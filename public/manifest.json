@@ -1,0 +1,20 @@
+{
+  "name": "GTO Lab — ポーカーGTO学習",
+  "short_name": "GTO Lab",
+  "description": "ローカル動作のポーカーGTO学習アプリ。レンジ・ソルバー解・弱点分析・ドリル。",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#18181b",
+  "theme_color": "#18181b",
+  "lang": "ja",
+  "categories": ["education", "games"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

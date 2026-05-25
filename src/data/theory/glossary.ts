@@ -1,0 +1,58 @@
+export interface GlossaryEntry {
+  term: string
+  reading?: string // 検索用の読み/別表記
+  definition: string
+  relatedTerms: string[]
+}
+
+// 用語集。relatedTerms は同じ term 文字列で相互参照する。
+export const GLOSSARY: GlossaryEntry[] = [
+  { term: 'GTO', reading: 'じーてぃーおー game theory optimal', definition: 'Game Theory Optimal。相手にどう対応されても搾取されない、ゲーム理論的に均衡した戦略。', relatedTerms: ['ナッシュ均衡', 'エクスプロイト', 'ソルバー'] },
+  { term: 'ナッシュ均衡', reading: 'なっしゅきんこう nash', definition: '全員が戦略を変える動機を持たない状態。ヘッズアップのGTO解はこの均衡に対応する。', relatedTerms: ['GTO', 'ソルバー'] },
+  { term: 'エクスプロイト', reading: 'えくすぷろいと exploit', definition: '相手の偏り(リーク)を突いて、GTOより高いEVを狙う戦略。GTOから意図的に逸脱する。', relatedTerms: ['GTO', 'リーク'] },
+  { term: 'ソルバー', reading: 'そるばー solver', definition: 'CFR等のアルゴリズムでGTO近似解を計算するツール(PioSOLVER等)。本アプリは自前のCFR+ソルバーを内蔵。', relatedTerms: ['GTO', 'CFR', 'エクスプロイタビリティ'] },
+  { term: 'CFR', reading: 'しーえふあーる counterfactual regret', definition: 'Counterfactual Regret Minimization。反実仮想後悔最小化。反復的にリグレットを減らして均衡へ収束させる手法。', relatedTerms: ['ソルバー', 'エクスプロイタビリティ'] },
+  { term: 'エクスプロイタビリティ', reading: 'exploitability', definition: '均衡からのズレの大きさ。小さいほど搾取されにくい=高精度。本アプリの「収束 X%」表示がこれ。', relatedTerms: ['CFR', 'GTO'] },
+  { term: 'レンジ', reading: 'れんじ range', definition: 'ある状況で取りうる手札全体の集合と各頻度。GTOは単一の手でなくレンジ全体で考える。', relatedTerms: ['コンボ', 'レンジ優位'] },
+  { term: 'コンボ', reading: 'こんぼ combo', definition: '具体的な2枚の組み合わせ。AKはスーテッド4通り+オフスート12通り=16コンボ(ペアは6コンボ)。', relatedTerms: ['レンジ', 'ブロッカー'] },
+  { term: 'ポジション', reading: 'ぽじしょん position', definition: '行動順の位置。後に行動できるほど情報が多く有利。IP/OOPで表す。', relatedTerms: ['IP', 'OOP', 'BTN'] },
+  { term: 'IP', reading: 'in position あいぴー', definition: 'In Position。ポストフロップで相手より後に行動できる有利な側。', relatedTerms: ['OOP', 'ポジション'] },
+  { term: 'OOP', reading: 'out of position おーおーぴー', definition: 'Out Of Position。相手より先に行動する不利な側。レンジを締めて戦う。', relatedTerms: ['IP', 'ポジション'] },
+  { term: 'UTG', reading: 'under the gun あんだーざがん', definition: 'Under The Gun。プリフロップで最初に行動する最も不利な前ポジション。レンジは最も狭い。', relatedTerms: ['ポジション', 'RFI'] },
+  { term: 'CO', reading: 'cut off かっとおふ', definition: 'カットオフ。BTNの1つ前。比較的広くオープンできる後ろ寄りのポジション。', relatedTerms: ['BTN', 'RFI'] },
+  { term: 'BTN', reading: 'button ぼたん でぃーらー', definition: 'ボタン(ディーラー)。全ストリートで最後に行動できる最も有利なポジション。最も広くオープンする。', relatedTerms: ['ポジション', 'IP'] },
+  { term: 'SB', reading: 'small blind すもーるぶらいんど', definition: 'スモールブラインド。プリフロップ後はOOP。リンプは避けレイズか降りるが基本。', relatedTerms: ['BB', 'OOP'] },
+  { term: 'BB', reading: 'big blind びっぐぶらいんど', definition: 'ビッグブラインド。既に1BB支払い済みのため、良いオッズで広くディフェンスする。', relatedTerms: ['SB', 'BBディフェンス', 'ポットオッズ'] },
+  { term: 'RFI', reading: 'raise first in れいずふぁーすといん', definition: 'Raise First In。誰も入っていない場で最初にレイズすること。リンプより優れる。', relatedTerms: ['オープン', 'リンプ'] },
+  { term: 'オープン', reading: 'open おーぷん', definition: 'プリフロップで最初にレイズしてポットを開くこと。RFIと同義に使われる。', relatedTerms: ['RFI', 'オープンサイズ'] },
+  { term: 'リンプ', reading: 'limp りんぷ', definition: 'レイズせずコールでポットに入ること。主導権を取れず一般に劣る。', relatedTerms: ['RFI', 'オープン'] },
+  { term: '3bet', reading: 'すりーべっと three bet', definition: 'オープンレイズに対する再レイズ。バリューとブラフ(ブロッカー)を混ぜる。', relatedTerms: ['4bet', 'ブロッカー'] },
+  { term: '4bet', reading: 'ふぉーべっと four bet', definition: '3betに対する再々レイズ。強いバリューとAブロッカーのブラフで構成。', relatedTerms: ['3bet'] },
+  { term: 'スクイーズ', reading: 'squeeze すくいーず', definition: 'オープン+コールが入った後の再レイズ。複数人を相手に降ろす圧力をかける。', relatedTerms: ['3bet'] },
+  { term: 'Cベット', reading: 'continuation bet こんてぃにゅえーしょん', definition: '継続ベット。プリフロップのアグレッサーがフロップで続けて打つこと。', relatedTerms: ['レンジ優位', 'IP'] },
+  { term: 'ドンクベット', reading: 'donk bet どんく', definition: 'プリフロップでコールした側がフロップで先に打つこと。大半の局面で不要。', relatedTerms: ['Cベット', 'レンジ優位'] },
+  { term: 'チェックレイズ', reading: 'check raise ちぇっくれいず', definition: '一度チェックして相手のベットに対しレイズで返す技。強い手とセミブラフで構成。', relatedTerms: ['セミブラフ'] },
+  { term: 'レンジ優位', reading: 'range advantage れんじゆうい', definition: 'そのボードで強い手をより多く持つ側。Cベット頻度・サイズの根拠になる。', relatedTerms: ['ナッツ優位', 'Cベット'] },
+  { term: 'ナッツ優位', reading: 'nut advantage なっつゆうい', definition: 'レンジ上位(超強い手)をより多く持つ側。大きいベットやオーバーベットの根拠。', relatedTerms: ['レンジ優位', 'ポラライズ'] },
+  { term: 'ポラライズ', reading: 'polarized ぽららいず', definition: '二極化。ベットレンジが強いバリューと弱いブラフに分かれた状態。大きいサイズと相性が良い。', relatedTerms: ['マージ', 'ナッツ優位'] },
+  { term: 'マージ', reading: 'merged まーじ', definition: 'バリュー寄りで中程度の手も含む連続的なベットレンジ。小〜中サイズと相性が良い。', relatedTerms: ['ポラライズ'] },
+  { term: 'バリューベット', reading: 'value bet ばりゅー', definition: 'より弱い手にコールしてもらって利益を得るためのベット。', relatedTerms: ['シンバリュー', 'ブラフ'] },
+  { term: 'シンバリュー', reading: 'thin value しんばりゅー', definition: '中程度の手による薄いバリューベット。わずかに弱い続行レンジから利益を取る。', relatedTerms: ['バリューベット'] },
+  { term: 'ブラフ', reading: 'bluff ぶらふ', definition: '弱い手で相手を降ろすためのベット。バリューと適正比で混ぜる。', relatedTerms: ['セミブラフ', 'バリューベット', 'ブラフキャッチ'] },
+  { term: 'セミブラフ', reading: 'semi bluff せみぶらふ', definition: '今は弱いが改善余地のあるドローで打つブラフ。降ろせても当たっても良い。', relatedTerms: ['ブラフ', 'ドロー'] },
+  { term: 'ブラフキャッチ', reading: 'bluff catch ぶらふきゃっち', definition: '相手のブラフにだけ勝てる中程度の手でコールすること。ポットオッズと相手の頻度で判断。', relatedTerms: ['ブラフ', 'ポットオッズ'] },
+  { term: 'ブロッカー', reading: 'blocker ぶろっかー', definition: '相手が持ちうる強い手を自分が1枚握って減らす効果。ブラフ手の選択に使う。', relatedTerms: ['コンボ', '3bet'] },
+  { term: 'エクイティ', reading: 'equity えくいてぃ', definition: 'そのまま全部見せ合ったときの勝率。期待される取り分。', relatedTerms: ['エクイティ実現', 'ポットオッズ'] },
+  { term: 'エクイティ実現', reading: 'equity realization じつげん', definition: '生の勝率を実際にどれだけ取れるか。ポジションやドローで割り引かれる(実現率R)。', relatedTerms: ['エクイティ', 'IP', 'OOP'] },
+  { term: 'ポットオッズ', reading: 'pot odds ぽっとおっず', definition: 'コール額と得られるポットの比。コールに必要な最低勝率を与える。', relatedTerms: ['エクイティ', 'インプライドオッズ'] },
+  { term: 'インプライドオッズ', reading: 'implied odds いんぷらいど', definition: '当たった後に追加で取れる額まで見込んだオッズ。ドローのコール根拠を広げる。', relatedTerms: ['ポットオッズ'] },
+  { term: 'EV', reading: 'expected value きたいち えくすぺくてっど', definition: '期待値。ある判断の長期平均利益。結果でなくEVで判断の良し悪しを測る。', relatedTerms: ['EV損失', 'GTO'] },
+  { term: 'EV損失', reading: 'ev loss いーぶいそんしつ', definition: '最善手のEVと選択のEVの差(BB)。本アプリのミス重大度の一次指標。', relatedTerms: ['EV', 'ブランダー'] },
+  { term: 'ブランダー', reading: 'blunder ぶらんだー', definition: 'EV損失の大きい重大なミス(本アプリでは2BB超)。', relatedTerms: ['EV損失'] },
+  { term: 'リーク', reading: 'leak りーく', definition: '繰り返し起こす負けの原因となる弱点。弱点分析はリークを可視化する。', relatedTerms: ['エクスプロイト'] },
+  { term: 'VPIP', reading: 'ぶいぴっぷ voluntarily put money', definition: '自発的にポットに参加した割合。緩さの指標。高すぎるとルース。', relatedTerms: ['PFR'] },
+  { term: 'PFR', reading: 'ぴーえふあーる preflop raise', definition: 'プリフロップでレイズした割合。アグレッションの指標。VPIPと近いほど締まった戦略。', relatedTerms: ['VPIP'] },
+  { term: 'ドロー', reading: 'draw どろー', definition: '完成すれば強くなる未完成の手(フラッシュドロー等)。セミブラフの主役。', relatedTerms: ['セミブラフ', 'アウツ'] },
+  { term: 'アウツ', reading: 'outs あうつ', definition: '手を完成させる残りカードの枚数。勝率の概算に使う(例: 4枚×2=ターンの約%)。', relatedTerms: ['ドロー', 'エクイティ'] },
+  { term: 'ティルト', reading: 'tilt てぃると', definition: '感情で判断が崩れる状態。プロセス重視で結果から切り離すのが対策。', relatedTerms: ['EV'] },
+]

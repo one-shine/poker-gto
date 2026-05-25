@@ -1,0 +1,28 @@
+import type { CoachFeedback } from '../../types/coach'
+import { StrategyDetail } from './StrategyDetail'
+
+// 正解 / ミックス戦略の「学習機会」カード。ミスではないので咎めず、
+// ミックス時は "なぜ複数アクションが正解になるのか" を一言で補足して理解を促す。
+export function MomentLesson({ feedback }: { feedback: CoachFeedback }) {
+  const head =
+    feedback.kind === 'mixed'
+      ? { icon: '💡', label: 'ミックス戦略 (学習機会)', cls: 'text-teal-200' }
+      : { icon: '✓', label: '正解', cls: 'text-emerald-300' }
+
+  return (
+    <>
+      <span className={`flex items-center gap-2 font-display font-extrabold ${head.cls}`}>
+        <span aria-hidden="true" className="text-lg">{head.icon}</span>
+        {head.label}
+      </span>
+      <p className="text-sm text-zinc-200 leading-relaxed my-2">{feedback.message}</p>
+      {feedback.kind === 'mixed' && (
+        <p className="text-xs text-teal-200/80 leading-relaxed mb-2">
+          GTOは相手に読まれないよう同じ手を複数アクションに割り振ります。どちらを選んでも正解で、
+          頻度通りに散らすほど均衡に近づきます。
+        </p>
+      )}
+      <StrategyDetail feedback={feedback} />
+    </>
+  )
+}

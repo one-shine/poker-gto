@@ -1,0 +1,95 @@
+import type { PlayerAction, Position, SkillLevel, Street } from './game'
+
+// EV損失の大きさ (BB) に基づく Snowie 流3段階。重大度は evLoss が決める (カテゴリではない)。
+export type MistakeSeverity = 'minor' | 'major' | 'critical'
+
+export interface MistakeRecord {
+  handId: string
+  street: Street
+  position: Position
+  action: PlayerAction
+  category: MistakeCategory
+  severity: MistakeSeverity
+  evLoss: number // BB。source が approximate のときは 0 (数値非提示)
+  timestamp: number
+}
+
+export type MistakeCategory =
+  | 'preflop_too_wide'
+  | 'preflop_too_tight'
+  | 'preflop_passive'  // レイズ推奨手を受動的にコール/リンプ (アクション選択の誤り)
+  | 'preflop_sizing'   // アクションは正しいがベット/レイズサイズが標準から逸脱
+  | 'fold_to_3bet'
+  | 'call_3bet_oop'
+  | 'blind_defense_wide'
+  | 'blind_defense_tight'
+  | 'sb_limp'
+  | 'missed_cbet_ip'
+  | 'cbet_oop_too_wide'
+  | 'check_ip_missed_value'
+  | 'oop_donk_bet'
+  | 'bluff_frequency'
+  | 'value_bet_missed'
+
+export interface PositionStats {
+  position: Position
+  handsPlayed: number
+  vpip: number
+  pfr: number
+  threebet: number
+  foldToSteal: number
+  stealAttempt: number
+  af: number
+  gtoAccuracy: number
+  evLost: number
+}
+
+export interface PlayerStats {
+  vpip: number
+  pfr: number
+  threebet: number
+  foldTo3bet: number
+  squeeze: number
+  coldCall: number
+  af: number
+  afByStreet: { flop: number; turn: number; river: number }
+  wtsd: number
+  wsd: number
+  cbet: { flop: number; turn: number; river: number }
+  foldToCbet: number
+  checkRaise: number
+  gtoAccuracy: number
+  evLostPer100: number
+  mistakeRate: number
+  byPosition: Record<Position, PositionStats>
+  mistakesByCategory: Record<MistakeCategory, number>
+}
+
+export interface PlayerProgress {
+  level: SkillLevel
+  xp: number
+  handsPlayed: number
+  mistakeRate: number
+  evLostPer100: number
+  mistakesByCategory: Record<MistakeCategory, number>
+  statsByPosition: Record<Position, PositionStats>
+  weakestPosition: Position | null
+  strongestPosition: Position | null
+  masteredConcepts: string[]
+}
+
+export interface UIComplexity {
+  showPotOdds: boolean
+  showBoardAnalysis: boolean
+  showRangeAdvantage: boolean
+  showMixedStrategies: boolean
+}
+
+export const XP_THRESHOLDS: Record<SkillLevel, number> = {
+  beginner: 0,
+  intermediate: 500,
+  advanced: 2000,
+  pro: 8000,
+}
+
+export const MIN_SAMPLE_SIZE = 20

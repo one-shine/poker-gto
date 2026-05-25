@@ -1,0 +1,124 @@
+import { useEffect, useState } from 'react'
+import type { SolutionSource } from '../../types/solver'
+import { useSettingsStore } from '../../stores/settingsStore'
+
+interface GameFooterProps {
+  // 現在表示中スポットの解の出典。null = 解未取得 (データ準備中)
+  source?: SolutionSource | null
+}
+
+// source ごとの信頼度表記。ⓘ/✓/△ で色のみ非依存 (CLAUDE.md ルール5)
+const SOURCE_INFO: Record<SolutionSource, { icon: string; label: string; cls: string }> = {
+  solver_precomputed: { icon: '✓', label: 'GTOソルバー解', cls: 'text-emerald-300' },
+  solver_live: { icon: '✓', label: 'GTOソルバー解 (ローカル求解·簡易)', cls: 'text-sky-300' },
+  approximate: { icon: '△', label: 'GTO近似レンジ (一般理論ベースの手作り)', cls: 'text-amber-300' },
+}
+
+export function GameFooter({ source }: GameFooterProps) {
+  const stackBB = useSettingsStore(s => s.stackBB)
+  const [open, setOpen] = useState(false)
+
+  // Escape で詳細モーダルを閉じる
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const src = source ? SOURCE_INFO[source] : null
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="前提条件の詳細を開く"
+        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border-t border-zinc-800 tabular-nums"
+      >
+        <span aria-hidden="true">ⓘ</span>
+        <span>6-max キャッシュゲーム · 各ハンド{stackBB}BBスタート · ノーレーク · ICM非考慮</span>
+        {src && (
+          <>
+            <span className="text-zinc-600" aria-hidden="true">·</span>
+            <span className={src.cls}>
+              <span aria-hidden="true">{src.icon} </span>
+              {src.label}
+            </span>
+          </>
+        )}
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="前提条件の詳細"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="max-w-md w-full rounded-xl bg-zinc-900 border border-zinc-700 p-5 text-sm"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-zinc-100">前提条件</h2>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="閉じる"
+                className="min-h-9 min-w-9 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <dl className="flex flex-col gap-2.5">
+              <Item term="ゲーム形式">
+                6-max ノーリミットホールデム · キャッシュゲーム
+              </Item>
+              <Item term="スタック深さ">
+                {stackBB}BB 固定。可変深さは将来対応 (取込解もこの深さ前提)。
+              </Item>
+              <Item term="スタックのリセット">
+                各ハンド開始時に全員 {stackBB}BB に戻ります。GTO解はこの深さで計算されるため、
+                スタックを繰り越すと SPR が変わり評価がずれます (GTO Wizard 等と同じ方式)。
+              </Item>
+              <Item term="レーキ">
+                0% (ノーレーク) として求解。実戦のレーキは未考慮。
+              </Item>
+              <Item term="ICM">
+                非考慮。チップEV基準のため、トーナメント終盤の学習用途には不向き。
+              </Item>
+              <Item term="解の出典">
+                {src ? (
+                  <span className={src.cls}>
+                    <span aria-hidden="true">{src.icon} </span>
+                    {src.label}
+                  </span>
+                ) : (
+                  <span className="text-zinc-400">このスポットはデータ準備中</span>
+                )}
+                <p className="mt-1 text-[11px] text-zinc-500 leading-relaxed">
+                  ✓ = 本物のソルバー解 / △ = 手作り近似 (ソルバー解への置換予定)。
+                  スポットごとに信頼度が変わります。
+                </p>
+              </Item>
+            </dl>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+function Item({ term, children }: { term: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-[11px] font-semibold text-zinc-500">{term}</dt>
+      <dd className="text-zinc-200 leading-relaxed">{children}</dd>
+    </div>
+  )
+}

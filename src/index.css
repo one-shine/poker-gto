@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/* ── デザイントークン (Felt & Brass) ───────────────────────────── */
+@theme {
+  --font-sans: "Hanken Grotesk", "Zen Kaku Gothic New", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Zen Kaku Gothic New", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* ブラス (真鍮) — プレミアム表現・ディーラーボタン・手番リング */
+  --color-brass-300: #e6cd7a;
+  --color-brass-400: #d4af37;
+  --color-brass-500: #b8901f;
+  --color-brass-600: #8f6d14;
+
+  /* フェルト (テーブル) */
+  --color-felt-400: #2f7d5b;
+  --color-felt-500: #1f5c43;
+  --color-felt-700: #103d2c;
+  --color-felt-900: #0a2a1e;
+
+  /* アイボリー (カード紙) */
+  --color-ivory-50: #f7f3ea;
+  --color-ivory-100: #efe9da;
+
+  /* インク / バーミリオン (スート) */
+  --color-ink: #1a1714;
+  --color-vermilion: #c0392b;
+
+  /* 階層ダーク背景 */
+  --color-base-900: #0c0e0d;
+  --color-base-800: #141816;
+  --color-base-700: #1c211e;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  /* 緑みを帯びた深いチャコール + 上端のさりげない光 */
+  background:
+    radial-gradient(120% 80% at 50% -10%, #16201b 0%, transparent 55%),
+    var(--color-base-900);
+  color: #e8eae6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root { min-height: 100vh; }
+
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
+
+/* 数値データは等幅 + 桁揃え */
+.font-data { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ── テクスチャ / 質感ユーティリティ ───────────────────────────── */
+
+/* 照明付きフェルト: 中心が明るいラジアル + 縁の落ち込み */
+.felt {
+  background:
+    radial-gradient(80% 70% at 50% 38%, var(--color-felt-400) 0%, var(--color-felt-500) 38%, var(--color-felt-700) 78%, var(--color-felt-900) 100%);
+}
+
+/* 微細グレイン (SVG ノイズ) を重ねてフェルトの質感を出す */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* ブラスの金属感 (斜めグラデ + 縁) */
+.brass {
+  background: linear-gradient(140deg, var(--color-brass-300) 0%, var(--color-brass-400) 45%, var(--color-brass-600) 100%);
+  color: var(--color-ink);
+}
+
+/* カスタムスクロールバー (端末トーン) */
+* { scrollbar-width: thin; scrollbar-color: #2a302c transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: #2a302c; border-radius: 4px; }
