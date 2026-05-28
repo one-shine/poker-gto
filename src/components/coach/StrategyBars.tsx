@@ -15,10 +15,11 @@ interface Props {
   source: SolutionSource
   showEv: boolean
   chosen?: PlayerAction // 選択したアクションを強調
+  approxEv?: boolean    // approximate_with_ev: EV はヒューリスティック (~ プレフィックス)
 }
 
 // GTO 戦略の頻度バー (GTO Wizard 流)。各アクションを頻度幅のバー + % (+ EV) で表示。
-export function StrategyBars({ strategy, showEv, chosen }: Props) {
+export function StrategyBars({ strategy, showEv, chosen, approxEv }: Props) {
   const sorted = [...strategy].sort((a, b) => b.frequency - a.frequency)
   return (
     <ul className="flex flex-col gap-1">
@@ -38,8 +39,8 @@ export function StrategyBars({ strategy, showEv, chosen }: Props) {
             </span>
             <span className="font-data w-9 text-right text-zinc-200 font-bold">{Math.round(s.frequency * 100)}%</span>
             {showEv && (
-              <span className="font-data w-14 text-right text-zinc-400">
-                {s.ev > 0 ? '+' : ''}{s.ev.toFixed(2)}BB
+              <span className="font-data w-14 text-right text-zinc-400" title={approxEv ? 'ヒューリスティック EV (postflop を equity で近似)' : undefined}>
+                {approxEv ? '~' : ''}{s.ev > 0 ? '+' : ''}{s.ev.toFixed(2)}BB
               </span>
             )}
           </li>

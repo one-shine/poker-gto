@@ -43,7 +43,7 @@
 ## 現在の進捗 (作業再開時はここを最初に読む)
 
 **現在のフェーズ**: Phase 4 ✅ + Phase 4.6 ✅ + Phase 3.5 🔄(自前TSソルバー: river/turn/flop 解✅ = **R1/R3 が postflop hero=OOP で稼働**。turn/flop はエクイティ近似)
-**次に着手するステップ**: 2026-05-28 セッションで R15(入力レンジ品質)/ R4-A(ヒューリスティック preflop EV)/ R25(IDB 移行)を完了 (207テスト)。次は R4-B (UI で approximate_with_ev 種別導入) または R10 B4 (チップ移動アニメ) / R14② (完全チャンスCFR) / R11/R19 監修 (WebSearch ベース) から選択。
+**次に着手するステップ**: 2026-05-28 セッション(続)で R4-B(UI に `approximate_with_ev` 種別導入・opener 5 spot で evLoss 稼働)も完了 (214テスト)。先行: R15/R4-A/R25 完了。次は R10 B4(チップ移動アニメ)/ R14②(完全チャンスCFR)/ R11/R19 監修(WebSearch ベース)から選択。
 その後 Phase 5(R8エクイティ/postflopドリル)→ Phase 4.5 → Phase 6。
 **Phase 4 成果**: 型、プリフロップ+5シナリオ(10計)、CoachAgent(EV損失/頻度評価)、session/progressStore、CoachPanel/StrategyBars、A1 LiveStrategyPanel(常時戦略+ポットオッズ)、A3 EV損失、play CoachToast、GTOPlayerAgent(trainer)、LearnPage(ダッシュボード+履歴)、SettingsPage、SampleSizeBadge、HandReplay。全97テスト・study/play/trainer 実機確認済。
 

@@ -22,6 +22,19 @@ async function loadPrecomputed(spotId: string): Promise<NodeSolution | null> {
   return mod.default ?? null
 }
 
+// R4-B: opener spot のヒューリスティック EV 付き解。
+// scripts/precompute-preflop-ev.ts で生成 (source='approximate_with_ev')。
+// precomputed が無く、これがあれば approximate より優先 (戦略は手作りと同じ、EV だけ追加)。
+const heuristicEvLoaders = import.meta.glob<{ default: NodeSolution }>(
+  '../../data/solutions/preflop-ev/*.json',
+)
+async function loadHeuristicEV(spotId: string): Promise<NodeSolution | null> {
+  const load = heuristicEvLoaders[`../../data/solutions/preflop-ev/${spotId}.json`]
+  if (!load) return null
+  const mod = await load()
+  return mod.default ?? null
+}
+
 // 手作り近似 (approximate)。precomputed が見つかればそちらを優先する。
 const approximatePreflop = new Map<string, NodeSolution>(
   PREFLOP_SCENARIOS.map(s => [s.id, fromRangeScenario(s)]),
@@ -42,8 +55,11 @@ export async function getSolution(
   opts: GetSolutionOptions = {},
 ): Promise<NodeSolution | null> {
   if (spot.street === 'preflop') {
-    // precomputed (実解・push/fold等) を優先、無ければ手作り近似。どちらも spotId で引く。
-    return (await loadPrecomputed(spot.baseSpotId)) ?? approximatePreflop.get(spot.baseSpotId) ?? null
+    // 優先順位: 実解 (solver_precomputed) > ヒューリスティック EV 付き (approximate_with_ev) > 手作り近似 (approximate)。
+    return (await loadPrecomputed(spot.baseSpotId))
+      ?? (await loadHeuristicEV(spot.baseSpotId))
+      ?? approximatePreflop.get(spot.baseSpotId)
+      ?? null
   }
   // ポストフロップ: flop/turn/river を自前 CFR で都度求解 (turn/flop は showdown をエクイティ近似)。
   if (

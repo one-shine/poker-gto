@@ -11,8 +11,15 @@ export function StrategyDetail({ feedback }: { feedback: CoachFeedback }) {
           {feedback.handKey} @ {feedback.spotId} の GTO 戦略
         </span>
         <span className="flex items-center gap-1 shrink-0">
-          {!feedback.showEv ? (
+          {feedback.source === 'approximate' ? (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300">参考: GTO近似</span>
+          ) : feedback.source === 'approximate_with_ev' ? (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300"
+              title="戦略は手作り近似。EV は (equity−0.5)×postflop_factor のヒューリスティック。"
+            >
+              GTO近似 + 概算EV
+            </span>
           ) : (
             <>
               {/* turn/flop の solver_live はエクイティ近似(以降の賭け未考慮)= river より信頼度低い (R14) */}
@@ -41,6 +48,7 @@ export function StrategyDetail({ feedback }: { feedback: CoachFeedback }) {
         source={feedback.source}
         showEv={feedback.showEv}
         chosen={feedback.chosen}
+        approxEv={feedback.source === 'approximate_with_ev'}
       />
     </div>
   )

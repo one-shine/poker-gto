@@ -1,10 +1,13 @@
 import type { Card, PlayerAction, Street } from './game'
 
-// 解の出典。信頼度: solver_precomputed > solver_live > approximate
+// 解の出典。信頼度: solver_precomputed > solver_live > approximate_with_ev > approximate
 export type SolutionSource =
-  | 'solver_precomputed' // 同梱ソルバー解 (信頼度最高)
-  | 'solver_live'        // ブラウザ内WASM求解 (簡易アブストラクション)
-  | 'approximate'        // 手作り近似 (未カバースポットの暫定フォールバック)
+  | 'solver_precomputed'   // 同梱ソルバー解 (信頼度最高)
+  | 'solver_live'          // ブラウザ内WASM求解 (簡易アブストラクション)
+  | 'approximate_with_ev'  // 手作り戦略 + ヒューリスティック EV (R4-A)。
+                           // 戦略は手作り近似だが EV は (equity-0.5)×postflop_factor で算出 →
+                           // evLoss 計算は可能 (UI に「概算EV(ヒューリスティック)」と明示する)
+  | 'approximate'          // 手作り近似 (EV 無し・未カバースポットの暫定フォールバック)
 
 export interface ActionSolution {
   action: PlayerAction

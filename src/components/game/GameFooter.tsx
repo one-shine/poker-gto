@@ -11,6 +11,7 @@ interface GameFooterProps {
 const SOURCE_INFO: Record<SolutionSource, { icon: string; label: string; cls: string }> = {
   solver_precomputed: { icon: '✓', label: 'GTOソルバー解', cls: 'text-emerald-300' },
   solver_live: { icon: '✓', label: 'GTOソルバー解 (ローカル求解·簡易)', cls: 'text-sky-300' },
+  approximate_with_ev: { icon: '△', label: 'GTO近似レンジ + 概算EV (ヒューリスティック)', cls: 'text-amber-300' },
   approximate: { icon: '△', label: 'GTO近似レンジ (一般理論ベースの手作り)', cls: 'text-amber-300' },
 }
 

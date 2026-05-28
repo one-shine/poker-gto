@@ -1,0 +1,650 @@
+{
+  "street": "preflop",
+  "spotId": "co-open",
+  "strategy": {
+    "22": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.673
+      }
+    ],
+    "33": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.828
+      }
+    ],
+    "44": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.001
+      }
+    ],
+    "55": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.18
+      }
+    ],
+    "66": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.367
+      }
+    ],
+    "77": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.58
+      }
+    ],
+    "88": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.798
+      }
+    ],
+    "99": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 2.06
+      }
+    ],
+    "AA": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 3.421
+      }
+    ],
+    "KK": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 3.173
+      }
+    ],
+    "QQ": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 2.976
+      }
+    ],
+    "JJ": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 2.678
+      }
+    ],
+    "TT": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 2.343
+      }
+    ],
+    "AKs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 2.109
+      }
+    ],
+    "AQs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 2.001
+      }
+    ],
+    "AJs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.859
+      }
+    ],
+    "ATs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.694
+      }
+    ],
+    "A9s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.448
+      }
+    ],
+    "A8s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.3
+      }
+    ],
+    "A7s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.7,
+        "ev": 1.226
+      },
+      {
+        "action": "fold",
+        "frequency": 0.3,
+        "ev": 0
+      }
+    ],
+    "A6s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 1.14
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "A5s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.7,
+        "ev": 1.137
+      },
+      {
+        "action": "fold",
+        "frequency": 0.3,
+        "ev": 0
+      }
+    ],
+    "A4s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 1.077
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "A3s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.3,
+        "ev": 1.036
+      },
+      {
+        "action": "fold",
+        "frequency": 0.7,
+        "ev": 0
+      }
+    ],
+    "A2s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.3,
+        "ev": 0.99
+      },
+      {
+        "action": "fold",
+        "frequency": 0.7,
+        "ev": 0
+      }
+    ],
+    "KQs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.561
+      }
+    ],
+    "KJs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.414
+      }
+    ],
+    "KTs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.26
+      }
+    ],
+    "K9s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.7,
+        "ev": 1.054
+      },
+      {
+        "action": "fold",
+        "frequency": 0.3,
+        "ev": 0
+      }
+    ],
+    "K8s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.921
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "QJs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.206
+      }
+    ],
+    "QTs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.068
+      }
+    ],
+    "Q9s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.89
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "JTs": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.947
+      }
+    ],
+    "J9s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.77
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "J8s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.3,
+        "ev": 0.641
+      },
+      {
+        "action": "fold",
+        "frequency": 0.7,
+        "ev": 0
+      }
+    ],
+    "T9s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.717
+      }
+    ],
+    "T8s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.563
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "98s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.571
+      }
+    ],
+    "97s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.44
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "87s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.443
+      }
+    ],
+    "86s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.358
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "76s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.347
+      }
+    ],
+    "75s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.23
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "65s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.255
+      }
+    ],
+    "64s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.3,
+        "ev": 0.14
+      },
+      {
+        "action": "fold",
+        "frequency": 0.7,
+        "ev": 0
+      }
+    ],
+    "54s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.19
+      }
+    ],
+    "53s": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.073
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "AKo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.983
+      }
+    ],
+    "AQo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.872
+      }
+    ],
+    "AJo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.731
+      }
+    ],
+    "ATo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.522
+      }
+    ],
+    "A9o": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.7,
+        "ev": 1.253
+      },
+      {
+        "action": "fold",
+        "frequency": 0.3,
+        "ev": 0
+      }
+    ],
+    "A8o": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 1.129
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "KQo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.423
+      }
+    ],
+    "KJo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.229
+      }
+    ],
+    "KTo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.7,
+        "ev": 1.051
+      },
+      {
+        "action": "fold",
+        "frequency": 0.3,
+        "ev": 0
+      }
+    ],
+    "K9o": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.4,
+        "ev": 0.838
+      },
+      {
+        "action": "fold",
+        "frequency": 0.6,
+        "ev": 0
+      }
+    ],
+    "QJo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 1.033
+      }
+    ],
+    "QTo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.876
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "JTo": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 1,
+        "ev": 0.756
+      }
+    ],
+    "J9o": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.4,
+        "ev": 0.576
+      },
+      {
+        "action": "fold",
+        "frequency": 0.6,
+        "ev": 0
+      }
+    ],
+    "T9o": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.5,
+        "ev": 0.479
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": 0
+      }
+    ],
+    "98o": [
+      {
+        "action": "raise",
+        "sizeBB": 2.5,
+        "frequency": 0.3,
+        "ev": 0.314
+      },
+      {
+        "action": "fold",
+        "frequency": 0.7,
+        "ev": 0
+      }
+    ]
+  },
+  "potBB": 1.5,
+  "source": "approximate_with_ev",
+  "meta": {
+    "sourceName": "hand-built strategy + heuristic postflop EV (factor=30)",
+    "license": "original",
+    "version": "1"
+  }
+}

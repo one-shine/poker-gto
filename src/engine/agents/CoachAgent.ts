@@ -141,11 +141,14 @@ export function evaluateAction(
 ): CoachFeedback | null {
   if (!MATCHABLE.includes(action)) return null
   const showEv = node.source !== 'approximate'
+  // approximate / approximate_with_ev は手作り scenario 由来 = 非fold手のみ収録。
+  // (fromRangeScenario / attachHeuristicEV を参照: pure fold は cells に含まれない)
+  const isHandBuilt = node.source === 'approximate' || node.source === 'approximate_with_ev'
   let sols = node.strategy[handKey]
 
-  // approximate のレンジは非fold手のみ収録。未収録 = fold 100% とみなす。
+  // 未収録 = fold 100% とみなす (手作り scenario の暗黙ルール)。
   if (!sols || sols.length === 0) {
-    if (node.source !== 'approximate') return null // 実解にこの手が無い → スキップ
+    if (!isHandBuilt) return null // 実解にこの手が無い → スキップ
     sols = [{ action: 'fold', frequency: 1, ev: 0 }]
   }
 

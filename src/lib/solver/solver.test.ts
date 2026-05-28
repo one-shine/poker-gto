@@ -321,14 +321,22 @@ describe('resolveSpotKey postflop (R16 ライブ配線)', () => {
 })
 
 describe('getSolution', () => {
-  it('returns approximate preflop solution for a known spot', async () => {
+  it('returns approximate_with_ev preflop solution for opener spots (R4-B)', async () => {
     const node = await getSolution({ baseSpotId: 'btn-open', street: 'preflop' })
     expect(node?.spotId).toBe('btn-open')
-    expect(node?.source).toBe('approximate')
+    expect(node?.source).toBe('approximate_with_ev')
+    // AA should have a positive heuristic EV attached
+    const aa = node?.strategy['AA']?.find(a => a.action === 'raise')
+    expect(aa?.ev).toBeGreaterThan(0)
   })
 
-  it('supplies utg-open (added in Phase 4) as an approximate solution', async () => {
+  it('supplies utg-open (added in Phase 4) as approximate_with_ev (R4-B precompute)', async () => {
     const node = await getSolution({ baseSpotId: 'utg-open', street: 'preflop' })
+    expect(node?.source).toBe('approximate_with_ev')
+  })
+
+  it('falls back to approximate for defender spots (no heuristic EV precomputed yet)', async () => {
+    const node = await getSolution({ baseSpotId: 'bb-vs-btn', street: 'preflop' })
     expect(node?.source).toBe('approximate')
   })
 

@@ -53,6 +53,9 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds }: Prop
         {node && node.source === 'approximate' && (
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300">参考: GTO近似</span>
         )}
+        {node && node.source === 'approximate_with_ev' && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300">GTO近似 + 概算EV</span>
+        )}
       </div>
 
       {/* A2: ポットオッズ / 必要勝率 / 自分のエクイティ (R8) */}
@@ -92,7 +95,7 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds }: Prop
       ) : !node || !strategy ? (
         <span className="text-xs text-zinc-500">このスポットは評価対象外です(未対応スポット)</span>
       ) : (
-        <StrategyBars strategy={strategy} source={node.source} showEv={node.source !== 'approximate'} />
+        <StrategyBars strategy={strategy} source={node.source} showEv={node.source !== 'approximate'} approxEv={node.source === 'approximate_with_ev'} />
       )}
     </div>
   )
