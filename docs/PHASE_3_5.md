@@ -26,11 +26,109 @@
 - [x] **R16 カバレッジ拡大: hero=IP 対応** — `deriveRiverRanges` を bb-vs-X(hero=OOP)+ X-open(hero=IP)両対応(2レンジは共通=opener raise + BB call、hero がどちら側かが base で決まる)。`resolveSpotKey` で heroIsOOP 判定、`getSolution` を OOP/IP × lead/被ベットの4ノードに一般化。hero=IP(btn-open, villain check後)の check/bet 戦略を検証。
 - [🔄] **R14 turn/flop 精度** — 2段階で対応:
   - [x] **(1) 信頼度の明示(今回)**: turn/flop の solver_live は「オールイン相当のエクイティ近似(以降のベッティング未考慮)」で river より精度が低い。CoachFeedback に `street` を持たせ、CoachPanel に「簡易: 賭け未考慮」バッジ + exploitability「収束 X%」を表示。**誤った権威付けを防止**(最重要リスクを解消)。
-  - [ ] **(2) 精度の本丸: 完全チャンスノード CFR(未了・専用作業)**。仕様:
-    - ツリーをマルチストリート化: ターンのベッティング終了(fold以外)→ **ChanceNode(リバー札を配る)** → リバーのベッティング → ショーダウン(board+r の二値, 厳密)。
-    - **実装方針**: `eq` 行列をクロージャ変数 `currentEq` 化し、ChanceNode が runout ごとに `currentEq=per-runout二値eq` を設定して再帰・平均(シグネチャ変更最小)。**公開カード除去**: runout r を含むコンボの reach を 0。committed/pot はストリート跨ぎで累積(リバーのベットサイズは現ポット比)。flatten は chance で停止(ターンノードのみ記録)。valueAvg/brValue も chance 対応。
-    - **性能**: runout サンプリング(turn: 8–16) + コンボ上限60 + 反復150 + Worker。river の検証済みテストを安全網に段階導入。
-    - flop は 2チャンス層で重い → 当面エクイティ近似のまま or 事前計算ライブラリ。
+  - [ ] **(2) 精度の本丸: 完全チャンスノード CFR(未了・専用作業)**。**詳細設計 2026-05-28 追記** (R14② 計画書):
+
+    ### 目的
+    現状 turn (board=4) の `solver_live` は「リバーまでオールイン相当のエクイティ平均」で、リバーのベッティング判断 (フラッシュドロー降りる/降りない、バリュー反映/ブラフ) を一切考慮しない。結果としてドローが過大評価され EV/頻度が現実とずれる。完全チャンスノード CFR で「river ベッティングを含めた turn の真の EV」を求める。
+
+    ### 範囲 (turn 限定 MVP)
+    - **対応**: turn (board=4)。「turn ベッティング → ChanceNode (river 札) → river ベッティング → 厳密ショーダウン」の2ストリート CFR
+    - **見送り**: flop (3ストリート・2チャンス層は重すぎる)。事前計算ライブラリ案件
+    - **派生**: hero=OOP/IP 両対応 (river CFR で既に対応済の構造をそのまま再利用)
+
+    ### データ構造
+    ```ts
+    // 既存 (riverSolver.ts) に追加
+    interface ChanceNode {
+      kind: 'chance'
+      potAfterTurn: number          // chance 入口でのポット
+      committedAtChance: [number, number] // chance 入口でのコミット (turn 終了時点)
+      runouts: ChanceChild[]        // sampled river cards
+    }
+    interface ChanceChild {
+      card: Card                    // dealt river card
+      // 2-value 厳密エクイティ (board=5, runout 含む)
+      eq: number[][]                // eq[oop_i][ip_j] (combo 衝突した手は -1)
+      removedOOP: boolean[]         // この runout で除外される oop combo (card と衝突)
+      removedIP: boolean[]
+      subtree: Node                 // river ベッティング部分木 (この runout 専用、独立 regret/stratSum)
+    }
+    ```
+
+    ### ツリー構築
+    - turn ベッティング部分は既存 `buildTree` の構造をそのまま使う (OOP check/bet · IP応答 · レイズ)
+    - **showdown 終端を ChanceNode へ置換**: fold 以外で到達する「コール後showdown」「双方check後showdown」の terminal を ChanceNode に
+    - 各 ChanceChild の subtree:
+      - 同じ `buildTree` で pot = potAfterTurn (turn 終了時) を渡して構築
+      - river の betting サブツリーは turn と同じ構造 (check/bet→fold/call/raise)
+      - 終端は strict 2-value showdown (引数の `eq` を使う、平均ではない)
+    - fold 終端は ChanceNode で包まず (river に進まないため不変)
+
+    ### CFR 拡張
+    既存 `traverse(node, up, reachUp, reachOpp)` に分岐追加:
+    ```
+    if (node.kind === 'chance') {
+      const N = node.runouts.length
+      const acc = new Array(combos[up]).fill(0)
+      for (const ro of node.runouts) {
+        // 公開カード除去: runout カードを含む相手 combo の reach を 0 に
+        const adjOpp = reachOpp.map((r, j) => (up === 0 ? ro.removedIP[j] : ro.removedOOP[j]) ? 0 : r)
+        const adjUp = reachUp.map((r, i) => (up === 0 ? ro.removedOOP[i] : ro.removedIP[i]) ? 0 : r)
+        // この runout の eq でショーダウン値を評価する subtree を traverse
+        const v = traverseWithEq(ro.subtree, up, adjUp, adjOpp, ro.eq)
+        for (let c = 0; c < acc.length; c++) acc[c] += v[c] / N
+      }
+      return acc
+    }
+    ```
+    `traverseWithEq(eq)` は既存 traverse を eq パラメータ化したもの。terminal.showdown のときに渡された eq を使う (現行は closure の eqOOP)。最小変更案: eq を closure 変数 `currentEq` にして chance 突入時に書き換え (シグネチャ不変) → ただし再帰のため要 restore。安全には引数化が綺麗。
+
+    `valueAvg` / `brValue` も同様に chance 分岐を追加 (平均戦略・最適応答評価)。
+
+    ### Runout サンプリング
+    - 全 44 通り (turn 後の残り 1 枚) のうち N=12 サンプル (決定的 stride or seeded random)
+    - **rank multiplicity 重み**: 同じランクのスート違いは同等。重複排除 + ランク覆い率を確保
+    - 重み付け: 各サンプルを 1/N で平均 (一様サンプル前提)
+
+    ### 性能予算
+    | パラメータ | 値 | 根拠 |
+    |---|---|---|
+    | runout sample N | 12 | 44通り中 27% カバー、ランク偏り抑制 |
+    | コンボ上限 | 60 (R15 の 200 から削減) | 60×60×12 runout × CFR で許容 |
+    | 反復 | 100 (R15 の 250 から削減) | runout 平均で十分収束 |
+    | 期待求解時間 | 5-15s | turn study 用 (Worker・キャッシュ前提) |
+
+    ### 実装ファイル
+    - **新規** `src/lib/solver/turnSolver.ts`: 多ストリート CFR (上記データ構造 + traverse 拡張)
+    - **修正** `src/lib/solver/getSolution.ts`: turn(board=4) で `useChanceCFR: true` 時に turnSolver を呼ぶ
+    - **修正** `src/workers/solver.worker.ts`: turn 求解の入口を増設 (river との切替)
+    - **修正** `src/lib/solver/solverClient.ts`: turn 専用エントリ追加
+
+    ### テスト戦略
+    1. **river 回帰 (絶対安全網)**: 既存 river/turn テストが全通過することを確認 (turn は従来の equity 近似のままにし、新コードは opt-in)
+    2. **chance 単体**: ランダム runout でも `Σ (1/N) = 1` の重み和、card removal で removed 行が 0 reach
+    3. **ドロー過大評価の解消**: 例: K♥9♥ on T♥6♥2♣ vs AhAc → 現行は flush draw 過大評価。新解で AA EV が上がる方向を assert (引数の閾値は緩めに)
+    4. **value bet 反映**: 強い手 (top set) の turn betting 戦略が現行より bet 偏重になることを assert
+    5. **収束**: exploitability < 10% pot (river の <5% より緩い目標)
+
+    ### 段階展開
+    | フェーズ | 内容 | コミット |
+    |---|---|---|
+    | R14②-1 | turnSolver.ts スケルトン + ChanceNode 型 + tree builder + 既存 river テスト維持 | 1 |
+    | R14②-2 | CFR traverse 拡張 + chance handling + 単体テスト | 1 |
+    | R14②-3 | getSolution opt-in 配線 + Worker 経由 + integration テスト | 1 |
+    | R14②-4 | パフォーマンス調整 (runout N, iters, combo cap 探索) | 0-1 |
+    | R14②-5 | UI バッジ更新 (turn は「賭け考慮済 / runout=12」と明示) | 1 |
+
+    ### リスクと緩和
+    - **バグリスク**: chance node のカード除去・reach 伝播は実装ミスが起きやすい → river との回帰テスト + 簡単なチャンスでの sanity (turn=確定 river=既知ボード) を先に通す
+    - **パフォーマンス**: 想定 5-15s を超えたら runout を 8 に削減 / コンボを 40 に削減
+    - **メモリ**: runout × river-subtree の regret 配列 (~ 12 × 60 × 5 × 数十 = ~50k floats) → 数 MB、許容範囲
+
+    ### 着手前提
+    - 入力レンジが薄いまま CFR だけ精密化しても効果限定 → **R4 実データ取込 / R15 narrowing が先**
+    - R15 narrowing は実装済 (river 限定)。R14② で turn の narrowing 同種を入れる場合は別作業
+    - 当面は R14① 信頼度明示で誤誘導は防げているので緊急度は低
   - **着手順序(重要)**: 精度の鎖は **R4(実データ)→ R15(レンジ narrowing)→ R14②(チャンスCFR)**。
     入力レンジが近似/上限/narrowing無しのままソルバーだけ精密化しても実精度は伸びない。R14② は R4/R15 の後 or 同時が効率的。
     R14①(信頼度明示)で誤誘導は防げているため、R14② は**後回し(専用枠)で可**。
