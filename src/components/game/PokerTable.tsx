@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import type { ActionRecord, GameState } from '../../types/game'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useContainSize } from '../../hooks/useContainSize'
@@ -86,7 +86,15 @@ export function PokerTable({ state, winnerIds }: PokerTableProps) {
         style={{ left: '50%', top: isMobile ? '40%' : '42%' }}
       >
         {totalPot > 0 && (
-          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur-sm border border-brass-500/30">
+          // R10 B4: 確定ポットの変動 (= ストリート遷移でチップ吸収) を pulse で示す。
+          // key 変更で animate を再走 → mainPotBB が変わるたびに短い拡縮。
+          <motion.div
+            key={`pot-${state.pot.mainPotBB}`}
+            initial={{ scale: 1 }}
+            animate={{ scale: [1.08, 1] }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+            className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur-sm border border-brass-500/30"
+          >
             {/* チップディスク (装飾・aria-hidden) */}
             <span aria-hidden="true" className="relative w-5 h-5">
               <span className="absolute inset-0 rounded-full bg-brass-400 border border-brass-600 shadow" />
@@ -101,7 +109,7 @@ export function PokerTable({ state, winnerIds }: PokerTableProps) {
                 (確定 {formatBB(state.pot.mainPotBB)} ＋ ベット {formatBB(liveBets)})
               </span>
             )}
-          </div>
+          </motion.div>
         )}
         <div className="flex gap-1 min-h-[2.5rem]">
           {state.board.map((c, i) => (
@@ -117,28 +125,33 @@ export function PokerTable({ state, winnerIds }: PokerTableProps) {
         </div>
       </div>
 
-      {/* ベットチップ層: 各プレイヤーの現ベット額を felt 上に表示 (誰がいくら賭けたか一目で) */}
-      {!showdown && state.players.map(p => {
-        if (p.currentBetBB <= 0 || !SEAT_POS[p.seatIndex]) return null
-        const bp = betPos(p.seatIndex, SEAT_POS)
-        return (
-          <motion.div
-            key={`bet-${p.id}`}
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-brass-500/40"
-            style={{ left: bp.left, top: bp.top }}
-            aria-hidden="true"
-          >
-            <span className="relative w-3.5 h-3.5 shrink-0">
-              <span className="absolute inset-0 rounded-full bg-brass-400 border border-brass-600" />
-              <span className="absolute inset-[2px] rounded-full border border-dashed border-base-900/60" />
-            </span>
-            <span className="font-data text-sm font-bold text-brass-100">{formatBB(p.currentBetBB)}</span>
-          </motion.div>
-        )
-      })}
+      {/* ベットチップ層: 各プレイヤーの現ベット額を felt 上に表示 (誰がいくら賭けたか一目で)
+          R10 B4: ストリート遷移 (currentBetBB → 0) で AnimatePresence の exit が発火し、
+          チップが中央ポットへ吸い込まれるように移動。視線が「誰が払い→ポット」に流れる。 */}
+      <AnimatePresence>
+        {!showdown && state.players.map(p => {
+          if (p.currentBetBB <= 0 || !SEAT_POS[p.seatIndex]) return null
+          const bp = betPos(p.seatIndex, SEAT_POS)
+          const potTop = isMobile ? '40%' : '42%'
+          return (
+            <motion.div
+              key={`bet-${p.id}`}
+              initial={{ opacity: 0, scale: 0.6, left: bp.left, top: bp.top }}
+              animate={{ opacity: 1, scale: 1, left: bp.left, top: bp.top }}
+              exit={{ opacity: 0, scale: 0.4, left: '50%', top: potTop }}
+              transition={{ duration: 0.32, ease: 'easeOut' }}
+              className="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-brass-500/40"
+              aria-hidden="true"
+            >
+              <span className="relative w-3.5 h-3.5 shrink-0">
+                <span className="absolute inset-0 rounded-full bg-brass-400 border border-brass-600" />
+                <span className="absolute inset-[2px] rounded-full border border-dashed border-base-900/60" />
+              </span>
+              <span className="font-data text-sm font-bold text-brass-100">{formatBB(p.currentBetBB)}</span>
+            </motion.div>
+          )
+        })}
+      </AnimatePresence>
 
       {/* 各席 + ディーラーボタン */}
       {state.players.map(p => {
