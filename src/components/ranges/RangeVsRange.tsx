@@ -3,41 +3,7 @@ import type { RangeScenario } from '../../types/ranges'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 import { RangeGrid } from './RangeGrid'
 import { RangeEquityDistribution } from './RangeEquityDistribution'
-
-const TOTAL_COMBOS = 1326 // C(52,2)
-
-function combosForHand(hand: string): number {
-  if (hand.length === 2) return 6 // ペア
-  return hand.endsWith('s') ? 4 : 12 // スーテッド / オフスート
-}
-
-interface RangeStats {
-  combos: number
-  raiseCombos: number
-  callCombos: number
-  pair: number
-  suited: number
-  offsuit: number
-  widthPct: number
-}
-
-// レンジを「コンボ数」基準で集計する(169ハンドでなく実コンボ重みで見る)。
-function rangeStats(scenario: RangeScenario): RangeStats {
-  let combos = 0, raiseCombos = 0, callCombos = 0, pair = 0, suited = 0, offsuit = 0
-  for (const [hand, cell] of Object.entries(scenario.cells)) {
-    const cc = combosForHand(hand)
-    const inRange = cell.raise + cell.call
-    if (inRange <= 0) continue
-    const w = cc * inRange
-    combos += w
-    raiseCombos += cc * cell.raise
-    callCombos += cc * cell.call
-    if (hand.length === 2) pair += w
-    else if (hand.endsWith('s')) suited += w
-    else offsuit += w
-  }
-  return { combos, raiseCombos, callCombos, pair, suited, offsuit, widthPct: combos / TOTAL_COMBOS }
-}
+import { rangeStats } from '../../lib/ranges/rangeStats'
 
 function Bar({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
   const pct = total > 0 ? (value / total) * 100 : 0

@@ -9,7 +9,8 @@
     "test": "vitest run",
     "type-check": "tsc -b",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:icons": "tsx scripts/build-icons.ts"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",
@@ -35,6 +36,7 @@
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.6.0",
     "jsdom": "^26.1.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
