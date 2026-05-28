@@ -1,6 +1,6 @@
 # Phase 3: ポーカーテーブルUI + 基本プレイ
 
-> 親計画: [../IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+> 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 > 進捗チェックリストは親計画の「現在の進捗」を参照。
 
 ## 目標

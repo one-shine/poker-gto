@@ -1,6 +1,6 @@
 # Phase 6: ポリッシュ・最適化
 
-> 親計画: [../IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+> 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 
 ## 進捗 (2026-05-24) 🔄 第1弾完了
 

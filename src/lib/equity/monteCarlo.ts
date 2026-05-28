@@ -16,7 +16,7 @@ export interface EquityResult {
 const key = (c: Card) => c.rank + c.suit[0]
 
 // カテゴリ ('AA' / 'AKs' / 'AKo') を具体コンボへ展開。
-function expandCategory(cat: string): [Card, Card][] {
+export function expandCategory(cat: string): [Card, Card][] {
   const r1 = cat[0] as Rank
   const r2 = cat[1] as Rank
   const out: [Card, Card][] = []

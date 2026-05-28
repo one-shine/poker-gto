@@ -58,11 +58,12 @@ export function actionFreqs(scenarioId: string, hand: string): ActionFreq[] {
   ]
 }
 
-// シナリオが取りうる選択肢 (call を含むのは BB ディフェンス系のみ)。
+// シナリオが取りうる選択肢。レイズの呼称はスポット種別で変える (オープン/3bet/4bet)。
 function optionsFor(scenarioId: string): DrillOption[] {
   const sc = PREFLOP_SCENARIOS.find(s => s.id === scenarioId)
   const hasCall = sc ? Object.values(sc.cells).some(c => c.call > 0) : false
-  const raiseLabel = hasCall ? '3Bet' : 'レイズ'
+  // 対3bet スポット(opener応答)では raise=4bet。それ以外で call を含む=defenderの3bet。
+  const raiseLabel = scenarioId.endsWith('-3bet') ? '4Bet' : hasCall ? '3Bet' : 'レイズ'
   return hasCall
     ? [{ action: 'raise', label: raiseLabel }, { action: 'call', label: 'コール' }, { action: 'fold', label: 'フォールド' }]
     : [{ action: 'raise', label: raiseLabel }, { action: 'fold', label: 'フォールド' }]
@@ -90,6 +91,23 @@ export function generateQuestion(rng: () => number = Math.random, category?: Mis
     hand,
     options: optionsFor(sc.id),
   }
+}
+
+// 短い説明文 (なぜこの推奨か)。スポット種別 + 推奨アクションで一般原則を述べる。
+// approximate レンジのため実EVは無く、定性的な指針に留める。
+export function explainPreflop(question: PreflopDrillQuestion, judgement: DrillJudgement): string {
+  const hasCall = question.options.some(o => o.action === 'call')
+  const is3bet = question.scenarioId.endsWith('-3bet')
+  const primary = [...judgement.best].sort((a, b) => b.freq - a.freq)[0]?.action
+  const mixed = judgement.best.length > 1 ? 'ミックス: ' : ''
+  if (!primary || primary === 'fold') {
+    return hasCall ? 'このディフェンスレンジには入らず、フォールド。' : 'このポジション/対面ではレンジ外。フォールド。'
+  }
+  if (primary === 'call') return `${mixed}ディフェンスレンジ。オッズに見合うのでコールで受ける。`
+  // raise
+  if (is3bet) return `${mixed}バリュー or ブロッカーの4bet候補。`
+  if (hasCall) return `${mixed}バリュー/ブロッカーの3bet候補。`
+  return `${mixed}オープンレンジに入る強さ。レイズ。`
 }
 
 export function judge(question: PreflopDrillQuestion, chosen: DrillAction): DrillJudgement {

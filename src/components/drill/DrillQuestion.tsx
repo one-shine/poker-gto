@@ -1,6 +1,6 @@
 import type { Card, Rank, Suit } from '../../types/game'
 import { CardDisplay } from '../game/CardDisplay'
-import type { PreflopDrillQuestion, DrillAction, DrillJudgement } from '../../lib/drill/preflopDrill'
+import { explainPreflop, type PreflopDrillQuestion, type DrillAction, type DrillJudgement } from '../../lib/drill/preflopDrill'
 
 const ACTION_JP: Record<DrillAction, string> = { raise: 'レイズ', call: 'コール', fold: 'フォールド' }
 
@@ -29,8 +29,13 @@ export function DrillQuestion({ question, judgement, onAnswer, onNext }: Props) 
 
   return (
     <div className="rounded-2xl border border-white/10 bg-base-800/60 p-5 space-y-4">
-      <div className="text-center space-y-1">
-        <p className="text-xs text-zinc-400">{question.scenarioLabel}</p>
+      <div className="text-center space-y-2">
+        <p className="text-sm font-semibold text-zinc-100">{question.scenarioLabel}</p>
+        {question.position && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-bold border bg-base-900 border-brass-400/40 text-brass-200">
+            あなた: {question.position}
+          </span>
+        )}
         <p className="font-display font-bold text-zinc-200">あなたのアクションは?</p>
       </div>
 
@@ -66,6 +71,9 @@ export function DrillQuestion({ question, judgement, onAnswer, onNext }: Props) 
             </p>
             <p className="text-sm text-zinc-300 mt-1">推奨: {recommend || 'フォールド 100%'}</p>
           </div>
+          <p className="text-sm text-zinc-100 leading-relaxed rounded-lg bg-base-900/70 border border-brass-400/30 p-3">
+            <span aria-hidden="true" className="mr-1">💡</span>{explainPreflop(question, judgement)}
+          </p>
           <div className="flex justify-center">
             <button
               type="button"

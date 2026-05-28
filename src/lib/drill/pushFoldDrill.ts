@@ -87,6 +87,15 @@ export function generatePushFoldQuestion(
   return { stack, role, hand, prompt: promptFor(stack, role), options: optionsFor(role) }
 }
 
+// 短い説明文。プッシュ/フォールドは実EV(厳密解)があるので EV 比較に紐づけられる。
+export function explainPushFold(judgement: PushFoldJudgement): string {
+  const primary = [...judgement.best].sort((a, b) => b.freq - a.freq)[0]?.action
+  if (!primary || primary === 'fold') return 'プッシュ/コールは期待値マイナス。フォールドが正しい。'
+  if (primary === 'push') return 'このスタックではプッシュが+EV(降りるより期待値が高い)。'
+  if (primary === 'call') return 'オールインに対しコールが+EV。'
+  return ''
+}
+
 export function judgePushFold(question: PushFoldQuestion, chosen: PFAction): PushFoldJudgement {
   const { all, source } = infosFor(question.stack, question.role, question.hand)
   const best = all.filter(a => a.freq >= MIXED_THRESHOLD)

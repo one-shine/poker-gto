@@ -1,6 +1,6 @@
 # Phase 4.6: 公開準備ハードニング(品質・UX)
 
-> 親計画: [../IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) / レビュー: [RELEASE_READINESS.md](RELEASE_READINESS.md)
+> 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) / レビュー: [RELEASE_READINESS.md](RELEASE_READINESS.md)
 > Phase 4 完了後の自己レビューで判明した、すぐ直せる品質/UX 問題をまとめて潰すミニフェーズ。
 > 本丸のコンテンツ拡充(ポストフロップ・実ソルバー)は Phase 3.5/5/6 で対応。
 

@@ -3,7 +3,7 @@ import type { Card, Rank, Suit } from '../../types/game'
 import { useProgressStore } from '../../stores/progressStore'
 import { CardDisplay } from '../game/CardDisplay'
 import {
-  generatePushFoldQuestion, judgePushFold, PUSHFOLD_STACKS,
+  explainPushFold, generatePushFoldQuestion, judgePushFold, PUSHFOLD_STACKS,
   type PushFoldQuestion, type PushFoldJudgement, type PushFoldRole, type PFAction,
 } from '../../lib/drill/pushFoldDrill'
 
@@ -95,8 +95,11 @@ export function PushFoldDrillPanel() {
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-base-800/60 p-5 space-y-4">
-        <div className="text-center space-y-1">
-          <p className="text-xs text-zinc-400">{question.prompt}</p>
+        <div className="text-center space-y-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-bold border bg-base-900 border-brass-400/40 text-brass-200">
+            あなた: {question.role === 'sb' ? 'SB（スモールブラインド）' : 'BB（ビッグブラインド）'} · {question.stack}BB
+          </span>
+          <p className="text-sm text-zinc-200">{question.prompt}</p>
           <p className="font-display font-bold text-zinc-200">あなたのアクションは?</p>
         </div>
 
@@ -126,12 +129,16 @@ export function PushFoldDrillPanel() {
               <p className="text-sm text-zinc-300 mt-1">推奨: {recommend || 'フォールド 100%'}</p>
             </div>
 
+            <p className="text-sm text-zinc-100 leading-relaxed rounded-lg bg-base-900/70 border border-brass-400/30 p-3">
+              <span aria-hidden="true" className="mr-1">💡</span>{explainPushFold(judgement)}
+            </p>
+
             {/* 各アクションの実 EV (solver_precomputed) */}
-            <div className="flex justify-center gap-2 text-xs">
+            <div className="flex justify-center gap-2 text-sm">
               {judgement.all.map(info => (
-                <span key={info.action} className="px-2 py-1 rounded-lg bg-base-900 border border-white/10 font-data text-zinc-300">
-                  {PF_JP[info.action]} <span className="text-zinc-500">{Math.round(info.freq * 100)}%</span>
-                  {' · '}<span className={Number.isFinite(info.ev) && info.ev >= 0 ? 'text-emerald-300' : 'text-zinc-400'}>{fmtEv(info.ev)}</span>
+                <span key={info.action} className="px-2.5 py-1 rounded-lg bg-base-900 border border-white/10 font-data text-zinc-200">
+                  {PF_JP[info.action]} <span className="text-zinc-400">{Math.round(info.freq * 100)}%</span>
+                  {' · '}<span className={Number.isFinite(info.ev) && info.ev >= 0 ? 'text-emerald-300' : 'text-rose-300'}>{fmtEv(info.ev)}</span>
                 </span>
               ))}
             </div>

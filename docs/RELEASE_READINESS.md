@@ -2,7 +2,7 @@
 
 > Phase 4 完了時点(2026-05-23)の自己レビューで洗い出した「一般公開に必要な項目」の正典。
 > 各項目を対応フェーズに割り当て済み。状態: ⬜ 未着手 / 🔄 進行中 / ✅ 完了。
-> 親計画: [../IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+> 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 
 ## 総合判定(レビュー時点)
 「完成度の高いプロトタイプ」。土台・UI・正直さ(出典明示)は高品質だが、
@@ -14,9 +14,9 @@
 | ID | 指摘 | 重大度 | 対応フェーズ | 状態 |
 |----|------|--------|------------|------|
 | **R1** | ポストフロップのコーチが完全に不在(`getSolution` postflop=null → フロップ以降フィードバックなし) | 🔴 ブロッカー | Phase 3.5(解供給)+ Phase 5(ポストフロップドリル) | 🔄 flop/turn/river の hero=OOP(lead/被ベット)で稼働(turn/flop はエクイティ近似)。IP/レイズ応酬は未対応 |
-| **R2** | プリフロップが 10/21 スポットのみ(BTN/CO 対レイズ・3bet・マルチウェイ等は無言スキップ) | 🔴 ブロッカー | Phase 5(SB vs BTN, BTN vs CO)+ Phase 6(残り) | ⬜ |
+| **R2** | プリフロップ網羅 **21/21 スポット完了✅**(2026-05-26)。①defender 4スポット(SB vs CO・BTN vs UTG/MP・CO vs UTG)②**非BB防御のライブ・コーチング配線**(`POS_VS_SPOT` + `getPreflopActionOrder` で clean fold-around 判定)③**facing-3bet 5スポット**(BTN/CO opener × SB/BB/BTN 3better、4bet/call/fold)。`preflopSpotId` を raises.length=2(open+3bet・HU限定)に拡張、スクイーズ/コールド参加は除外。RangeGrid/RangesPage の凡例を 3bet スポットで「4-Bet」表記に。すべて approximate手作り(R11 監修対象)。**プリフロップのみ配線**(postflop は deriveRiverRanges 非対応で正しくスキップ)。マルチウェイは設計ルール4でGTO精度除外=対象外 | ✅ | 完了(実解置換は R4/将来) | ✅ 21/21 |
 | **R3** | 「実EV損失」が実質ドーマント(approximate は ev=0、数値は solver_* 時のみ→現状出ない) | 🔴 ブロッカー | Phase 3.5(solver_precomputed=実EV) | 🔄 river は solver_live で実EV稼働。preflop実解(R4)は別途 |
-| **R4** | 本物のソルバー解が無い(全レンジ手作り近似、trainer 相手も近似ベース) | 🔴 ブロッカー | Phase 3.5(実解取込) | 🔄 **HU プッシュ/フォールドは厳密 GTO を自前生成 + トレーナー UI 稼働** (`scripts/solve-pushfold.ts`→`hu-pf-*.json`, `solver_precomputed`, ショーダウン=オールイン勝率=真値)。学習→ドリル→「プッシュ/フォールド」で stack(10/15/20)/立場(SB/BB/ミックス)別に出題・**実EV表示**・厳密解判定。残: 100BB オープン/3bet は postflop EV 要 |
+| **R4** | 本物のソルバー解が無い(全レンジ手作り近似、trainer 相手も近似ベース)。**R4-A 実装済 ✅** 2026-05-28: `src/lib/solver/heuristicPreflopEV.ts` でヒューリスティック open-raise 求解(fictitious play + postflop EV = `(equity-0.5) × 30BB`)。BTN open vs BB call の 169×169 fictitious play で per-category EV/頻度を算出。exploitability < 0.005 BB/hand。実出力: opener レンジ ~51%(AA/KK/QQ/AKs 100% raise EV +2〜3BB / 72o-32o 0% raise EV -0.35〜-0.67)、caller ~28%(3bet 無しのため実 GTO ~55% より狭い・既知の限界)。テスト 5 件(AA bullish / 72o folds / 単調性 / 収束 / raiseSize 影響)。次=R4-B(UI で `approximate_with_ev` 種別導入)。 | 🔴 ブロッカー | Phase 3.5(実解取込) | 🔄 **HU プッシュ/フォールドは厳密 GTO を自前生成 + トレーナー UI 稼働** (`scripts/solve-pushfold.ts`→`hu-pf-*.json`, `solver_precomputed`, ショーダウン=オールイン勝率=真値)。学習→ドリル→「プッシュ/フォールド」で stack/立場(SB/BB/ミックス)別に出題・**実EV表示**・厳密解判定。**スタック拡充✅**(2026-05-27): 5/8/12/25BB を追加生成し **5/8/10/12/15/20/25BB の7段階**を網羅(exploitability 0.0003〜0.0017・push頻度は 5BB 131/169→25BB 74/169 と単調に縮小=公開Nashチャート整合)。トレーナーは `PUSHFOLD_STACKS`(JSON自動発見)で自動反映。**バンドル改善**: `getSolution` の precomputed glob を eager→**spotId一致のみ遅延import**化し、push/fold JSON を gameStore チャンクから排除(223KB→41KB・旧来の +80KB 肥大も解消)。残: 100BB オープン/3bet は postflop EV 要(別軸・厳密不可) |
 | **R5** | セッション統計が非永続(リロードで精度・ハンド履歴が消える) | 🟠 | **Phase 4.6**(前倒し)/ 恒久は Phase 5 IndexedDB | ✅ |
 | **R6** | study モードは GTO精度が常に N=0(常時戦略=全ハンド hinted 除外)。ユーザーが戸惑う | 🟠 | **Phase 4.6**(UX調整:測定用ドリル/トグル) | ✅ |
 | **R7** | study の「一時停止」が見かけだけ(エンジンは止まらず裏で進行) | 🟠 | **Phase 4.6**(実エンジン停止) | ✅ |
@@ -27,18 +27,18 @@
 | **R12** | (Phase 4.6 レビュー)一時停止フラグが appMode 切替(study→play)で残留しうる。`startNewHand` で解除済のため実害は次ハンドで解消 | 🟡 監視 | 緩和済 | 🔄 |
 | **R13** | (Phase 3.5 レビュー)ライブ求解中に「データ準備中(評価対象外)」と誤表示 → `useSolution` に loading 状態追加、LiveStrategyPanel で「GTO解を求めています…」(スピナー)/「評価対象外」を区別 | 🟠 UX | 即時修正 | ✅ |
 | **R14** | (3.5)turn/flop はエクイティ近似(以降のベッティング無視)でドロー過大評価。①**信頼度の明示**(CoachPanel に「簡易: 賭け未考慮」+「収束 X%」)で誤った権威付けを解消 ✅。②**精度の本丸=完全チャンスCFR**は専用作業として仕様化・スケジュール(docs/PHASE_3_5.md) | 🟠 精度 | ①Phase 3.5 ✅ / ②専用作業 | 🔄 |
-| **R15** | (3.5)postflop の入力レンジが**近似プリフロップ由来 + 上限100コンボ + ストリート narrowing 無し**。river の CFR が厳密でも入力が粗く、EV/頻度の精度は限定的 | 🟠 精度 | Phase 3.5 精密化 + R4(実preflop解) | ⬜ |
-| **R16** | (3.5)postflop コーチのカバレッジ拡大 → **hero=IP(X-open base)対応**。`deriveRiverRanges` を bb-vs-X(OOP)+ X-open(IP)両対応、`resolveSpotKey`/`getSolution` を OOP/IP × lead/被ベットの4ノードに一般化。残: レイズ応酬(チェックレイズ)・3bet/マルチウェイ・SBコンプリート | 🟠 カバレッジ | 🔄 IP対応済。残ノードは将来 |
+| **R15** | (3.5→**実装済 ✅** 2026-05-28)postflop の入力レンジの精度向上。①**コンボ上限を 100→200・top-N から「重みしきい値 0.05 + 上限」へ**: 尾部の意味ある mixed 戦略(0.05〜)を保護しつつ SRP の超巨大レンジ(200-570 combos)を許容範囲に圧縮。実測 (`scripts/measure-ranges.ts`) で 90%+ カバー(従来 18%)。②**River 限定 board 強度 narrowing**: 5枚ボードの rankValue で下位20%を落とし「フロップ/ターンを peel しなかった手」を近似。`rangeNarrowing.ts` に分離(9テスト)。must=hero 必ず保持・board overlap は drop 優先。turn/flop はドロー価値必要のため R14②(完全チャンスCFR)領域として未着手。性能影響: river/turn 求解 720ms→2.8s (4×, vitest timeout を 15s に拡張)。 | 🟠 精度 | Phase 3.5 精密化 + R4(実preflop解) | ✅ R15-A/B 完了 |
+| **R16** | (3.5)postflop コーチのカバレッジ拡大 → **hero=IP対応 + レイズ応酬対応✅**(2026-05-26)。`deriveRiverRanges` は bb-vs-X(OOP)+ X-open(IP)両対応。`getSolution` が `raiseSizes:[0.5]` を渡し、被ベットノードに **raise(OOP=チェックレイズ / IP=レイズ)** が加わる(`riverSolver` の `facingBet`/`raisesLeft` は元々対応・未使用だった)。被ベット時 hero は fold/call/raise で評価。ポストフロップドリルでも3択化。実機確認(BTN-open IP 被ベット=fold11%/call87%+raise)。**3bet pot postflop ✅**(2026-05-27): `deriveRiverRanges` を `potSpec()` 経由に一般化し `3bp-{hero}-vs-{villain}`(5ポット×両視点=10スポット)を追加。3betレンジ=`{3better}-vs-{opener}` raise / 対3betコールレンジ=`{opener}-vs-{3better}-3bet` call。ポストフロップドリルに「ポット種別(シングルレイズド/3betポット)」トグル+`heroRangeSpec()`。ポット≈22.5BB・残り≈89BB。実機確認(SB 3betポット vs BTN・K9s 2pair on AK9→レイズ99% +11.22BB)。**被レイズ深いノード ✅**(2026-05-27): hero が自ベット/チェックレイズをレイズし返された節([1,2]=OOP被レイズ / [0,1,2]=IP被チェックレイズ)を `SpotKey.facingRaise` + `getSolution` targetPath で対応(`riverSolver` は raiseSizes 指定時に元々生成済・到達していなかっただけ)。ポストフロップドリルに3択目「被レイズ」(fold/call のみ・hero ベット額→相手レイズ to 額を明示)を追加。実機確認(リバー被レイズ・ワンペア→フォールド94% -6.38BB)。**ライブコーチング配線 ✅**(2026-05-27): `resolveSpotKey` のポストフロップを `postflopBase()` で再構成するよう刷新。**IPオープナー postflop の長年のバグを修正**(defender のコールを limp 誤判定して null を返していた→ btn-open 等が実ゲームで稼働)。3bet ポット(open→3bet→call → `3bp-{hero}-vs-{villain}`)・被レイズ(hero ベット→villain レイズ)も実ゲームで検出。`baseHeroIsOOP()` クロスチェックで SB盲対盲の IP/OOP 反転を除外。postflop resolveSpotKey テスト +8(従来ゼロ)。実機: 配線後も study/コーチ 0 console err。残: マルチウェイ・SBコンプリート・再レイズ応酬(raisesLeft≥2) | 🟢 カバレッジ | ✅ IP+チェックレイズ+3betポット+被レイズ+ライブ配線対応 |
 | **R17** | (3.5)exploitability 未計測 → best-response 計算で算出。`NodeSolution`/`CoachFeedback` に載せ、CoachPanel に「収束 X% pot」表示。収束テスト(反復↑で↓・<5%)。※CFR収束の指標でありエクイティ抽象化誤差(R14)は別 | 🟡 | Phase 3.5 | ✅ |
 | **R18** | (3.5)IndexedDB 求解キャッシュに**上限/エビクション無し**。多様な postflop スポットで肥大化しうる | 🟡 | Phase 6(LRU/サイズ上限) | ⬜ |
 | **R19** | (4.5レビュー)理論コンテンツ(17コンセプト + 48用語)は手書き。数値(オープン頻度 UTG15/BTN45、バリュー:ブラフ 2:1 等)は概算で、レンジ同様**監修が必要**。誤字「sui ted」を1件修正済 | 🟡 内容 | 随時監修(R11 と同枠) | 🔄 typo修正済・数値監修は継続 |
 | **R20** | (4.5)`PositionStatsTable` の**推定精度**は近似: 母数=ヒーローHU判断数(コーチ未評価スポットも含む)、分子=判断数−`sessionStore.mistakes`。ヒント除外・未評価スポットを厳密に扱わず楽観寄り。「推定」表記+注記で緩和 | 🟡 精度UX | 厳密化は per-position 評価集計を持てば可(Phase 5/6) | 🔄 緩和済 |
-| **R21** | (4.5)レンジvsレンジは**構成比較のみ**。エクイティ/ナッツ優位・ボード上のエクイティ分布カーブは Monte Carlo(R8)前提で未実装。「🎯ドリル」導線もドリル(Phase 5)未実装で「近日」表示 | 🟡 機能 | Phase 5(R8 + ドリル) | ⬜ |
+| **R21** | (4.5→**実装済✅** 2026-05-28)レンジvsレンジに**ボード上のエクイティ分布**を追加。`lib/equity/rangeVsRange.ts`(コンボごとに相手レンジ全体へのエクイティを算出→10分位ヒストグラム・平均エクイティ=レンジ優位・ナッツ級/弱い手比率=ナッツ優位)。river=厳密・flop/turn=seeded MC(400ランナウト)。`equity.worker.ts`/`equityClient.ts` を rangeInput 系統に拡張(Worker共有)。RangesPage「レンジ比較」タブに `RangeEquityDistribution`(ボードプリセット6種+ランダムフロップ・advantageバー・2ヒストグラム)。色覚配慮(横軸=エクイティで読める・凡例マーカー)。入力レンジは手作り近似のため**参考値**と明示。検証6件(AA圧勝/avg和≒1/セットのナッツ優位/正規化/seed再現/空レンジ)。189テスト | 🟢 機能 | ✅ | ✅ |
 | **R22** | (4.5)新規純関数の一部(`RangeVsRange` の combo集計・`PositionStatsTable` の aggregate)は未テスト。コンセプト被覆は専用テストで保証済(全 MistakeCategory→≥1 concept・115テスト) | 🟢 | 随時(集計をpure module化してテスト) | 🔄 被覆テスト済 |
 | **R8** | エクイティ Monte Carlo worker(`monteCarlo.ts`+`equity.worker.ts`+`equityClient.ts`)実装。相手レンジ指定でシミュレートし、study(intermediate+)で「あなたの勝率」を必要勝率と並べて表示・オッズ充足判定。検証テスト4件(AAvsKK/タイ/ナッツ/空レンジ) | 🟠→✅ | Phase 5 | ✅ |
-| **R23** | (5レビュー)**ポストフロップドリル未実装**(プリフロップドリルのみ)。プリフロップドリルは approximate レンジ基準(EV非表示・頻度10%判定)。postflop はソルバー解ベースで要async統合 | 🟠 機能 | 専用作業(Phase 5残/6) | 🔄 preflopドリル✅ |
+| **R23** | (5レビュー)ポストフロップドリル**実装済✅**(2026-05-26): `postflopDrill.ts`+`PostflopDrillPanel.tsx`。HU SRP(bb-vs-{btn,co}/{btn,co}-open)でランダムボード+レンジ内hero手を出題→自前CFRを**都度求解(async)**→返却アクションから選択肢を動的生成(lead=check/bet / 被ベット=call/fold)。**実EV併記**・source=`solver_live`(△ ローカル求解と正直表記)。XP 8/3。ストリート切替(flop/turn/river/mix)。ドリルタブに統合。146テスト | 🟢 機能 | ✅ | ✅ |
 | **R24** | (5)エクイティの相手レンジは近似: 非BBの相手は一律「オープンレンジ」、BBは「bb-vs-hero ディフェンスレンジ」。実際のアクション系列(3bet/コール経路)は未反映。HU 限定・多人数/未対応は非表示(正直) | 🟡 精度 | アクション系列からのレンジ推定(Phase 6) | 🔄 |
-| **R25** | (5)**IndexedDB 恒久永続化は未移行**(localStorage のまま・履歴上限50)。大量セッションで古い履歴が失われる。localStorage は現データ規模では実用上問題なし | 🟡 永続化 | Phase 6(idb 移行・R18 と同枠) | ⬜ |
+| **R25** | (5→**実装済 ✅** 2026-05-28)`src/lib/storage/idbStorage.ts` で Zustand `StateStorage` 互換の IDB アダプタを実装し sessionStore を IDB に移行。**自動マイグレーション**: 旧 `localStorage` データを初回 read で IDB へコピー → localStorage 削除(一回限り)。IDB 非対応環境は localStorage にフォールバック。履歴上限を 50 → **1000** に緩和。テスト 4 件(roundtrip / 未設定キー → null / 旧 LS 移行 / IDB 無効時 fallback)。`fake-indexeddb` を dev-dep に追加。 | 🟡 永続化 | Phase 6(idb 移行・R18 と同枠) | ✅ |
 | **R26** | (5)追加プリフロップ 2スポット(sb-vs-btn 3bet-or-fold / btn-vs-co 3bet+coldcall)は **approximate 手作り**(R11 と同じく監修・実解置換対象)。これで 12/必要スポット | 🟡 内容 | 監修 + 実解(R4) | 🔄 |
 | **R10** | ポリッシュ: **B1 トータルポット表示✅**(現ベット込み総額 + 確定/ベット内訳)/ **B3 勝者ハイライト✅**(WINNERバッジ+発光・色覚配慮)。残: B4 チップ→ポット移動アニメ・D2 モバイル | 🟡 | Phase 6 | 🔄 B1/B3 済 |
 | **R27** | (6)**ページ遅延ロード✅**(lazy/Suspense・main 471→334KB・各ページ別chunk)。**PWA✅**(manifest+sw.js runtime cache+登録+meta)。ただしアイコンは favicon.svg のみ(PNG 192/512 maskable 未整備でストア/スプラッシュ品質は限定的) | 🟡 配信 | Phase 6 仕上げ(PNGアイコン) | 🔄 |
@@ -86,7 +86,7 @@
 ## T. 技術・運用(配信)
 - [ ] **T1 モバイル化方式**: PWA(手軽)か Capacitor(ストア配信)。Phase 6 で WASM 用 **COOP/COEP** とオフライン対応。
 - [ ] **T2 観測**: クラッシュレポート(Sentry 等)・解析(プライバシー配慮)・バージョン更新フロー。
-- [ ] **T3 セキュリティレビュー**: 公開前に依存脆弱性(`npm audit`)・XSS/インジェクション・データ取り扱いを点検。`git` 化して CI(test/build/lint/audit)を回す。
+- [x] **T3 git化 + CI** (2026-05-25): `git init`→ 初回コミット → private repo `github.com/one-shine/poker-gto` に push。`.github/workflows/ci.yml` で push/PR 時に **lint → build(tsc -b 型チェック込) → test → npm audit(high以上で失敗)** を Node22 で実行。**初回CI緑・脆弱性0件**。残(公開前): XSS/インジェクション・データ取り扱いの観点レビュー、actions の Node20ランタイム非推奨警告(将来 v5 等へ更新)。
 - [ ] **T4 国際化(任意)**: 現状 UI は日本語のみ。英語化で市場拡大。
 
 > 早期に決めるべき設計判断: **L1(データの出所)** と **T1(PWA か Capacitor か)**。

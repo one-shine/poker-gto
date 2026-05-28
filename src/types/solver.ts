@@ -55,5 +55,8 @@ export interface SpotKey {
   potBB?: number       // ストリート開始時のポット (この街のベット前)
   effStackBB?: number
   riverBetBB?: number  // hero が直面しているベット額 (>0 = 被ベット節, 未設定/0 = 先頭/チェック後)
+  // hero が自らのベット/チェックレイズに対し相手のレイズに直面しているノード (R16 深いノード)。
+  // true のとき riverBetBB は hero 自身のリードベット額 (betFrac 算出用)。fold/call のみ。
+  facingRaise?: boolean
   heroIsOOP?: boolean  // hero が OOP (defender) か IP (opener) か
 }

@@ -3,8 +3,11 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import type { ActionRecord } from '../types/game'
 import type { CoachFeedback } from '../types/coach'
 import type { MistakeRecord } from '../types/stats'
+import { idbStorage } from '../lib/storage/idbStorage'
 
-const MAX_HISTORY = 50 // localStorage 肥大化防止 (恒久保存は Phase 5 で IndexedDB へ)
+// R25: IDB へ移行し履歴上限を緩和 (旧 localStorage は idbStorage が自動マイグレーション)。
+// 上限を 0 = 無制限にしないのは、UI 表示・集計の単純化と、IDB 内で 1 ストアが過大化するのを避けるため。
+const MAX_HISTORY = 1000
 
 interface SessionStore {
   handHistory: ActionRecord[][]   // ハンドごとのアクション列
@@ -71,7 +74,7 @@ export const useSessionStore = create<SessionStore>()(
     }),
     {
       name: 'poker-gto-session',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => idbStorage),
       // Set はそのまま JSON 化できないため配列に変換して保存/復元する。
       partialize: s => ({
         handHistory: s.handHistory, mistakes: s.mistakes,

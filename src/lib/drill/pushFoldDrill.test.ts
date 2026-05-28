@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { generatePushFoldQuestion, judgePushFold, PUSHFOLD_STACKS } from './pushFoldDrill'
+import { explainPushFold, generatePushFoldQuestion, judgePushFold, PUSHFOLD_STACKS } from './pushFoldDrill'
 
 describe('pushFoldDrill', () => {
-  it('discovers bundled stacks (10/15/20)', () => {
-    expect(PUSHFOLD_STACKS).toEqual([10, 15, 20])
+  it('discovers bundled stacks from JSON (昇順)', () => {
+    expect(PUSHFOLD_STACKS).toEqual([5, 8, 10, 12, 15, 20, 25])
   })
 
   it('SB push is correct for AA at 10BB; fold is wrong; uses precomputed source + real EV', () => {
@@ -35,5 +35,17 @@ describe('pushFoldDrill', () => {
     const deep = judgePushFold({ ...generatePushFoldQuestion(20, 'sb', () => 0), hand: 'K5o' }, 'push')
     const f = (j: typeof shallow) => j.all.find(a => a.action === 'push')!.freq
     expect(f(shallow)).toBeGreaterThan(f(deep))
+  })
+
+  describe('explainPushFold', () => {
+    it('SB push (AA 10BB) → +EV push rationale', () => {
+      const j = judgePushFold({ ...generatePushFoldQuestion(10, 'sb', () => 0), hand: 'AA' }, 'push')
+      expect(explainPushFold(j)).toContain('プッシュが+EV')
+    })
+
+    it('SB trash (72o 10BB) → fold rationale', () => {
+      const j = judgePushFold({ ...generatePushFoldQuestion(10, 'sb', () => 0), hand: '72o' }, 'fold')
+      expect(explainPushFold(j)).toContain('フォールド')
+    })
   })
 })

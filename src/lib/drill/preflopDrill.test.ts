@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { actionFreqs, judge, generateQuestion, allHandCategories, type PreflopDrillQuestion } from './preflopDrill'
+import { actionFreqs, judge, generateQuestion, allHandCategories, explainPreflop, type PreflopDrillQuestion } from './preflopDrill'
 
 const q = (scenarioId: string, hand: string): PreflopDrillQuestion => ({
   scenarioId, scenarioLabel: '', position: '', hand, options: [],
@@ -29,5 +29,27 @@ describe('preflop drill', () => {
     const question = generateQuestion(() => 0)
     expect(question.hand).toBeTruthy()
     expect(question.options.length).toBeGreaterThanOrEqual(2)
+  })
+
+  describe('explainPreflop', () => {
+    it('open spot + raise → open-range rationale', () => {
+      const question = { ...q('btn-open', 'AA'), options: [{ action: 'raise' as const, label: 'レイズ' }, { action: 'fold' as const, label: 'フォールド' }] }
+      const j = judge(question, 'raise')
+      expect(explainPreflop(question, j)).toContain('オープンレンジ')
+    })
+
+    it('facing-3bet spot + raise → 4bet rationale', () => {
+      const question = { ...q('btn-vs-bb-3bet', 'AA'), options: [
+        { action: 'raise' as const, label: '4Bet' }, { action: 'call' as const, label: 'コール' }, { action: 'fold' as const, label: 'フォールド' },
+      ] }
+      const j = judge(question, 'raise')
+      expect(explainPreflop(question, j)).toContain('4bet')
+    })
+
+    it('out-of-range hand → fold rationale', () => {
+      const question = { ...q('utg-open', '72o'), options: [{ action: 'raise' as const, label: 'レイズ' }, { action: 'fold' as const, label: 'フォールド' }] }
+      const j = judge(question, 'fold')
+      expect(explainPreflop(question, j)).toContain('フォールド')
+    })
   })
 })

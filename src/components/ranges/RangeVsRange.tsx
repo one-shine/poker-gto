@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { RangeScenario } from '../../types/ranges'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 import { RangeGrid } from './RangeGrid'
+import { RangeEquityDistribution } from './RangeEquityDistribution'
 
 const TOTAL_COMBOS = 1326 // C(52,2)
 
@@ -119,6 +120,8 @@ export function RangeVsRange() {
         広いレンジは平均的に弱く、相手のレンジ優位を許しやすい点に注意。
       </div>
 
+      <RangeEquityDistribution a={a} b={b} />
+
       <div className="grid md:grid-cols-2 gap-5">
         <div>
           <h3 className="text-sm font-display font-bold text-zinc-200 mb-2">A: {a.label}</h3>
@@ -132,7 +135,7 @@ export function RangeVsRange() {
 
       <p className="text-[11px] text-zinc-500 leading-snug border-t border-white/10 pt-3">
         ※ 構成はコンボ数(ペア6・スーテッド4・オフスート12)を頻度で重み付けした近似です。
-        ボード上のエクイティ分布(レンジ優位・ナッツ優位)は Phase 5 のエクイティ計算で追加予定です。
+        ボード上のエクイティ分布(レンジ優位・ナッツ優位)は上部のヒストグラムで確認できます。
       </p>
     </div>
   )

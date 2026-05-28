@@ -70,7 +70,7 @@ function SingleRange() {
           {callCount > 0 && (
             <>
               <span className="text-zinc-400">
-                3-Bet: <span className="text-green-400 font-semibold">{raiseCount}</span>
+                {scenario.id.endsWith('-3bet') ? '4-Bet' : '3-Bet'}: <span className="text-green-400 font-semibold">{raiseCount}</span>
               </span>
               <span className="text-zinc-400">
                 コール: <span className="text-blue-400 font-semibold">{callCount}</span>

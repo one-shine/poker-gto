@@ -55,6 +55,8 @@ interface Props {
 
 export function RangeGrid({ scenario }: Props) {
   const hasCall = Object.values(scenario.cells).some(c => c.call > 0)
+  // 対3bet スポット(opener応答)では raise=4bet。それ以外で call を含む=3bet。
+  const raiseLabel = scenario.id.endsWith('-3bet') ? '4-Bet' : hasCall ? '3-Bet' : 'レイズ'
 
   return (
     <div className="space-y-3">
@@ -108,7 +110,7 @@ export function RangeGrid({ scenario }: Props) {
         <span className="font-semibold text-zinc-300">凡例:</span>
         <span className="flex items-center gap-1.5">
           <span className="w-3.5 h-3.5 rounded-sm inline-flex items-center justify-center text-[8px] font-extrabold text-white" style={{ background: RAISE_COLOR }}>R</span>
-          {hasCall ? '3-Bet' : 'レイズ'}
+          {raiseLabel}
         </span>
         {hasCall && (
           <span className="flex items-center gap-1.5">

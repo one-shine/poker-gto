@@ -81,6 +81,243 @@ describe('resolveSpotKey', () => {
     const s = baseState({ actionHistory: [rec('p3', 'raise')] })
     expect(resolveSpotKey(s, 'hero')).toBeNull()
   })
+
+  // R2: 非BB防御の単独オープン応答 (clean fold-around)。背後の未行動ブラインドは許容。
+  const folded = (p: Player): Player => ({ ...p, isFolded: true })
+
+  it('BTN facing single CO open (UTG/MP folded, blinds behind) → btn-vs-co', () => {
+    const s = baseState({
+      players: [
+        player('hero', 'BTN', 0), player('sb', 'SB', 1), player('bb', 'BB', 2),
+        folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)), player('co', 'CO', 5),
+      ],
+      actionHistory: [rec('utg', 'fold'), rec('mp', 'fold'), rec('co', 'raise')],
+    })
+    expect(resolveSpotKey(s, 'hero')).toEqual({ baseSpotId: 'btn-vs-co', street: 'preflop' })
+  })
+
+  it('SB facing single CO open (3bet-or-fold spot) → sb-vs-co', () => {
+    const s = baseState({
+      players: [
+        player('hero', 'SB', 1), folded(player('btn', 'BTN', 0)), player('bb', 'BB', 2),
+        folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)), player('co', 'CO', 5),
+      ],
+      actionHistory: [rec('utg', 'fold'), rec('mp', 'fold'), rec('co', 'raise'), rec('btn', 'fold')],
+    })
+    expect(resolveSpotKey(s, 'hero')).toEqual({ baseSpotId: 'sb-vs-co', street: 'preflop' })
+  })
+
+  it('CO facing single UTG open → co-vs-utg', () => {
+    const s = baseState({
+      players: [
+        player('hero', 'CO', 5), player('btn', 'BTN', 0), player('sb', 'SB', 1),
+        player('bb', 'BB', 2), player('utg', 'UTG', 3), folded(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [rec('utg', 'raise'), rec('mp', 'fold')],
+    })
+    expect(resolveSpotKey(s, 'hero')).toEqual({ baseSpotId: 'co-vs-utg', street: 'preflop' })
+  })
+
+  it('cold-caller before hero → null (not a clean HU response)', () => {
+    // CO raises, BTN cold-calls, then hero=SB acts → 実質マルチウェイ
+    const s = baseState({
+      players: [
+        player('hero', 'SB', 1), player('btn', 'BTN', 0), player('bb', 'BB', 2),
+        folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)), player('co', 'CO', 5),
+      ],
+      actionHistory: [rec('utg', 'fold'), rec('mp', 'fold'), rec('co', 'raise'), rec('btn', 'call')],
+    })
+    expect(resolveSpotKey(s, 'hero')).toBeNull()
+  })
+
+  it('unsupported defender pairing (e.g. MP vs UTG) → null', () => {
+    const s = baseState({
+      players: [
+        player('hero', 'MP', 4), player('btn', 'BTN', 0), player('sb', 'SB', 1),
+        player('bb', 'BB', 2), player('utg', 'UTG', 3), player('co', 'CO', 5),
+      ],
+      actionHistory: [rec('utg', 'raise')],
+    })
+    expect(resolveSpotKey(s, 'hero')).toBeNull()
+  })
+
+  // R2: opener が 3bet に直面 (HU・4bet/call/fold)。
+  it('BTN open faces a BB 3bet (HU) → btn-vs-bb-3bet', () => {
+    const s = baseState({
+      players: [
+        player('hero', 'BTN', 0), folded(player('sb', 'SB', 1)), player('bb', 'BB', 2),
+        folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)), folded(player('co', 'CO', 5)),
+      ],
+      actionHistory: [
+        rec('utg', 'fold'), rec('mp', 'fold'), rec('co', 'fold'),
+        rec('hero', 'raise'), rec('sb', 'fold'), rec('bb', 'raise'),
+      ],
+    })
+    expect(resolveSpotKey(s, 'hero')).toEqual({ baseSpotId: 'btn-vs-bb-3bet', street: 'preflop' })
+  })
+
+  it('CO open faces a BTN 3bet (IP 3bettor) → co-vs-btn-3bet', () => {
+    const s = baseState({
+      players: [
+        player('hero', 'CO', 5), player('btn', 'BTN', 0), folded(player('sb', 'SB', 1)),
+        folded(player('bb', 'BB', 2)), folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [
+        rec('utg', 'fold'), rec('mp', 'fold'), rec('hero', 'raise'),
+        rec('btn', 'raise'), rec('sb', 'fold'), rec('bb', 'fold'),
+      ],
+    })
+    expect(resolveSpotKey(s, 'hero')).toEqual({ baseSpotId: 'co-vs-btn-3bet', street: 'preflop' })
+  })
+
+  it('squeeze (cold-caller then 3bet) → null (not a clean HU 3bet pot)', () => {
+    // hero=CO opens, BTN cold-calls, BB squeezes (3bet) → コールド参加で除外
+    const s = baseState({
+      players: [
+        player('hero', 'CO', 5), player('btn', 'BTN', 0), folded(player('sb', 'SB', 1)),
+        player('bb', 'BB', 2), folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [
+        rec('utg', 'fold'), rec('mp', 'fold'), rec('hero', 'raise'),
+        rec('btn', 'call'), rec('sb', 'fold'), rec('bb', 'raise'),
+      ],
+    })
+    expect(resolveSpotKey(s, 'hero')).toBeNull()
+  })
+})
+
+describe('resolveSpotKey postflop (R16 ライブ配線)', () => {
+  const hc: [Card, Card] = [c('A', 'hearts'), c('A', 'clubs')]
+  const FLOP: Card[] = [c('A', 'spades'), c('K', 'diamonds'), c('7', 'clubs')]
+  const fold = (p: Player): Player => ({ ...p, isFolded: true })
+  // 任意ストリート・任意額のアクション記録
+  const act = (playerId: string, action: ActionRecord['action'], street: ActionRecord['street'], amountBB = 0): ActionRecord => ({
+    handId: 'h1', street, playerId, heroPosition: 'BTN', villainPositions: [], action, amountBB, potBB: 5.5, isIP: true, timestamp: 0,
+  })
+
+  it('SRP BB defender, hero leads flop (villain未ベット) → bb-vs-btn lead node', () => {
+    const s = baseState({
+      street: 'flop', board: FLOP, pot: { mainPotBB: 5.5, sidePots: [] },
+      players: [
+        { ...player('hero', 'BB', 2), holeCards: hc }, { ...player('btn', 'BTN', 0) },
+        fold(player('sb', 'SB', 1)), fold(player('utg', 'UTG', 3)), fold(player('mp', 'MP', 4)), fold(player('co', 'CO', 5)),
+      ],
+      actionHistory: [act('btn', 'raise', 'preflop', 2.5), act('hero', 'call', 'preflop', 2.5)],
+    })
+    const r = resolveSpotKey(s, 'hero')
+    expect(r?.baseSpotId).toBe('bb-vs-btn')
+    expect(r?.street).toBe('flop')
+    expect(r?.heroIsOOP).toBe(true)
+    expect(r?.facingRaise).toBe(false)
+    expect(r?.riverBetBB).toBeUndefined()
+  })
+
+  it('SRP IP opener: hero=BTN opened, BB called, BB checked flop → btn-open (旧来はnullだったバグを修正)', () => {
+    const s = baseState({
+      street: 'flop', board: FLOP, pot: { mainPotBB: 5.5, sidePots: [] },
+      players: [
+        { ...player('hero', 'BTN', 0), holeCards: hc }, fold(player('sb', 'SB', 1)), { ...player('bb', 'BB', 2) },
+        fold(player('utg', 'UTG', 3)), fold(player('mp', 'MP', 4)), fold(player('co', 'CO', 5)),
+      ],
+      actionHistory: [act('hero', 'raise', 'preflop', 2.5), act('bb', 'call', 'preflop', 2.5), act('bb', 'check', 'flop')],
+    })
+    const r = resolveSpotKey(s, 'hero')
+    expect(r?.baseSpotId).toBe('btn-open')
+    expect(r?.heroIsOOP).toBe(false)
+    expect(r?.facingRaise).toBe(false)
+  })
+
+  it('SRP IP opener faces BB lead bet → btn-open 被ベット', () => {
+    const s = baseState({
+      street: 'flop', board: FLOP, pot: { mainPotBB: 5.5, sidePots: [] },
+      players: [
+        { ...player('hero', 'BTN', 0), holeCards: hc }, fold(player('sb', 'SB', 1)),
+        { ...player('bb', 'BB', 2), currentBetBB: 3.6 },
+        fold(player('utg', 'UTG', 3)), fold(player('mp', 'MP', 4)), fold(player('co', 'CO', 5)),
+      ],
+      actionHistory: [act('hero', 'raise', 'preflop', 2.5), act('bb', 'call', 'preflop', 2.5), act('bb', 'raise', 'flop', 3.6)],
+    })
+    const r = resolveSpotKey(s, 'hero')
+    expect(r?.baseSpotId).toBe('btn-open')
+    expect(r?.facingRaise).toBe(false)
+    expect(r?.riverBetBB).toBeCloseTo(3.6)
+  })
+
+  it('被レイズ深いノード: hero=BB led, BTN raised → facingRaise=true (riverBetBB=heroのリードベット)', () => {
+    const s = baseState({
+      street: 'flop', board: FLOP, pot: { mainPotBB: 5.5, sidePots: [] },
+      players: [
+        { ...player('hero', 'BB', 2), holeCards: hc, currentBetBB: 3.6 },
+        { ...player('btn', 'BTN', 0), currentBetBB: 10 },
+        fold(player('sb', 'SB', 1)), fold(player('utg', 'UTG', 3)), fold(player('mp', 'MP', 4)), fold(player('co', 'CO', 5)),
+      ],
+      actionHistory: [
+        act('btn', 'raise', 'preflop', 2.5), act('hero', 'call', 'preflop', 2.5),
+        act('hero', 'raise', 'flop', 3.6), act('btn', 'raise', 'flop', 10),
+      ],
+    })
+    const r = resolveSpotKey(s, 'hero')
+    expect(r?.baseSpotId).toBe('bb-vs-btn')
+    expect(r?.facingRaise).toBe(true)
+    expect(r?.riverBetBB).toBeCloseTo(3.6)
+  })
+
+  it('3bet ポット: BB が BTN open を 3bet、BTN コール、hero=BB が flop リード → 3bp-bb-vs-btn', () => {
+    const s = baseState({
+      street: 'flop', board: FLOP, pot: { mainPotBB: 22.5, sidePots: [] },
+      players: [
+        { ...player('hero', 'BB', 2), holeCards: hc, stackBB: 89 }, { ...player('btn', 'BTN', 0), stackBB: 89 },
+        fold(player('sb', 'SB', 1)), fold(player('utg', 'UTG', 3)), fold(player('mp', 'MP', 4)), fold(player('co', 'CO', 5)),
+      ],
+      actionHistory: [act('btn', 'raise', 'preflop', 2.5), act('hero', 'raise', 'preflop', 11), act('btn', 'call', 'preflop', 11)],
+    })
+    const r = resolveSpotKey(s, 'hero')
+    expect(r?.baseSpotId).toBe('3bp-bb-vs-btn')
+    expect(r?.heroIsOOP).toBe(true)
+    expect(r?.effStackBB).toBe(89)
+  })
+
+  it('3bet ポット caller視点: hero=BTN open→BB 3bet→hero call、flop で BB チェック → 3bp-btn-vs-bb (IP)', () => {
+    const s = baseState({
+      street: 'flop', board: FLOP, pot: { mainPotBB: 22.5, sidePots: [] },
+      players: [
+        { ...player('hero', 'BTN', 0), holeCards: hc, stackBB: 89 }, fold(player('sb', 'SB', 1)),
+        { ...player('bb', 'BB', 2), stackBB: 89 },
+        fold(player('utg', 'UTG', 3)), fold(player('mp', 'MP', 4)), fold(player('co', 'CO', 5)),
+      ],
+      actionHistory: [
+        act('hero', 'raise', 'preflop', 2.5), act('bb', 'raise', 'preflop', 11), act('hero', 'call', 'preflop', 11),
+        act('bb', 'check', 'flop'),
+      ],
+    })
+    const r = resolveSpotKey(s, 'hero')
+    expect(r?.baseSpotId).toBe('3bp-btn-vs-bb')
+    expect(r?.heroIsOOP).toBe(false)
+  })
+
+  it('SB 関与の SRP は除外 (盲対盲の IP/OOP 反転) → null', () => {
+    const s = baseState({
+      street: 'flop', board: FLOP, pot: { mainPotBB: 6, sidePots: [] },
+      players: [
+        { ...player('hero', 'SB', 1), holeCards: hc }, { ...player('bb', 'BB', 2) },
+        fold(player('btn', 'BTN', 0)), fold(player('utg', 'UTG', 3)), fold(player('mp', 'MP', 4)), fold(player('co', 'CO', 5)),
+      ],
+      actionHistory: [act('hero', 'raise', 'preflop', 3), act('bb', 'call', 'preflop', 3)],
+    })
+    expect(resolveSpotKey(s, 'hero')).toBeNull()
+  })
+
+  it('マルチウェイ (相手2人) → null', () => {
+    const s = baseState({
+      street: 'flop', board: FLOP, pot: { mainPotBB: 8, sidePots: [] },
+      players: [
+        { ...player('hero', 'BB', 2), holeCards: hc }, { ...player('btn', 'BTN', 0) }, { ...player('co', 'CO', 5) },
+        fold(player('sb', 'SB', 1)), fold(player('utg', 'UTG', 3)), fold(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [act('co', 'raise', 'preflop', 2.5), act('btn', 'call', 'preflop', 2.5), act('hero', 'call', 'preflop', 2.5)],
+    })
+    expect(resolveSpotKey(s, 'hero')).toBeNull()
+  })
 })
 
 describe('getSolution', () => {
@@ -96,7 +333,7 @@ describe('getSolution', () => {
   })
 
   it('returns null for an unknown spot id', async () => {
-    expect(await getSolution({ baseSpotId: 'co-vs-utg', street: 'preflop' })).toBeNull()
+    expect(await getSolution({ baseSpotId: 'mp-vs-utg', street: 'preflop' })).toBeNull()
   })
 
   it('returns null when board is missing/insufficient', async () => {
@@ -130,18 +367,68 @@ describe('getSolution', () => {
     expect(node!.strategy[key].every(a => Number.isFinite(a.ev))).toBe(true)
   })
 
-  it('solves the river facing-bet node (call/fold) for hero OOP', async () => {
+  it('solves the river facing-bet node (call/fold/raise=check-raise) for hero OOP', async () => {
     const board: Card[] = [c('A', 'spades'), c('K', 'diamonds'), c('7', 'clubs'), c('3', 'hearts'), c('2', 'spades')]
-    const heroCards: [Card, Card] = [c('A', 'hearts'), c('A', 'clubs')] // トップセット → 被ベットでほぼコール
+    const heroCards: [Card, Card] = [c('A', 'hearts'), c('A', 'clubs')] // トップセット → 被ベットでコール/レイズ
     const node = await getSolution(
       { baseSpotId: 'bb-vs-btn', street: 'river', board, heroCards, potBB: 12, effStackBB: 90, riverBetBB: 8 },
       { allowLiveSolve: true },
     )
     expect(node?.source).toBe('solver_live')
     const sols = node!.strategy['AcAh']
+    // R16: 被ベットノードに raise(チェックレイズ)が加わる
+    expect(sols.map(s => s.action).sort()).toEqual(['call', 'fold', 'raise'])
+    expect(sols.every(s => Number.isFinite(s.ev))).toBe(true)
+    // ナッツはほぼ降りない (コール+チェックレイズの合計が高頻度)
+    const fold = sols.find(s => s.action === 'fold')!
+    expect(fold.frequency).toBeLessThan(0.1)
+    // 価値手はチェックレイズを選択肢に持つ (頻度>0)
+    const raise = sols.find(s => s.action === 'raise')!
+    expect(raise.frequency).toBeGreaterThan(0)
+  })
+
+  it('solves the river facing-bet node for hero=IP (offers fold/call/raise)', async () => {
+    const board: Card[] = [c('A', 'spades'), c('K', 'diamonds'), c('7', 'clubs'), c('3', 'hearts'), c('2', 'spades')]
+    const heroCards: [Card, Card] = [c('A', 'hearts'), c('A', 'clubs')] // hero=BTN(IP), トップセット
+    const node = await getSolution(
+      // villain(BB=OOP) がリード → hero(IP) が fold/call/raise を選ぶノード
+      { baseSpotId: 'btn-open', street: 'river', board, heroCards, potBB: 12, effStackBB: 90, riverBetBB: 8, heroIsOOP: false },
+      { allowLiveSolve: true },
+    )
+    expect(node?.source).toBe('solver_live')
+    const sols = node!.strategy['AcAh']
+    expect(sols.map(s => s.action).sort()).toEqual(['call', 'fold', 'raise'])
+    expect(sols.find(s => s.action === 'fold')!.frequency).toBeLessThan(0.1) // ナッツは降りない
+  })
+
+  it('solves the river facing-RAISE node for hero=OOP (hero led, villain raised → fold/call)', async () => {
+    const board: Card[] = [c('A', 'spades'), c('K', 'diamonds'), c('7', 'clubs'), c('3', 'hearts'), c('2', 'spades')]
+    const heroCards: [Card, Card] = [c('A', 'hearts'), c('A', 'clubs')] // トップセット → 被レイズでも降りない
+    const node = await getSolution(
+      // riverBetBB = hero 自身のリードベット (betFrac の基準)。facingRaise で [1,2] ノードを狙う。
+      { baseSpotId: 'bb-vs-btn', street: 'river', board, heroCards, potBB: 12, effStackBB: 90, riverBetBB: 8, facingRaise: true },
+      { allowLiveSolve: true },
+    )
+    expect(node?.source).toBe('solver_live')
+    expect(node!.spotId).toContain('-vsraise')
+    const sols = node!.strategy['AcAh']
+    // 被レイズノードは fold/call のみ (これ以上のレイズ無し)
     expect(sols.map(s => s.action).sort()).toEqual(['call', 'fold'])
-    const call = sols.find(s => s.action === 'call')!
-    expect(call.frequency).toBeGreaterThan(0.8) // ナッツはほぼコール
+    expect(sols.every(s => Number.isFinite(s.ev))).toBe(true)
+    expect(sols.find(s => s.action === 'fold')!.frequency).toBeLessThan(0.1) // ナッツは降りない
+  })
+
+  it('solves the river facing-CHECK-RAISE node for hero=IP (OOP checked→hero bet→OOP XR → fold/call)', async () => {
+    const board: Card[] = [c('A', 'spades'), c('K', 'diamonds'), c('7', 'clubs'), c('3', 'hearts'), c('2', 'spades')]
+    const heroCards: [Card, Card] = [c('A', 'hearts'), c('A', 'clubs')] // hero=BTN(IP) トップセット
+    const node = await getSolution(
+      { baseSpotId: 'btn-open', street: 'river', board, heroCards, potBB: 12, effStackBB: 90, riverBetBB: 8, facingRaise: true, heroIsOOP: false },
+      { allowLiveSolve: true },
+    )
+    expect(node?.source).toBe('solver_live')
+    const sols = node!.strategy['AcAh']
+    expect(sols.map(s => s.action).sort()).toEqual(['call', 'fold'])
+    expect(sols.find(s => s.action === 'fold')!.frequency).toBeLessThan(0.1)
   })
 
   it('solves a river spot for hero=IP (btn-open base, villain checked) → check/bet strategy', async () => {

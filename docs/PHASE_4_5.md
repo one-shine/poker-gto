@@ -1,6 +1,6 @@
 # Phase 4.5: 理論ライブラリ + 弱点分析UI
 
-> 親計画: [../IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+> 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 
 ## 進捗 (2026-05-24) ✅ 実装完了
 

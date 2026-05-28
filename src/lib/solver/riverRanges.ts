@@ -1,4 +1,4 @@
-import type { Card, Rank, Suit } from '../../types/game'
+import type { Card, Position, Rank, Suit } from '../../types/game'
 import { RANKS, SUITS } from '../../engine/cards/Card'
 import { sameCard } from '../../engine/cards/Card'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
@@ -64,32 +64,100 @@ function forceHero(combos: Combo[], heroCards: [Card, Card]): Combo[] {
   return filtered
 }
 
+// レンジを引く元 (プリフロップシナリオ + どの頻度を使うか)。
+interface RangeRef { scenarioId: string; pick: 'raise' | 'call' }
+interface PotSpec { oop: RangeRef; ip: RangeRef; heroIsOOP: boolean }
+
+// ポストフロップのアクション順 (HU): 左から SB→BB→…→BTN。後ろ (BTN寄り) ほど IP。
+const POSTFLOP_ORDER: Position[] = ['SB', 'BB', 'UTG', 'MP', 'CO', 'BTN']
+function postflopOOP(a: Position, b: Position): Position {
+  return POSTFLOP_ORDER.indexOf(a) < POSTFLOP_ORDER.indexOf(b) ? a : b
+}
+
+// 3bet ポット: opener が 3bet を受けてコールした単発 3bet ドポット (R16)。
+// 3better レンジ = `{3better}-vs-{opener}` の raise(3bet頻度)。
+// caller  レンジ = `{opener}-vs-{3better}-3bet` の call(対3betコール頻度)。
+const THREE_BET_POTS: { threeBetter: Position; opener: Position }[] = [
+  { threeBetter: 'SB', opener: 'BTN' },
+  { threeBetter: 'BB', opener: 'BTN' },
+  { threeBetter: 'SB', opener: 'CO' },
+  { threeBetter: 'BB', opener: 'CO' },
+  { threeBetter: 'BTN', opener: 'CO' },
+]
+function findThreeBetPot(a: Position, b: Position) {
+  return THREE_BET_POTS.find(
+    p => (p.threeBetter === a && p.opener === b) || (p.threeBetter === b && p.opener === a),
+  )
+}
+const lc = (p: Position) => p.toLowerCase()
+
+// baseSpotId からポストフロップの OOP/IP レンジ参照と hero の位置を解決する。
+// 単一窓口にすることで deriveRiverRanges と heroRangeSpec が同じ前提を共有する。
+//  - bb-vs-X            : hero=BB=OOP / villain=X=IP (SRP)
+//  - X-open             : hero=X=IP   / villain=BB=OOP (SRP)
+//  - 3bp-{hero}-vs-{vil}: 3bet ポット (どちらが 3better かは THREE_BET_POTS で判定)
+// 対応外 (マルチウェイ/SBコンプリート等) は null。
+function potSpec(baseSpotId: string): PotSpec | null {
+  const bb = /^bb-vs-(utg|mp|co|btn|sb)$/.exec(baseSpotId)
+  if (bb) {
+    return {
+      oop: { scenarioId: baseSpotId, pick: 'call' },
+      ip: { scenarioId: `${bb[1]}-open`, pick: 'raise' },
+      heroIsOOP: true,
+    }
+  }
+  const open = /^(utg|mp|co|btn|sb)-open$/.exec(baseSpotId)
+  if (open) {
+    return {
+      oop: { scenarioId: `bb-vs-${open[1]}`, pick: 'call' },
+      ip: { scenarioId: baseSpotId, pick: 'raise' },
+      heroIsOOP: false,
+    }
+  }
+  const three = /^3bp-(utg|mp|co|btn|sb|bb)-vs-(utg|mp|co|btn|sb|bb)$/.exec(baseSpotId)
+  if (three) {
+    const heroPos = three[1].toUpperCase() as Position
+    const villPos = three[2].toUpperCase() as Position
+    const pot = findThreeBetPot(heroPos, villPos)
+    if (!pot) return null
+    const threeBetRange: RangeRef = { scenarioId: `${lc(pot.threeBetter)}-vs-${lc(pot.opener)}`, pick: 'raise' }
+    const callerRange: RangeRef = { scenarioId: `${lc(pot.opener)}-vs-${lc(pot.threeBetter)}-3bet`, pick: 'call' }
+    const oopPos = postflopOOP(heroPos, villPos)
+    const oop = oopPos === pot.threeBetter ? threeBetRange : callerRange
+    const ip = oopPos === pot.threeBetter ? callerRange : threeBetRange
+    return { oop, ip, heroIsOOP: heroPos === oopPos }
+  }
+  return null
+}
+
+// hero の手札を引くべきレンジ参照 (出題側がレンジ内 hero ハンドを選ぶのに使う)。
+export function heroRangeSpec(baseSpotId: string): RangeRef | null {
+  const spec = potSpec(baseSpotId)
+  if (!spec) return null
+  return spec.heroIsOOP ? spec.oop : spec.ip
+}
+
+// base が表す hero の OOP/IP (求解と整合する権威値)。未対応 base は null。
+// ライブ配線が seat ベース判定とのクロスチェックに使う (不整合スポットを除外)。
+export function baseHeroIsOOP(baseSpotId: string): boolean | null {
+  return potSpec(baseSpotId)?.heroIsOOP ?? null
+}
+
 // baseSpotId からポストフロップの OOP/IP レンジと hero の位置を導出。
-// HU の 2 レンジは常に「opener の raise レンジ + BB の call レンジ」。hero がどちら側かが base で決まる:
-//  - bb-vs-X : hero=BB=OOP (defender) / villain=X=IP (opener)
-//  - X-open  : hero=X=IP (opener)     / villain=BB=OOP (defender)
-// 対応外 (3bet/マルチウェイ/SBコンプリート等) は null → スキップ。
+// hero 側は実手札を重み1で必ず含め、villain 側からは hero のカードを除外する。
 export function deriveRiverRanges(
   baseSpotId: string,
   board: Card[],
   heroCards: [Card, Card],
 ): { oop: Combo[]; ip: Combo[]; heroIsOOP: boolean } | null {
-  const bb = /^bb-vs-(utg|mp|co|btn|sb)$/.exec(baseSpotId)
-  const open = /^(utg|mp|co|btn|sb)-open$/.exec(baseSpotId)
-
-  if (bb) {
-    const openerId = `${bb[1]}-open`
-    const oop = forceHero(expandRange(baseSpotId, 'call', board), heroCards) // hero=BB=OOP
-    const ip = expandRange(openerId, 'raise', [...board, ...heroCards])      // villain=opener=IP
-    if (oop.length === 0 || ip.length === 0) return null
-    return { oop, ip, heroIsOOP: true }
-  }
-  if (open) {
-    const pos = open[1]
-    const ip = forceHero(expandRange(baseSpotId, 'raise', board), heroCards)  // hero=opener=IP
-    const oop = expandRange(`bb-vs-${pos}`, 'call', [...board, ...heroCards]) // villain=BB=OOP
-    if (oop.length === 0 || ip.length === 0) return null
-    return { oop, ip, heroIsOOP: false }
-  }
-  return null // 未対応スポット
+  const spec = potSpec(baseSpotId)
+  if (!spec) return null
+  const heroRef = spec.heroIsOOP ? spec.oop : spec.ip
+  const villRef = spec.heroIsOOP ? spec.ip : spec.oop
+  const heroRange = forceHero(expandRange(heroRef.scenarioId, heroRef.pick, board), heroCards)
+  const villRange = expandRange(villRef.scenarioId, villRef.pick, [...board, ...heroCards])
+  if (heroRange.length === 0 || villRange.length === 0) return null
+  const oop = spec.heroIsOOP ? heroRange : villRange
+  const ip = spec.heroIsOOP ? villRange : heroRange
+  return { oop, ip, heroIsOOP: spec.heroIsOOP }
 }

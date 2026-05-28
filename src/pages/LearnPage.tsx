@@ -10,6 +10,7 @@ import { SampleSizeBadge } from '../components/stats/SampleSizeBadge'
 import { HandReplay } from '../components/history/HandReplay'
 import { DrillPanel } from '../components/drill/DrillPanel'
 import { PushFoldDrillPanel } from '../components/drill/PushFoldDrillPanel'
+import { PostflopDrillPanel } from '../components/drill/PostflopDrillPanel'
 
 const LEVEL_JP: Record<SkillLevel, string> = {
   beginner: 'ビギナー', intermediate: 'インターミディエイト', advanced: 'アドバンス', pro: 'プロ',
@@ -145,19 +146,20 @@ function History() {
   )
 }
 
-// ドリルタブ: プリフロップ(近似レンジ) / プッシュフォールド(厳密ソルバー解) の切替。
+// ドリルタブ: プリフロップ(近似) / ポストフロップ(自前CFR) / プッシュフォールド(厳密解) の切替。
 function DrillTab({ deepLinked }: { deepLinked: boolean }) {
   // 弱点ディープリンク(プリフロップのMistakeCategory)で来たら必ずプリフロップを表示。
-  const [mode, setMode] = useState<'preflop' | 'pushfold'>('preflop')
+  const [mode, setMode] = useState<'preflop' | 'postflop' | 'pushfold'>('preflop')
   return (
     <div className="space-y-4">
       {!deepLinked && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Tab active={mode === 'preflop'} onClick={() => setMode('preflop')}>プリフロップ</Tab>
+          <Tab active={mode === 'postflop'} onClick={() => setMode('postflop')}>ポストフロップ</Tab>
           <Tab active={mode === 'pushfold'} onClick={() => setMode('pushfold')}>プッシュ/フォールド</Tab>
         </div>
       )}
-      {mode === 'preflop' ? <DrillPanel /> : <PushFoldDrillPanel />}
+      {mode === 'preflop' ? <DrillPanel /> : mode === 'postflop' ? <PostflopDrillPanel /> : <PushFoldDrillPanel />}
     </div>
   )
 }

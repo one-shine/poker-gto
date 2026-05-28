@@ -1,6 +1,6 @@
 # デザイン刷新計画 — 「Felt & Brass(分析ターミナル)」
 
-> 親計画: [../IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+> 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 > Phase 3 完了後の UI ポリッシュ。`frontend-design` スキルで方向付け。
 > 純粋 Tailwind CSS 4 + Framer Motion 12 で実装(shadcn は Phase 4 で導入)。
 

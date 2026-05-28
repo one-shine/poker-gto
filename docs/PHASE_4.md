@@ -1,6 +1,6 @@
 # Phase 4: コーチ + ミス分析 + 用語システム
 
-> 親計画: [../IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+> 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 
 ## 進捗 (2026-05 更新)
 

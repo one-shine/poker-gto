@@ -6,36 +6,25 @@ import { deriveRiverRanges, comboKey } from './riverRanges'
 import { solveRiverAsync } from './solverClient'
 import { getCachedSolution, putCachedSolution } from './solveCache'
 import type { Combo } from './riverSolver'
+import { capRange, narrowByRiverStrength } from './rangeNarrowing'
 
-// ライブ求解を高速に保つためレンジを上限コンボ数に絞る (solver_live = 簡易アブストラクション)。
-// 重み降順で上位を残す。must は必ず保持 (hero の手札)。
-const MAX_COMBOS = 100
-function capRange(combos: Combo[], mustKey?: string): Combo[] {
-  if (combos.length <= MAX_COMBOS) return combos
-  const sorted = [...combos].sort((a, b) => b.weight - a.weight)
-  const kept = sorted.slice(0, MAX_COMBOS)
-  if (mustKey && !kept.some(c => comboKey(c.cards) === mustKey)) {
-    const must = combos.find(c => comboKey(c.cards) === mustKey)
-    if (must) kept[kept.length - 1] = must
-  }
-  return kept
-}
-
-// 取込済みの実ソルバー解 (solver_precomputed)。scripts/import-ranges.ts が
-// src/data/solutions/preflop/*.json に出力したものを優先採用 (無ければ近似)。
-// 現状データ未取込 (要ライセンス) → glob は空 → 全て approximate にフォールバック。
-const precomputedModules = import.meta.glob<{ default: NodeSolution }>(
+// 取込済みの実ソルバー解 (solver_precomputed)。src/data/solutions/preflop/{spotId}.json
+// (scripts/solve-pushfold.ts / import-ranges.ts が出力) を優先採用 (無ければ近似)。
+// ⚠ eager だと push/fold 等の全 JSON が gameStore チャンクに同梱され肥大化する。
+// ファイル名 = spotId なので、要求された spotId に一致するファイルのみ遅延 import する。
+const precomputedLoaders = import.meta.glob<{ default: NodeSolution }>(
   '../../data/solutions/preflop/*.json',
-  { eager: true },
 )
-const precomputedPreflop = new Map<string, NodeSolution>()
-for (const mod of Object.values(precomputedModules)) {
-  if (mod.default?.spotId) precomputedPreflop.set(mod.default.spotId, mod.default)
+async function loadPrecomputed(spotId: string): Promise<NodeSolution | null> {
+  const load = precomputedLoaders[`../../data/solutions/preflop/${spotId}.json`]
+  if (!load) return null
+  const mod = await load()
+  return mod.default ?? null
 }
 
-// プリフロップ解の窓口。precomputed があれば優先、無ければ手作り近似 (approximate)。
-const preflopSolutions = new Map<string, NodeSolution>(
-  PREFLOP_SCENARIOS.map(s => [s.id, precomputedPreflop.get(s.id) ?? fromRangeScenario(s)]),
+// 手作り近似 (approximate)。precomputed が見つかればそちらを優先する。
+const approximatePreflop = new Map<string, NodeSolution>(
+  PREFLOP_SCENARIOS.map(s => [s.id, fromRangeScenario(s)]),
 )
 
 export interface GetSolutionOptions {
@@ -53,8 +42,8 @@ export async function getSolution(
   opts: GetSolutionOptions = {},
 ): Promise<NodeSolution | null> {
   if (spot.street === 'preflop') {
-    // シナリオ由来 (precomputed優先 / 無ければ近似) → さらに scenario 外の precomputed (push/fold等)。
-    return preflopSolutions.get(spot.baseSpotId) ?? precomputedPreflop.get(spot.baseSpotId) ?? null
+    // precomputed (実解・push/fold等) を優先、無ければ手作り近似。どちらも spotId で引く。
+    return (await loadPrecomputed(spot.baseSpotId)) ?? approximatePreflop.get(spot.baseSpotId) ?? null
   }
   // ポストフロップ: flop/turn/river を自前 CFR で都度求解 (turn/flop は showdown をエクイティ近似)。
   if (
@@ -74,10 +63,13 @@ async function solveRiverSpot(spot: SpotKey, opts: GetSolutionOptions): Promise<
 
   const potBB = spot.potBB!
   const effStackBB = spot.effStackBB ?? 100
-  // 被ベット節は別ノード → ベット比を含めてキャッシュキーを分ける
+  // 被ベット節は別ノード → ベット比を含めてキャッシュキーを分ける。
+  // facingRaise のとき riverBetBB は hero 自身のリードベット額 = betFrac の基準。
   const betFrac = spot.riverBetBB && spot.riverBetBB > 0 ? +(spot.riverBetBB / potBB).toFixed(2) : 0.66
-  const facing = !!spot.riverBetBB && spot.riverBetBB > 0
-  const cacheId = `${spot.baseSpotId}|${boardKey(board)}|${comboKey(heroCards)}|${potBB}|${effStackBB}|${facing ? `f${betFrac}` : 'lead'}`
+  const facingRaise = !!spot.facingRaise
+  const facing = !facingRaise && !!spot.riverBetBB && spot.riverBetBB > 0
+  const phase = facingRaise ? `r${betFrac}` : facing ? `f${betFrac}` : 'lead'
+  const cacheId = `${spot.baseSpotId}|${boardKey(board)}|${comboKey(heroCards)}|${potBB}|${effStackBB}|${phase}`
   const cached = await getCachedSolution(cacheId)
   if (cached) return cached
 
@@ -86,19 +78,28 @@ async function solveRiverSpot(spot: SpotKey, opts: GetSolutionOptions): Promise<
 
   const heroK = comboKey(heroCards)
   const heroIsOOP = ranges.heroIsOOP
-  const heroSide = heroIsOOP ? capRange(ranges.oop, heroK) : capRange(ranges.ip, heroK)
-  const oop = heroIsOOP ? heroSide : capRange(ranges.oop)
-  const ip = heroIsOOP ? capRange(ranges.ip) : heroSide
+  // R15-B: river のみ、board 強度に基づき下位 20% を narrow (peel しない手の近似)。
+  const narrow = (combos: Combo[], must?: string) =>
+    spot.street === 'river' ? narrowByRiverStrength(combos, board, must) : combos
+  const heroSide = heroIsOOP ? capRange(narrow(ranges.oop, heroK), heroK) : capRange(narrow(ranges.ip, heroK), heroK)
+  const oop = heroIsOOP ? heroSide : capRange(narrow(ranges.oop))
+  const ip = heroIsOOP ? capRange(narrow(ranges.ip)) : heroSide
+  // R16: 単一レイズを許可 → 被ベットノードに raise(OOP=チェックレイズ / IP=レイズ)が加わる。
+  // raiseSizes はコール後ポット比の追加額 (0.5 ≈ 元ベットの ~2.7x へのレイズ)。
   const { nodes, exploitability } = await solveRiverAsync({
     board, oop, ip, potBB, stackBB: effStackBB,
-    betSizes: [betFrac], iterations: 250,
+    betSizes: [betFrac], raiseSizes: [0.5], iterations: 250,
   })
-  // hero 判断ノードを OOP/IP × lead/被ベット で特定 (root actions = [check, bet])。
-  //  OOP lead     = root []           (player 0)
-  //  OOP 被ベット  = check→IP bet [0,1] (player 0 が facing)
-  //  IP  チェック後 = OOP check [0]     (player 1)
-  //  IP  被ベット   = OOP bet  [1]      (player 1 が facing)
-  const targetPath = heroIsOOP ? (facing ? [0, 1] : []) : (facing ? [1] : [0])
+  // hero 判断ノードを OOP/IP × lead/被ベット/被レイズ で特定 (root actions = [check, bet])。
+  //  OOP lead      = root []              (player 0)
+  //  OOP 被ベット   = check→IP bet [0,1]    (player 0 が facing)
+  //  OOP 被レイズ   = bet→IP raise [1,2]    (player 0 が自ベットをレイズされた)
+  //  IP  チェック後  = OOP check [0]         (player 1)
+  //  IP  被ベット    = OOP bet  [1]          (player 1 が facing)
+  //  IP  被レイズ    = check→IP bet→OOP XR [0,1,2] (player 1 がチェックレイズに直面)
+  const targetPath = facingRaise
+    ? (heroIsOOP ? [1, 2] : [0, 1, 2])
+    : heroIsOOP ? (facing ? [0, 1] : []) : (facing ? [1] : [0])
   const expectedPlayer = heroIsOOP ? 0 : 1
   const target = nodes.find(n =>
     n.path.length === targetPath.length && n.path.every((v, i) => v === targetPath[i]) && n.player === expectedPlayer,
@@ -118,7 +119,7 @@ async function solveRiverSpot(spot: SpotKey, opts: GetSolutionOptions): Promise<
 
   const node: NodeSolution = {
     street: spot.street,
-    spotId: `${spot.baseSpotId}-${spot.street}-${boardKey(board)}${facing ? '-vsbet' : ''}`,
+    spotId: `${spot.baseSpotId}-${spot.street}-${boardKey(board)}${facingRaise ? '-vsraise' : facing ? '-vsbet' : ''}`,
     board,
     strategy: { [heroK]: heroActions },
     potBB,

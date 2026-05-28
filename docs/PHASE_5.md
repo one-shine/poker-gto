@@ -1,6 +1,6 @@
 # Phase 5: 学習システム + リフレクション
 
-> 親計画: [../IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+> 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 
 ## 進捗 (2026-05-24) 🔄 主要スコープ完了・一部 Phase 6 送り
 

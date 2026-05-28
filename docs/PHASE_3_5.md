@@ -1,6 +1,6 @@
 # Phase 3.5: GTOソルバー基盤 (本物の解の供給)
 
-> 親計画: [../IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) / 公開準備: [RELEASE_READINESS.md](RELEASE_READINESS.md)
+> 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) / 公開準備: [RELEASE_READINESS.md](RELEASE_READINESS.md)
 
 ## 方針変更 (2026-05-24): 自前TSソルバー
 `postflop-solver`(Rust/WASM)は **AGPL-3.0 で商用(広告収益)と衝突** + この環境でビルド不可のため不採用。

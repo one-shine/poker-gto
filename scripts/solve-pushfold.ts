@@ -2,7 +2,7 @@
 /**
  * HU プッシュ/フォールド Nash 解の生成スクリプト (オフライン・Node 実行)。
  *
- *   npx tsx scripts/solve-pushfold.ts [--stacks 10,15,20] [--eq-iters 2500] [--pf-iters 2000] [--seed 1]
+ *   npx tsx scripts/solve-pushfold.ts [--stacks 5,8,10,12,15,20,25] [--eq-iters 2500] [--pf-iters 2000] [--seed 1]
  *
  * 自前ソルバー (src/lib/solver/) でカテゴリ別オールイン勝率行列を MC 構築 → 各有効スタックの
  * push/fold Nash を求解 → solver_precomputed JSON を src/data/solutions/preflop/ に出力する。
@@ -62,7 +62,7 @@ function writeNode(node: NodeSolution) {
 }
 
 function main() {
-  const stacks = flag('stacks', '10,15,20').split(',').map(Number).filter(n => n > 0)
+  const stacks = flag('stacks', '5,8,10,12,15,20,25').split(',').map(Number).filter(n => n > 0)
   const eqIters = Number(flag('eq-iters', '2500'))
   const pfIters = Number(flag('pf-iters', '2000'))
   const seed = Number(flag('seed', '1'))
