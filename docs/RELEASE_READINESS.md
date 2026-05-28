@@ -5,17 +5,23 @@
 > 親計画: [./IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 
 ## 総合判定(レビュー時点)
-「完成度の高いプロトタイプ」。土台・UI・正直さ(出典明示)は高品質だが、
-**「GTO学習アプリ」の看板に対し実際に学べる範囲が狭い**(ポストフロップ無言・プリフロップ10/21・近似のみ)。
-下記 R1–R11 を解消して「公開水準」を満たす。
+> 旧判定 (Phase 4 完了時, 2026-05-23): 「完成度の高いプロトタイプ」。土台・UI・正直さ(出典明示)は高品質だが、
+> **「GTO学習アプリ」の看板に対し実際に学べる範囲が狭い**(ポストフロップ無言・プリフロップ10/21・近似のみ)。
+
+### 最新判定(2026-05-28 セッション完了時)
+**R1–R4 のブロッカー 4 件のうち 3 件が解消** (R1/R2/R3 ✅、R4 は 100BB 完全化のみ残)。
+- ポストフロップ: hero=OOP/IP × lead/被ベット/被レイズ × SRP/3betポットで Coach 稼働 (R16)
+- プリフロップ: 21/21 スポット網羅 + opener 5 + defender 5 で概算 EV 稼働 (R4-A/B) + push/fold 7 段階で厳密解
+- 全スポットで `source` バッジ + EV 数値表示 (approximate / approximate_with_ev / solver_live / solver_precomputed の 4 段階)
+- 「学習アプリとして公開水準」を**満たすライン**に到達。残る精度向上は R14② (turn/flop 賭け考慮)・R4 (100BB 厳密解)・R11/R19 (近似レンジ監修) 等の漸進的改善。
 
 ## 対応表
 
 | ID | 指摘 | 重大度 | 対応フェーズ | 状態 |
 |----|------|--------|------------|------|
-| **R1** | ポストフロップのコーチが完全に不在(`getSolution` postflop=null → フロップ以降フィードバックなし) | 🔴 ブロッカー | Phase 3.5(解供給)+ Phase 5(ポストフロップドリル) | 🔄 flop/turn/river の hero=OOP(lead/被ベット)で稼働(turn/flop はエクイティ近似)。IP/レイズ応酬は未対応 |
+| **R1** | ポストフロップのコーチが完全に不在(`getSolution` postflop=null → フロップ以降フィードバックなし)。**ブロッカー解消済 ✅** 2026-05-28 時点: R16 で hero=OOP/IP × lead/被ベット/被レイズ/チェックレイズ × SRP/3betポット × ライブ配線まで対応済み。実機で Coach がポストフロップでもフィードバック可能。残課題は (1) turn/flop の精度向上 = **R14②** に切り出し済み、(2) マルチウェイ = 設計ルール4で**意図的に除外**、(3) raisesLeft≥2 の再々レイズ応酬 = カバレッジ拡大の課題で軽度。R1 自体は β 公開水準に到達。 | 🔴→🟢 解消 | Phase 3.5 + Phase 5 | ✅ ブロッカー解消・残は R14② で吸収 |
 | **R2** | プリフロップ網羅 **21/21 スポット完了✅**(2026-05-26)。①defender 4スポット(SB vs CO・BTN vs UTG/MP・CO vs UTG)②**非BB防御のライブ・コーチング配線**(`POS_VS_SPOT` + `getPreflopActionOrder` で clean fold-around 判定)③**facing-3bet 5スポット**(BTN/CO opener × SB/BB/BTN 3better、4bet/call/fold)。`preflopSpotId` を raises.length=2(open+3bet・HU限定)に拡張、スクイーズ/コールド参加は除外。RangeGrid/RangesPage の凡例を 3bet スポットで「4-Bet」表記に。すべて approximate手作り(R11 監修対象)。**プリフロップのみ配線**(postflop は deriveRiverRanges 非対応で正しくスキップ)。マルチウェイは設計ルール4でGTO精度除外=対象外 | ✅ | 完了(実解置換は R4/将来) | ✅ 21/21 |
-| **R3** | 「実EV損失」が実質ドーマント(approximate は ev=0、数値は solver_* 時のみ→現状出ない) | 🔴 ブロッカー | Phase 3.5(solver_precomputed=実EV) | 🔄 river は solver_live で実EV稼働。preflop実解(R4)は別途 |
+| **R3** | 「実EV損失」が実質ドーマント(approximate は ev=0、数値は solver_* 時のみ→現状出ない)。**ブロッカー解消済 ✅** 2026-05-28: ①ポストフロップ flop/turn/river で `solver_live` の実 EV が稼働(R16 + R15)、②プリフロップ push/fold 7 段階で `solver_precomputed` の厳密 EV、③プリフロップ opener 5 + defender 5 で `approximate_with_ev` の概算 EV(R4-A/B)。これでほぼ全スポットで Coach が evLoss を数値表示できる。残: 100BB open/3bet を `solver_precomputed` レベルに引き上げる = **R4 100BB 完全化** (別軸・サーバ事前計算級)。 | 🔴→🟢 解消 | Phase 3.5 | ✅ ブロッカー解消・残は R4 100BB に集約 |
 | **R4** | 本物のソルバー解が無い(全レンジ手作り近似、trainer 相手も近似ベース)。**R4-A 実装済 ✅** 2026-05-28: `src/lib/solver/heuristicPreflopEV.ts` でヒューリスティック open-raise 求解(fictitious play + postflop EV = `(equity-0.5) × 30BB`)。BTN open vs BB call の 169×169 fictitious play で per-category EV/頻度を算出。exploitability < 0.005 BB/hand。実出力: opener レンジ ~51%(AA/KK/QQ/AKs 100% raise EV +2〜3BB / 72o-32o 0% raise EV -0.35〜-0.67)、caller ~28%(3bet 無しのため実 GTO ~55% より狭い・既知の限界)。テスト 5 件(AA bullish / 72o folds / 単調性 / 収束 / raiseSize 影響)。**R4-B 実装済 ✅** 2026-05-28: `attachHeuristicEV.ts` + `scripts/precompute-preflop-ev.ts` で opener 5 spot(btn/co/mp/utg/sb-open)の EV 付き解を JSON 生成(`src/data/solutions/preflop-ev/*.json`、各 6-22KB・lazy import → 個別 chunk 5-10KB)。`SolutionSource` に `approximate_with_ev` 追加。`getSolution` の優先順位: solver_precomputed > approximate_with_ev > approximate。`CoachAgent` を `isHandBuilt` で両 source 対応(未収録=fold 100% 扱い継続)。UI: `GameFooter`/`StrategyDetail`/`LiveStrategyPanel`/`StrategyBars` に「GTO近似 + 概算EV」バッジと `~` プレフィックス付き EV 表示(approximate と区別)。テスト 6 件。これで opener spot で **evLoss が稼働** = Coach が「-1.2BB の損失」を数値で示せる。**defender bb-vs-X 拡張 ✅** 2026-05-28: `computeDefenderHeuristicEV` + `buildOpenerRaiseFreq` を追加し、bb-vs-{utg,mp,co,btn,sb} の 5 defender spot を precompute。EV(call) = avail × opener raise 頻度加重の `(eq-0.5)×F` (BB 視点)、EV(fold) = -bb、EV(raise/3bet) = 0 (TODO: opener 4bet/call/fold 連鎖が複雑)。テスト 5 件 (AA 高 call EV / fold=-1 / 単調性 / 弱手 < fold / 頻度保存)。これで defender spot でも Coach が **call vs fold の evLoss を算出**できる (例: 22 call EV -1.4BB vs fold -1BB → 22 call は -0.4BB のミス判定)。 | 🔴 ブロッカー | Phase 3.5(実解取込) | 🔄 **HU プッシュ/フォールドは厳密 GTO を自前生成 + opener 5 + defender 5 spot の概算EV 稼働 + トレーナー UI 稼働** (`scripts/solve-pushfold.ts`→`hu-pf-*.json`, `solver_precomputed`, ショーダウン=オールイン勝率=真値)。学習→ドリル→「プッシュ/フォールド」で stack/立場(SB/BB/ミックス)別に出題・**実EV表示**・厳密解判定。**スタック拡充✅**(2026-05-27): 5/8/12/25BB を追加生成し **5/8/10/12/15/20/25BB の7段階**を網羅(exploitability 0.0003〜0.0017・push頻度は 5BB 131/169→25BB 74/169 と単調に縮小=公開Nashチャート整合)。トレーナーは `PUSHFOLD_STACKS`(JSON自動発見)で自動反映。**バンドル改善**: `getSolution` の precomputed glob を eager→**spotId一致のみ遅延import**化し、push/fold JSON を gameStore チャンクから排除(223KB→41KB・旧来の +80KB 肥大も解消)。残: 100BB オープン/3bet は postflop EV 要(別軸・厳密不可) |
 | **R5** | セッション統計が非永続(リロードで精度・ハンド履歴が消える) | 🟠 | **Phase 4.6**(前倒し)/ 恒久は Phase 5 IndexedDB | ✅ |
 | **R6** | study モードは GTO精度が常に N=0(常時戦略=全ハンド hinted 除外)。ユーザーが戸惑う | 🟠 | **Phase 4.6**(UX調整:測定用ドリル/トグル) | ✅ |
