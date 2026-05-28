@@ -14,7 +14,10 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { buildEquityMatrix } from '../src/lib/solver/preflopEquity.ts'
 import { PREFLOP_SCENARIOS } from '../src/data/ranges/preflop.ts'
-import { computeHeuristicEV, buildCallerCallFreq } from '../src/lib/solver/attachHeuristicEV.ts'
+import {
+  computeHeuristicEV, buildCallerCallFreq,
+  computeDefenderHeuristicEV, buildOpenerRaiseFreq,
+} from '../src/lib/solver/attachHeuristicEV.ts'
 
 function flag(name: string, def: string): string {
   const i = process.argv.indexOf(`--${name}`)
@@ -59,12 +62,20 @@ function main() {
       console.warn(`skip: ${openerId} (caller=${callerId} not found)`)
       continue
     }
+    // opener: hero=opener, villain=BB の caller scenario の call 頻度を使う
     const callerCallFreq = buildCallerCallFreq(caller)
-    const node = computeHeuristicEV(opener, eq, callerCallFreq, { postflopFactor: factor })
-    const out = resolve(process.cwd(), `src/data/solutions/preflop-ev/${openerId}.json`)
-    mkdirSync(dirname(out), { recursive: true })
-    writeFileSync(out, JSON.stringify(node, null, 2))
-    console.log(`  wrote ${out}`)
+    const openerNode = computeHeuristicEV(opener, eq, callerCallFreq, { postflopFactor: factor })
+    const openerOut = resolve(process.cwd(), `src/data/solutions/preflop-ev/${openerId}.json`)
+    mkdirSync(dirname(openerOut), { recursive: true })
+    writeFileSync(openerOut, JSON.stringify(openerNode, null, 2))
+    console.log(`  wrote ${openerOut}`)
+
+    // defender (bb-vs-X): hero=BB, villain=opener の X-open の raise 頻度を使う
+    const openerRaiseFreq = buildOpenerRaiseFreq(opener)
+    const defNode = computeDefenderHeuristicEV(caller, openerRaiseFreq, eq, { postflopFactor: factor })
+    const defOut = resolve(process.cwd(), `src/data/solutions/preflop-ev/${callerId}.json`)
+    writeFileSync(defOut, JSON.stringify(defNode, null, 2))
+    console.log(`  wrote ${defOut}`)
   }
   console.log('done.')
 }

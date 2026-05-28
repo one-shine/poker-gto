@@ -70,6 +70,16 @@ export function buildCallerCallFreq(callerScenario: RangeScenario): Float64Array
   return q
 }
 
+// opener (X-open) の raise 頻度ベクトル。defender (bb-vs-X) の EV 計算に使う。
+export function buildOpenerRaiseFreq(openerScenario: RangeScenario): Float64Array {
+  const q = new Float64Array(NCAT)
+  for (let i = 0; i < NCAT; i++) {
+    const cell = openerScenario.cells[CATEGORIES[i]]
+    if (cell) q[i] = cell.raise
+  }
+  return q
+}
+
 // per-category EV を計算する。
 // EV(raise hero=ci) = Σ_cj avail[ci][cj] · [ (1-q[cj])·(sb+bb) + q[cj]·(eq[ci][cj]-0.5)·F ] / Σ_cj avail[ci][cj]
 // EV(fold) = 0 (BTN/CO/MP/UTG は ブラインド未投入)。
@@ -121,6 +131,67 @@ export function computeHeuristicEV(
     source: 'approximate_with_ev',
     meta: {
       sourceName: `hand-built strategy + heuristic postflop EV (factor=${F})`,
+      license: 'original',
+      version: '1',
+    },
+  }
+}
+
+// ── defender bb-vs-X 用 ヒューリスティック EV ───────────────────────────────────
+// hero=BB が opener X の raise に直面したスポット。
+// アクション: fold / call / raise(3bet)。
+// EV 設計:
+//   EV(call) = Σ_cj avail[ci][cj] · raiseFreq[cj] · (eq[ci][cj]-0.5)·F  / Σ avail·raiseFreq
+//            (BB 視点での postflop net。opener の raise レンジ加重)
+//   EV(fold) = -bb            (ブラインドロス)
+//   EV(raise) = 0 (TODO: 3bet → opener の 4bet/call/fold の遷移が複雑なので未実装)
+//
+// raise の EV は 0 で固定なので、その手の evLoss は計算上控えめになる。
+// UI で「3bet の EV は概算外」と明示するか、approximate_with_ev のバッジで
+// ユーザーに伝える (今回はバッジで対応)。
+export function computeDefenderHeuristicEV(
+  defender: RangeScenario,            // bb-vs-X
+  openerRaiseFreq: Float64Array,      // X-open の raise 頻度 (per-category)
+  eq: number[][],
+  opts: HeuristicEVOptions = {},
+): NodeSolution {
+  const bb = opts.bbBlind ?? 1.0
+  const F = opts.postflopFactor ?? 30
+
+  // EV(call) per-category (hero=BB が cat ci のとき)
+  const evCallAll = new Float64Array(NCAT)
+  for (let ci = 0; ci < NCAT; ci++) {
+    const av = AVAIL[ci]
+    let num = 0, den = 0
+    for (let cj = 0; cj < NCAT; cj++) {
+      const a = av[cj]
+      const w = openerRaiseFreq[cj]
+      if (a <= 0 || w <= 0) continue
+      num += a * w * (eq[ci][cj] - 0.5) * F
+      den += a * w
+    }
+    evCallAll[ci] = den > 0 ? num / den : 0
+  }
+
+  const strategy: Record<string, ActionSolution[]> = {}
+  for (const [hand, cell] of Object.entries(defender.cells)) {
+    const ci = CAT_INDEX.get(hand)
+    if (ci == null) continue
+    const acts: ActionSolution[] = []
+    const evCall = +evCallAll[ci].toFixed(3)
+    if (cell.raise > 0) acts.push({ action: 'raise', sizeBB: defender.raiseSize, frequency: cell.raise, ev: 0 })
+    if (cell.call > 0) acts.push({ action: 'call', frequency: cell.call, ev: evCall })
+    if (cell.fold > 0) acts.push({ action: 'fold', frequency: cell.fold, ev: -bb })
+    strategy[hand] = acts
+  }
+  return {
+    street: 'preflop',
+    spotId: defender.id,
+    strategy,
+    potBB: 1.5,
+    source: 'approximate_with_ev',
+    meta: {
+      sourceName: `hand-built defender strategy + heuristic call EV (factor=${F}, 3bet EV未計上)`,
       license: 'original',
       version: '1',
     },

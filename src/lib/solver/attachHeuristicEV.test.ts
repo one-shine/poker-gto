@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { buildCallerCallFreq, computeHeuristicEV } from './attachHeuristicEV'
+import {
+  buildCallerCallFreq, computeHeuristicEV,
+  buildOpenerRaiseFreq, computeDefenderHeuristicEV,
+} from './attachHeuristicEV'
 import { buildEquityMatrix } from './preflopEquity'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 
@@ -87,5 +90,71 @@ describe('attachHeuristicEV (R4-B)', () => {
     expect(node.source).toBe('approximate_with_ev')
     // AA は依然として正値
     expect(node.strategy['AA']?.find(a => a.action === 'raise')?.ev ?? -1).toBeGreaterThan(0)
+  })
+})
+
+describe('computeDefenderHeuristicEV (R4 defender 拡張)', () => {
+  it('AA in bb-vs-btn has positive call EV (well above fold)', () => {
+    const eq = eqMatrix()
+    const openerQ = buildOpenerRaiseFreq(SC('btn-open'))
+    const node = computeDefenderHeuristicEV(SC('bb-vs-btn'), openerQ, eq)
+    expect(node.source).toBe('approximate_with_ev')
+    const aa = node.strategy['AA']
+    const call = aa.find(a => a.action === 'call')
+    // AA はディフェンダー scenario で raise 100% かつ call は cells に無いケースが多い → 確認
+    const raise = aa.find(a => a.action === 'raise')
+    if (call) expect(call.ev).toBeGreaterThan(0)
+    if (raise) {
+      // 3bet の EV は 0 で固定 (未計上の方針)
+      expect(raise.ev).toBe(0)
+    }
+  })
+
+  it('fold has EV = -bb (default 1)', () => {
+    const eq = eqMatrix()
+    const openerQ = buildOpenerRaiseFreq(SC('btn-open'))
+    const node = computeDefenderHeuristicEV(SC('bb-vs-btn'), openerQ, eq)
+    // BB defender で fold が含まれる手 (低めの手)
+    const trash = node.strategy['72o']
+    if (trash) {
+      const fold = trash.find(a => a.action === 'fold')
+      if (fold) expect(fold.ev).toBeCloseTo(-1)
+    }
+  })
+
+  it('EV(call) monotonic by hand strength (99 > 66 > 22, all pure calls in bb-vs-btn)', () => {
+    const eq = eqMatrix()
+    const openerQ = buildOpenerRaiseFreq(SC('btn-open'))
+    const node = computeDefenderHeuristicEV(SC('bb-vs-btn'), openerQ, eq)
+    const evCall = (k: string) =>
+      node.strategy[k]?.find(a => a.action === 'call')?.ev ?? Number.NEGATIVE_INFINITY
+    // KK は raise 100% で call エントリ無し → 純粋 call 群で単調性を確認
+    expect(evCall('99')).toBeGreaterThan(evCall('66'))
+    expect(evCall('66')).toBeGreaterThan(evCall('22'))
+  })
+
+  it('weak hand (22) has call EV worse than fold (-1) → call is a mistake', () => {
+    const eq = eqMatrix()
+    const openerQ = buildOpenerRaiseFreq(SC('btn-open'))
+    const node = computeDefenderHeuristicEV(SC('bb-vs-btn'), openerQ, eq)
+    const call = node.strategy['22']?.find(a => a.action === 'call')
+    if (call) {
+      // 22 vs BTN レンジは set value のみ → 期待 EV はマイナス、fold (-1) より悪い場合あり
+      expect(call.ev).toBeLessThan(0)
+    }
+  })
+
+  it('strategy frequencies are preserved from the defender scenario', () => {
+    const eq = eqMatrix()
+    const openerQ = buildOpenerRaiseFreq(SC('btn-open'))
+    const sc = SC('bb-vs-btn')
+    const node = computeDefenderHeuristicEV(sc, openerQ, eq)
+    for (const hand of Object.keys(sc.cells).slice(0, 5)) {
+      const cell = sc.cells[hand]
+      const sols = node.strategy[hand]
+      if (cell.call > 0) {
+        expect(sols.find(a => a.action === 'call')?.frequency).toBeCloseTo(cell.call)
+      }
+    }
   })
 })

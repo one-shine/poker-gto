@@ -335,9 +335,13 @@ describe('getSolution', () => {
     expect(node?.source).toBe('approximate_with_ev')
   })
 
-  it('falls back to approximate for defender spots (no heuristic EV precomputed yet)', async () => {
+  it('serves approximate_with_ev for defender bb-vs-X spots (R4 defender 拡張)', async () => {
     const node = await getSolution({ baseSpotId: 'bb-vs-btn', street: 'preflop' })
-    expect(node?.source).toBe('approximate')
+    expect(node?.source).toBe('approximate_with_ev')
+    // call EV が非ゼロでアタッチされている (純粋 fold 手は除外)
+    const call99 = node?.strategy['99']?.find(a => a.action === 'call')
+    expect(call99).toBeTruthy()
+    expect(call99?.ev).not.toBe(0)
   })
 
   it('returns null for an unknown spot id', async () => {
