@@ -43,7 +43,7 @@
 ## 現在の進捗 (作業再開時はここを最初に読む)
 
 **現在のフェーズ**: Phase 4 ✅ + Phase 4.6 ✅ + Phase 3.5 🔄(自前TSソルバー: river/turn/flop 解✅ = **R1/R3 が postflop hero=OOP で稼働**。turn/flop はエクイティ近似)
-**次に着手するステップ**: 2026-05-28 セッション(続)で R4-B(UI に `approximate_with_ev` 種別導入・opener 5 spot で evLoss 稼働)も完了 (214テスト)。先行: R15/R4-A/R25 完了。次は R10 B4(チップ移動アニメ)/ R14②(完全チャンスCFR)/ R11/R19 監修(WebSearch ベース)から選択。
+**次に着手するステップ**: 2026-05-29 残タスク自律ワークフロー進行中 (243テスト緑・型0)。**R10 D2 他ページモバイルQA ✅** (Learn/Analysis/Theory/Ranges/Settings を 390px で Playwright 実機確認・overflow ゼロ・修正不要)。次は順に **R11/R19 内容監修(WebSearch)→ R14②(turn 完全チャンスCFR 5サブ)→ R4 100BB(best-effort+文書化)**。先行: R15/R4-A/R4-B/R25 完了。
 その後 Phase 5(R8エクイティ/postflopドリル)→ Phase 4.5 → Phase 6。
 **Phase 4 成果**: 型、プリフロップ+5シナリオ(10計)、CoachAgent(EV損失/頻度評価)、session/progressStore、CoachPanel/StrategyBars、A1 LiveStrategyPanel(常時戦略+ポットオッズ)、A3 EV損失、play CoachToast、GTOPlayerAgent(trainer)、LearnPage(ダッシュボード+履歴)、SettingsPage、SampleSizeBadge、HandReplay。全97テスト・study/play/trainer 実機確認済。
 
