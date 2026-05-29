@@ -23,6 +23,10 @@ export interface RiverInput {
   raiseSizes?: number[] // ポット比のレイズ (既定 [], レイズ無し)
   iterations?: number
   runoutSamples?: number // flop のランナウト組サンプル数 (既定 80)。turn は全44, river は無視
+  // R14②: turn 完全チャンス CFR の opt-in。solveRiver は無視し、solverClient/Worker が
+  // useChanceCFR=true のとき turnSolver.solveTurn へ振り替える。
+  useChanceCFR?: boolean
+  runoutN?: number // chance ノードの river ランナウトサンプル数 (既定 12)
 }
 
 export type RiverActionLabel = 'check' | 'call' | 'fold' | { bet: number } | { raise: number }

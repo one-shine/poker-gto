@@ -22,14 +22,23 @@ export function StrategyDetail({ feedback }: { feedback: CoachFeedback }) {
             </span>
           ) : (
             <>
-              {/* turn/flop の solver_live はエクイティ近似(以降の賭け未考慮)= river より信頼度低い (R14) */}
+              {/* R14②: turn は完全チャンスCFRで river ベッティング考慮済 (賭け考慮済)。flop は依然エクイティ近似。 */}
               {feedback.source === 'solver_live' && feedback.street !== 'river' && (
-                <span
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300"
-                  title="ターン/フロップは「オールイン相当」のエクイティ近似で、以降のベッティングを考慮しません。リバーより精度は低めです。"
-                >
-                  簡易: 賭け未考慮
-                </span>
+                feedback.bettingAware ? (
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-sky-900/40 text-sky-300"
+                    title={`ターンは以降の river ベッティング(バリュー/ブラフ/降ろし)を織り込む完全チャンスノード CFR で求解。リバー ${feedback.runoutN ?? 48} 通り(全列挙)を評価しています。`}
+                  >
+                    賭け考慮済 (runout {feedback.runoutN ?? 48})
+                  </span>
+                ) : (
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300"
+                    title="フロップは「オールイン相当」のエクイティ近似で、以降のベッティングを考慮しません。精度は低めです。"
+                  >
+                    簡易: 賭け未考慮
+                  </span>
+                )
               )}
               {feedback.exploitability != null && (
                 <span

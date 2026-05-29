@@ -43,7 +43,7 @@
 ## 現在の進捗 (作業再開時はここを最初に読む)
 
 **現在のフェーズ**: Phase 4 ✅ + Phase 4.6 ✅ + Phase 3.5 🔄(自前TSソルバー: river/turn/flop 解✅ = **R1/R3 が postflop hero=OOP で稼働**。turn/flop はエクイティ近似)
-**次に着手するステップ**: 2026-05-29 残タスク自律ワークフロー進行中 (243テスト緑・型0)。**R10 D2 他ページモバイルQA ✅** (Learn/Analysis/Theory/Ranges/Settings を 390px で Playwright 実機確認・overflow ゼロ・修正不要)。**R11/R19 内容監修 ✅** (全21スポットを一般理論と突合=明確な誤りなし・実解精密化は R4 の領域 / 理論数値を教科書照合し正確・SB 40%→約55% の内部不整合を是正)。次は **R14②(turn 完全チャンスCFR 5サブ)→ R4 100BB(best-effort+文書化)**。先行: R15/R4-A/R4-B/R25 完了。
+**次に着手するステップ**: 2026-05-29〜30 残タスク自律ワークフロー進行中 (259テスト緑・型0・build/lint緑)。**R10 D2 モバイルQA ✅ / R11/R19 内容監修 ✅**。**R14② turn 完全チャンス CFR ✅ 実装完了 (2026-05-30)**: `turnSolver.ts`(turn→ChanceNode(river札)→river ベッティング→厳密ショーダウンの2街CFR・opt-in)。設計検証ワークフロー先行→ground-truth で EV 正規化バグ発見・修正→レビューワークフローでランナウト被覆バグ(suit-block ストライド)発見・修正(全48 runout 列挙へ)。getSolution が turn で chance-CFR(全48 runout・combo50/iters40・6.9–9.9s・exploit 4.3–5.3%)、バッジ「賭け考慮済 (runout 48)」。詳細は `docs/PHASE_3_5.md`「R14② 完全チャンス CFR 実装完了」。次は **R4 100BB(best-effort+文書化)→ flop 賭け考慮(事前計算案件)/ 残ノード**。先行: R15/R4-A/R4-B/R25 完了。
 その後 Phase 5(R8エクイティ/postflopドリル)→ Phase 4.5 → Phase 6。
 **Phase 4 成果**: 型、プリフロップ+5シナリオ(10計)、CoachAgent(EV損失/頻度評価)、session/progressStore、CoachPanel/StrategyBars、A1 LiveStrategyPanel(常時戦略+ポットオッズ)、A3 EV損失、play CoachToast、GTOPlayerAgent(trainer)、LearnPage(ダッシュボード+履歴)、SettingsPage、SampleSizeBadge、HandReplay。全97テスト・study/play/trainer 実機確認済。
 

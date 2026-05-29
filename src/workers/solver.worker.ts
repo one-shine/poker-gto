@@ -1,4 +1,5 @@
 import { solveRiver, type RiverInput } from '../lib/solver/riverSolver'
+import { solveTurn } from '../lib/solver/turnSolver'
 
 // 求解を メインスレッド外で実行する Web Worker。
 // DOM lib の Window 型と衝突しないよう self を最小型にキャストする。
@@ -10,7 +11,8 @@ const ctx = self as unknown as {
 ctx.onmessage = (e: MessageEvent) => {
   const { id, input } = e.data as { id: number; input: RiverInput }
   try {
-    const sol = solveRiver(input)
+    // R14②: useChanceCFR=true (turn) は完全チャンスノード CFR、それ以外は従来の river/turn 近似。
+    const sol = input.useChanceCFR ? solveTurn(input) : solveRiver(input)
     ctx.postMessage({ id, nodes: sol.nodes, exploitability: sol.exploitability })
   } catch (err) {
     ctx.postMessage({ id, error: err instanceof Error ? err.message : String(err) })

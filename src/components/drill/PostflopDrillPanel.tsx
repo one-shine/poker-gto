@@ -238,7 +238,7 @@ export function PostflopDrillPanel() {
       <p className="text-[11px] text-zinc-500">
         正解 +{XP_CORRECT}XP / 挑戦 +{XP_WRONG}XP。基準: <SourceBadge source={solved?.source ?? null} />。
         ベット額はポット比 (リードは約2/3ポット)。3betポットはポット ≈ 22.5BB・残り ≈ 89BB。
-        ターン/フロップはショーダウンをエクイティ近似 (賭け未考慮)。頻度10%以上の行動が正解 (ミックス対応)。
+        フロップはショーダウンをエクイティ近似 (賭け未考慮)。ターンは river ベッティングを織り込む完全チャンスノード CFR (賭け考慮済・river 全48通り評価)。頻度10%以上の行動が正解 (ミックス対応)。
       </p>
     </div>
   )

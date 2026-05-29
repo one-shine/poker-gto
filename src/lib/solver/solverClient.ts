@@ -1,4 +1,5 @@
 import { solveRiver, type RiverInput, type SolvedNodeSummary } from './riverSolver'
+import { solveTurn } from './turnSolver'
 
 export interface SolveResult {
   nodes: SolvedNodeSummary[]
@@ -27,7 +28,7 @@ export function solveRiverAsync(input: RiverInput): Promise<SolveResult> {
   if (!w) {
     // インラインフォールバック (Worker 非対応 / テスト)
     try {
-      const sol = solveRiver(input)
+      const sol = input.useChanceCFR ? solveTurn(input) : solveRiver(input)
       return Promise.resolve({ nodes: sol.nodes, exploitability: sol.exploitability })
     } catch (err) {
       return Promise.reject(err instanceof Error ? err : new Error(String(err)))

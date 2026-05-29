@@ -40,6 +40,10 @@ export interface NodeSolution {
   potBB: number
   source: SolutionSource
   exploitability?: number // solver_live が到達した exploitability (% pot)
+  // R14②: turn を完全チャンスノード CFR で解いた解 (river ベッティング考慮済み)。
+  // turn の solver_live でも「簡易: 賭け未考慮」ではなく「賭け考慮済」と表示するためのフラグ。
+  bettingAware?: boolean
+  runoutN?: number // chance-CFR の river ランナウトサンプル数 (UI 表示用)
   meta: SolutionMeta
 }
 

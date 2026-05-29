@@ -12,15 +12,16 @@ import { comboKey } from './riverRanges'
 export const MAX_COMBOS = 200
 export const MIN_WEIGHT = 0.05
 
-export function capRange(combos: Combo[], mustKey?: string): Combo[] {
+// cap 既定 200。R14② turn 完全チャンス CFR は O(combos²×runout) と重いため cap=60 を渡す。
+export function capRange(combos: Combo[], mustKey?: string, cap: number = MAX_COMBOS): Combo[] {
   let kept = combos.filter(c => c.weight >= MIN_WEIGHT)
-  if (kept.length > MAX_COMBOS) {
-    kept = [...kept].sort((a, b) => b.weight - a.weight).slice(0, MAX_COMBOS)
+  if (kept.length > cap) {
+    kept = [...kept].sort((a, b) => b.weight - a.weight).slice(0, cap)
   }
   if (mustKey && !kept.some(c => comboKey(c.cards) === mustKey)) {
     const must = combos.find(c => comboKey(c.cards) === mustKey)
     if (must) {
-      if (kept.length >= MAX_COMBOS) kept[kept.length - 1] = must
+      if (kept.length >= cap) kept[kept.length - 1] = must
       else kept.push(must)
     }
   }

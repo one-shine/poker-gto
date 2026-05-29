@@ -24,9 +24,9 @@
 ## 精密化 (2026-05-24〜)
 - [x] **R17 exploitability 計測** — best-response 値を算出し均衡からのズレ(%pot)を計測。`riverSolver` が返し、`solverClient`/Worker → `getSolution` が `NodeSolution.exploitability` に設定 → `CoachFeedback` 経由で CoachPanel が「収束 X% pot」表示。収束テスト(反復↑で↓・収束時<5%)。**注意**: CFR の収束度であり、turn/flop のエクイティ抽象化誤差(R14)は測らない。
 - [x] **R16 カバレッジ拡大: hero=IP 対応** — `deriveRiverRanges` を bb-vs-X(hero=OOP)+ X-open(hero=IP)両対応(2レンジは共通=opener raise + BB call、hero がどちら側かが base で決まる)。`resolveSpotKey` で heroIsOOP 判定、`getSolution` を OOP/IP × lead/被ベットの4ノードに一般化。hero=IP(btn-open, villain check後)の check/bet 戦略を検証。
-- [🔄] **R14 turn/flop 精度** — 2段階で対応:
-  - [x] **(1) 信頼度の明示(今回)**: turn/flop の solver_live は「オールイン相当のエクイティ近似(以降のベッティング未考慮)」で river より精度が低い。CoachFeedback に `street` を持たせ、CoachPanel に「簡易: 賭け未考慮」バッジ + exploitability「収束 X%」を表示。**誤った権威付けを防止**(最重要リスクを解消)。
-  - [ ] **(2) 精度の本丸: 完全チャンスノード CFR(未了・専用作業)**。**詳細設計 2026-05-28 追記** (R14② 計画書):
+- [x] **R14 turn/flop 精度** — 2段階で対応 (① 信頼度明示 ✅ + ② turn 完全チャンス CFR ✅ 実装完了):
+  - [x] **(1) 信頼度の明示**: turn/flop の solver_live は「オールイン相当のエクイティ近似(以降のベッティング未考慮)」で river より精度が低い。CoachFeedback に `street` を持たせ、CoachPanel に「簡易: 賭け未考慮」バッジ + exploitability「収束 X%」を表示。**誤った権威付けを防止**(最重要リスクを解消)。
+  - [x] **(2) 精度の本丸: 完全チャンスノード CFR ✅ 実装完了 (2026-05-30)** → 下記「## R14② 完全チャンス CFR 実装完了」参照。**詳細設計 2026-05-28 追記** (R14② 計画書):
 
     ### 目的
     現状 turn (board=4) の `solver_live` は「リバーまでオールイン相当のエクイティ平均」で、リバーのベッティング判断 (フラッシュドロー降りる/降りない、バリュー反映/ブラフ) を一切考慮しない。結果としてドローが過大評価され EV/頻度が現実とずれる。完全チャンスノード CFR で「river ベッティングを含めた turn の真の EV」を求める。
@@ -133,6 +133,21 @@
     入力レンジが近似/上限/narrowing無しのままソルバーだけ精密化しても実精度は伸びない。R14② は R4/R15 の後 or 同時が効率的。
     R14①(信頼度明示)で誤誘導は防げているため、R14② は**後回し(専用枠)で可**。
 - [ ] R15 入力レンジ品質(ストリート narrowing)/ 残ノード(チェックレイズ・3bet・マルチウェイ)— 残課題
+
+## R14② 完全チャンス CFR 実装完了 (2026-05-30)
+turn (board=4) を「turn ベッティング → ChanceNode(river札) → river ベッティング → 厳密2値ショーダウン」の2ストリート CFR で求解する `src/lib/solver/turnSolver.ts` を新設。riverSolver.ts は不変(回帰安全網)で、turnSolver は opt-in。
+
+- **設計検証ワークフロー先行**: 実装前に複数視点(reach/カード除去・eq スレッディング/ゼロサム会計・EV/exploitability)で正しさを設計レビュー。統一スペックに従い実装。
+- **データ構造**: `ChanceNode{potAfterTurn, committedAtChance, runouts}` / `ChanceChild{card, eq(5枚厳密2値), removedOOP/IP, subtree}`。非fold の turn 終端を ChanceNode へ置換(fold 終端は不変)。各 runout は独立 regret/stratSum の river サブツリーを持つ。
+- **二重 half 体系**: turn-fold 終端 `halfT=potBB/2` / river サブツリー終端 `halfR=potAfterTurn/2`(turn 投入は potAfterTurn に畳み込み、river committed は [0,0] リセット・stack は turn 投入を差引)。
+- **eq は明示パラメータ**で各 runout の厳密 eq を showdown へ伝播(closure-mutate 案は EV/exploitability パスで壊れるため不採用)。
+- **チャンス分岐**は `chanceAccumulate` に集約: `acc[c]=Σ(removedSelf?0:v[c]/realN)`(1/N は値のみ・常に全 N で割る・fresh adjUp/adjOpp・index は up/1-up で選択)。traverse/valueAvg/brValue が共用。brValue は nature に best-response しない(runout 1/N 平均)。
+- **正規化バグを発見・修正(ground-truth テストで検出)**: 静的 norm(turn レンジ reach)では除去バイアスが残り「ベットなし=エクイティ近似」と一致しなかった。EV 表示を value と同経路の `massAvg`(net≡1)で割る方式に変更し /N を相殺=条件付き EV を正しく返す(学習は /N の一様チャンス測度のまま=正しい)。
+- **ランナウト被覆バグを発見・修正(レビューワークフロー検出)**: 当初 12 札の決定的ストライド抽出は `createDeck`(suit-outer/rank-inner=suit ブロック順)に対しストライド 4 となり ~5 ランクしか拾わず、オーバーカード/ドローを「死に手」と誤評価していた(例: K高ボードで KQ を EV 死に手扱い)。**turn river は単一札 48 通りのため全列挙に変更**(`allTurnRunouts`・ランク/スート完全被覆=サンプリングバイアス無し)。`selectRunouts`(テスト用サブセット)もランク被覆+スート分散へ是正。回帰テスト追加。
+- **配線**: `getSolution` が turn(board=4)で `useChanceCFR:true`(全48 runout 列挙・combo cap 50・iters 40)。Worker/solverClient が solveTurn へ振替。`NodeSolution.bettingAware/runoutN` → `CoachFeedback` → `StrategyDetail` バッジ「賭け考慮済 (runout 48)」(flop は従来「簡易: 賭け未考慮」)。PostflopDrillPanel フッター注記も是正。
+- **性能**: 代表 turn スポット 6.9–9.9s・exploitability 4.3–5.3%(目標 <10% に対し十分収束)。全48 runout は 12 の 4x のため iters 40・combo 50 で budget(5–15s)内に収めた(runout 完全列挙を優先し iters/combo で調整)。
+- **検証**: turnSolver.test.ts 16件(ground-truth ベットなし=エクイティ近似一致 / マルチコンボ会計 / 分極化 EV 順序 / 支配ハンド / exploit 収束 / 会計&カード除去ストレス / **ランナウト被覆回帰**)+ solver.test.ts turn を chance-CFR 契約に更新。レビューワークフローの probe(マルチコンボ ground-truth・短スタック・除去 finiteness)を恒久テスト化。**259テスト緑**・build/lint/型 0。
+- **スコープ**: turn 限定 MVP。flop(3ストリート2チャンス層)は事前計算ライブラリ案件として見送り。river サブツリーのノードコーチングは対象外(turn 判断のみ・river は従来 riverSolver 経路)。
 
 ## Phase 3.5 ソルバー実装トラック: 完了
 river/turn/flop の自前 CFR 求解 + Worker + getSolution 配線 + 永続キャッシュ + 取込器雛形が揃った。

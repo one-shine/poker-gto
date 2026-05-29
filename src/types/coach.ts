@@ -19,4 +19,7 @@ export interface CoachFeedback {
   strategy: ActionSolution[] // この手の GTO 推奨 (頻度バー表示用)
   message: string            // 理由文 (日本語)
   exploitability?: number    // solver_live の収束度 (均衡からのズレ, 0..1 = %pot/100)
+  // R14②: turn を完全チャンスノード CFR で解いた=river ベッティング考慮済み(「簡易: 賭け未考慮」でない)。
+  bettingAware?: boolean
+  runoutN?: number
 }

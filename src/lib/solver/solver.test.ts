@@ -352,7 +352,7 @@ describe('getSolution', () => {
     expect(await getSolution({ baseSpotId: 'bb-vs-btn', street: 'flop', board: [] })).toBeNull()
   })
 
-  it('solves a TURN spot (4-card board) via self CFR (equity-approximated) → solver_live', async () => {
+  it('solves a TURN spot (4-card board) via 完全チャンスノード CFR (R14②) → solver_live + bettingAware', async () => {
     const board: Card[] = [c('A', 'spades'), c('K', 'diamonds'), c('7', 'clubs'), c('3', 'hearts')]
     const heroCards: [Card, Card] = [c('A', 'hearts'), c('A', 'clubs')]
     const node = await getSolution(
@@ -361,8 +361,14 @@ describe('getSolution', () => {
     )
     expect(node?.source).toBe('solver_live')
     expect(node?.street).toBe('turn')
+    // R14②: turn は river ベッティングを織り込むチャンス CFR で解かれる(賭け未考慮の近似ではない)。
+    expect(node?.bettingAware).toBe(true)
+    expect(node?.runoutN).toBe(48) // 全 river 札を列挙 (サンプリング偏り回避)
+    expect(node!.meta.sourceName).toContain('chance-node')
     expect(node!.strategy['AcAh'].length).toBeGreaterThan(0)
     expect(node!.strategy['AcAh'].every(a => Number.isFinite(a.ev))).toBe(true)
+    // 収束: turn chance-CFR の目標は <10% pot (river の <5% より緩い)。
+    expect(node!.exploitability).toBeLessThan(0.10)
   })
 
   it('solves a river spot (bb-vs-btn) via self CFR → solver_live with hero strategy + EV', async () => {

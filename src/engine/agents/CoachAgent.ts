@@ -155,6 +155,7 @@ export function evaluateAction(
   const base = (): Omit<CoachFeedback, 'kind' | 'message' | 'evLoss'> => ({
     handKey, spotId: node.spotId, street: node.street, source: node.source, chosen: action, showEv, strategy: sols,
     exploitability: node.exploitability,
+    bettingAware: node.bettingAware, runoutN: node.runoutN,
   })
 
   const chosen = pickClosest(sols, action, sizeBB)

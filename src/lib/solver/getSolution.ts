@@ -85,7 +85,9 @@ async function solveRiverSpot(spot: SpotKey, opts: GetSolutionOptions): Promise<
   const facingRaise = !!spot.facingRaise
   const facing = !facingRaise && !!spot.riverBetBB && spot.riverBetBB > 0
   const phase = facingRaise ? `r${betFrac}` : facing ? `f${betFrac}` : 'lead'
-  const cacheId = `${spot.baseSpotId}|${boardKey(board)}|${comboKey(heroCards)}|${potBB}|${effStackBB}|${phase}`
+  // R14②: turn は完全チャンスノード CFR (river ベッティングを織り込む) で求解。flop/river は従来通り。
+  const chanceCFR = spot.street === 'turn'
+  const cacheId = `${spot.baseSpotId}|${boardKey(board)}|${comboKey(heroCards)}|${potBB}|${effStackBB}|${phase}${chanceCFR ? '|cc' : ''}`
   const cached = await getCachedSolution(cacheId)
   if (cached) return cached
 
@@ -97,14 +99,21 @@ async function solveRiverSpot(spot: SpotKey, opts: GetSolutionOptions): Promise<
   // R15-B: river のみ、board 強度に基づき下位 20% を narrow (peel しない手の近似)。
   const narrow = (combos: Combo[], must?: string) =>
     spot.street === 'river' ? narrowByRiverStrength(combos, board, must) : combos
-  const heroSide = heroIsOOP ? capRange(narrow(ranges.oop, heroK), heroK) : capRange(narrow(ranges.ip, heroK), heroK)
-  const oop = heroIsOOP ? heroSide : capRange(narrow(ranges.oop))
-  const ip = heroIsOOP ? capRange(narrow(ranges.ip)) : heroSide
+  // chance-CFR は O(combos²×runout) で重い (全48 runout)。コンボ上限を 50 に圧縮し budget 内に。
+  // (flop/river は既定 200)。runout は完全列挙を優先し、コンボ/反復で時間を調整する方針。
+  const cap = chanceCFR ? 50 : undefined
+  const heroSide = heroIsOOP ? capRange(narrow(ranges.oop, heroK), heroK, cap) : capRange(narrow(ranges.ip, heroK), heroK, cap)
+  const oop = heroIsOOP ? heroSide : capRange(narrow(ranges.oop), undefined, cap)
+  const ip = heroIsOOP ? capRange(narrow(ranges.ip), undefined, cap) : heroSide
   // R16: 単一レイズを許可 → 被ベットノードに raise(OOP=チェックレイズ / IP=レイズ)が加わる。
   // raiseSizes はコール後ポット比の追加額 (0.5 ≈ 元ベットの ~2.7x へのレイズ)。
   const { nodes, exploitability } = await solveRiverAsync({
     board, oop, ip, potBB, stackBB: effStackBB,
-    betSizes: [betFrac], raiseSizes: [0.5], iterations: 250,
+    betSizes: [betFrac], raiseSizes: [0.5],
+    // turn chance-CFR は全48 runout を列挙(サンプリングのランク/スート偏りを回避)。runout が 4x に
+    // なる分、反復を 40・コンボ 50 に抑えて budget(5-15s)内に。exploitability は十分収束(<10%)。
+    iterations: chanceCFR ? 40 : 250,
+    useChanceCFR: chanceCFR,
   })
   // hero 判断ノードを OOP/IP × lead/被ベット/被レイズ で特定 (root actions = [check, bet])。
   //  OOP lead      = root []              (player 0)
@@ -141,7 +150,12 @@ async function solveRiverSpot(spot: SpotKey, opts: GetSolutionOptions): Promise<
     potBB,
     source: 'solver_live',
     exploitability,
-    meta: { sourceName: `self CFR (${spot.street})`, license: 'self-generated', version: '1', solvedAt: Date.now() },
+    bettingAware: chanceCFR,
+    runoutN: chanceCFR ? 48 : undefined,
+    meta: {
+      sourceName: chanceCFR ? 'self CFR (turn, chance-node 全48 runout)' : `self CFR (${spot.street})`,
+      license: 'self-generated', version: '1', solvedAt: Date.now(),
+    },
   }
   await putCachedSolution(cacheId, node)
   return node
