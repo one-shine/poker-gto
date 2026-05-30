@@ -71,6 +71,7 @@ export function buildCallerCallFreq(callerScenario: RangeScenario): Float64Array
 }
 
 // opener (X-open) の raise 頻度ベクトル。defender (bb-vs-X) の EV 計算に使う。
+// 3better の 3bet レンジ (= {3better}-vs-{opener} の raise 列) にも流用する。
 export function buildOpenerRaiseFreq(openerScenario: RangeScenario): Float64Array {
   const q = new Float64Array(NCAT)
   for (let i = 0; i < NCAT; i++) {
@@ -79,6 +80,24 @@ export function buildOpenerRaiseFreq(openerScenario: RangeScenario): Float64Arra
   }
   return q
 }
+
+// opener が 3bet に直面したときの応答 (fold / call / 4bet)。
+// {opener}-vs-{3better}-3bet シナリオの cell から読む (cell.raise=4bet, cell.call=call, cell.fold=fold)。
+// レンジに無い手 = その手をオープンしていても 3bet に 100% フォールド扱い (oFold=1)。
+export interface OpenerResponse { oFold: Float64Array; oCall: Float64Array; o4bet: Float64Array }
+export function buildOpenerResponseFreqs(facing3betScenario: RangeScenario): OpenerResponse {
+  const oFold = new Float64Array(NCAT)
+  const oCall = new Float64Array(NCAT)
+  const o4bet = new Float64Array(NCAT)
+  for (let i = 0; i < NCAT; i++) {
+    const cell = facing3betScenario.cells[CATEGORIES[i]]
+    if (cell) { oFold[i] = cell.fold; oCall[i] = cell.call; o4bet[i] = cell.raise }
+    else { oFold[i] = 1 } // 未掲載 = 3bet に全フォールド
+  }
+  return { oFold, oCall, o4bet }
+}
+
+const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x))
 
 // per-category EV を計算する。
 // EV(raise hero=ci) = Σ_cj avail[ci][cj] · [ (1-q[cj])·(sb+bb) + q[cj]·(eq[ci][cj]-0.5)·F ] / Σ_cj avail[ci][cj]
@@ -138,27 +157,37 @@ export function computeHeuristicEV(
 }
 
 // ── defender bb-vs-X 用 ヒューリスティック EV ───────────────────────────────────
-// hero=BB が opener X の raise に直面したスポット。
-// アクション: fold / call / raise(3bet)。
+// hero=3better が opener X の raise に直面したスポット。アクション: fold / call / raise(3bet)。
 // EV 設計:
-//   EV(call) = Σ_cj avail[ci][cj] · raiseFreq[cj] · (eq[ci][cj]-0.5)·F  / Σ avail·raiseFreq
-//            (BB 視点での postflop net。opener の raise レンジ加重)
-//   EV(fold) = -bb            (ブラインドロス)
-//   EV(raise) = 0 (TODO: 3bet → opener の 4bet/call/fold の遷移が複雑なので未実装)
+//   EV(call)  = Σ_cj avail·raiseFreq · (eq-0.5)·F_srp / Σ   (SRP ポット postflop net)
+//   EV(fold)  = -foldCost                                   (ブラインドロス。BB=-1.0/SB=-0.5/cold=0)
+//   EV(3bet)  = Σ_cj avail·openerOpenFreq · [ oFold·DEAD + oCall·(eq-0.5)·F3 + o4bet·G4bet ] / Σ
+//      DEAD  = open + (他者の死にブラインド) = openBB + (1.5 - heroBlindPosted)   (相手フォールド時の獲得死に金)
+//      G4bet = cont·(eq-0.5)·F4 - (1-cont)·COST3,  cont=clamp((eqVs4bet-0.36)/0.16,0,1)  (4bet被弾: 強い手は続行)
+//      COST3 = threeBetBB - heroBlindPosted   (4bet に降りた時の損失)
+//      opener 応答 (oFold/oCall/o4bet) は実データ {opener}-vs-{3better}-3bet シナリオから。無ければ EV(3bet)=0。
 //
-// raise の EV は 0 で固定なので、その手の evLoss は計算上控えめになる。
-// UI で「3bet の EV は概算外」と明示するか、approximate_with_ev のバッジで
-// ユーザーに伝える (今回はバッジで対応)。
+// heuristic: not GTO-exact。F3=45/F4=60 は 3bet/4bet ポット用の概算倍率 (SRP F=30 とは別、線形スケールしない)。
+// fold-equity 項 (DEAD) がブラフ3bet を fold より良く評価する核心。node は固定レンジへのベストレスポンス近似。
+export interface DefenderEVOptions extends HeuristicEVOptions {
+  openerResponse?: OpenerResponse  // opener の 3bet 応答 (実データ)。無ければ 3bet EV=0
+  openerOpenFreq?: Float64Array    // w[cj] = opener の総オープン頻度 (= buildOpenerRaiseFreq(opener-open))
+  openBB?: number                  // o, opener のオープン額 (既定 2.5)
+  threeBetBB?: number              // t, hero の 3bet 額 (既定 11)
+  heroBlindPosted?: number         // hero が既に投入したブラインド (BB=1.0/SB=0.5/cold=0)。DEAD/COST3 に使う
+  threeBetFactor?: number          // F3 (既定 45)
+  fourBetFactor?: number           // F4 (既定 60)
+}
 export function computeDefenderHeuristicEV(
-  defender: RangeScenario,            // bb-vs-X
+  defender: RangeScenario,            // bb-vs-X (3better のレンジ)
   openerRaiseFreq: Float64Array,      // X-open の raise 頻度 (per-category)
   eq: number[][],
-  opts: HeuristicEVOptions = {},
+  opts: DefenderEVOptions = {},
 ): NodeSolution {
-  const bb = opts.bbBlind ?? 1.0
-  const F = opts.postflopFactor ?? 30
+  const bb = opts.bbBlind ?? 1.0      // = foldCost (EV(fold) の絶対値)
+  const F = opts.postflopFactor ?? 30 // SRP factor
 
-  // EV(call) per-category (hero=BB が cat ci のとき)
+  // EV(call) per-category (hero=3better が cat ci のとき)
   const evCallAll = new Float64Array(NCAT)
   for (let ci = 0; ci < NCAT; ci++) {
     const av = AVAIL[ci]
@@ -173,17 +202,53 @@ export function computeDefenderHeuristicEV(
     evCallAll[ci] = den > 0 ? num / den : 0
   }
 
+  // EV(3bet) per-category — opener 応答データがある時のみ。無ければ 0 のまま。
+  const ev3All = new Float64Array(NCAT)
+  const hasThreeBet = !!(opts.openerResponse && opts.openerOpenFreq)
+  if (opts.openerResponse && opts.openerOpenFreq) {
+    const { oFold, oCall, o4bet } = opts.openerResponse
+    const w = opts.openerOpenFreq
+    const o = opts.openBB ?? 2.5
+    const t = opts.threeBetBB ?? 11
+    const heroBlind = opts.heroBlindPosted ?? 0
+    const F3 = opts.threeBetFactor ?? 45
+    const F4 = opts.fourBetFactor ?? 60
+    const DEAD = o + (1.5 - heroBlind)
+    const COST3 = t - heroBlind
+    for (let ci = 0; ci < NCAT; ci++) {
+      const av = AVAIL[ci]
+      // hero の対 opener-4bet レンジ equity → cont (4bet 被弾で続行する度合い)
+      let n4 = 0, d4 = 0
+      for (let cj = 0; cj < NCAT; cj++) {
+        const a = av[cj], wo = o4bet[cj]
+        if (a <= 0 || wo <= 0) continue
+        n4 += a * wo * eq[ci][cj]; d4 += a * wo
+      }
+      const cont = d4 > 0 ? clamp((n4 / d4 - 0.36) / 0.16, 0, 1) : 0
+      let num = 0, den = 0
+      for (let cj = 0; cj < NCAT; cj++) {
+        const ww = av[cj] * w[cj]
+        if (ww <= 0) continue
+        const edge = eq[ci][cj] - 0.5
+        const g4 = cont * edge * F4 - (1 - cont) * COST3
+        num += ww * (oFold[cj] * DEAD + oCall[cj] * edge * F3 + o4bet[cj] * g4)
+        den += ww
+      }
+      ev3All[ci] = den > 0 ? num / den : 0
+    }
+  }
+
   const strategy: Record<string, ActionSolution[]> = {}
   for (const [hand, cell] of Object.entries(defender.cells)) {
     const ci = CAT_INDEX.get(hand)
     if (ci == null) continue
     const acts: ActionSolution[] = []
-    const evCall = +evCallAll[ci].toFixed(3)
-    if (cell.raise > 0) acts.push({ action: 'raise', sizeBB: defender.raiseSize, frequency: cell.raise, ev: 0 })
-    if (cell.call > 0) acts.push({ action: 'call', frequency: cell.call, ev: evCall })
+    if (cell.raise > 0) acts.push({ action: 'raise', sizeBB: defender.raiseSize, frequency: cell.raise, ev: hasThreeBet ? +ev3All[ci].toFixed(3) : 0 })
+    if (cell.call > 0) acts.push({ action: 'call', frequency: cell.call, ev: +evCallAll[ci].toFixed(3) })
     if (cell.fold > 0) acts.push({ action: 'fold', frequency: cell.fold, ev: -bb })
     strategy[hand] = acts
   }
+  const F3 = opts.threeBetFactor ?? 45
   return {
     street: 'preflop',
     spotId: defender.id,
@@ -191,7 +256,87 @@ export function computeDefenderHeuristicEV(
     potBB: 1.5,
     source: 'approximate_with_ev',
     meta: {
-      sourceName: `hand-built defender strategy + heuristic call EV (factor=${F}, 3bet EV未計上)`,
+      sourceName: hasThreeBet
+        ? `hand-built defender strategy + heuristic call+3bet EV (SRP factor=${F}, 3bet factor=${F3}, opener応答=手作りレンジ推定)`
+        : `hand-built defender strategy + heuristic call EV (factor=${F}, 3bet EV未計上=opener応答データ無し)`,
+      license: 'original',
+      version: '1',
+    },
+  }
+}
+
+// ── opener が 3bet に直面 (facing-3bet) 用 ヒューリスティック EV ────────────────────
+// hero=opener (BTN/CO) が 3better Y の 3bet に直面。アクション: fold / call / raise(4bet)。
+// EV 設計 (hero 視点・決定時点からの純益):
+//   EV(fold) = -(openBB)                                  (オープンを放棄。BTN/CO はブラインド未投入)
+//   EV(call) = Σ avail·villain3betFreq · (eq-0.5)·F3 / Σ  (3bet ポットを call して postflop)
+//   EV(4bet) = FT4·DEAD4 + (1-FT4)·avgEdge·F4
+//      DEAD4 = threeBetBB + (1.5 - threeBetterBlind)      (3better が 4bet に降りた時の獲得死に金)
+//      FT4   = 3better の対4bet フォールド率 (既定 0.55・データ無し=定数推定)
+//      avgEdge = Σ avail·villain3betFreq·(eq-0.5)/Σ       (3better レンジへの equity advantage)
+//
+// heuristic: not GTO-exact。villain の 3bet レンジは実データ ({3better}-vs-{opener} の raise 列)、
+// fold-to-4bet は定数推定。F3=45/F4=60。
+export interface OpenerFacing3betOptions {
+  openBB?: number          // o, hero(opener) のオープン額 (既定 2.5)
+  threeBetBB?: number      // t, villain の 3bet 額 (既定 11)
+  fourBetBB?: number       // f, hero の 4bet 表示額 (既定 24)
+  openerBlind?: number     // hero(opener) が投入したブラインド (BTN/CO=0)。既定 0
+  threeBetterBlind?: number // 3better が投入したブラインド (BB=1.0/SB=0.5/BTN=0)。DEAD4 に使う。既定 0
+  threeBetFactor?: number  // F3 (既定 45)
+  fourBetFactor?: number   // F4 (既定 60)
+  foldToFourBet?: number   // FT4 (既定 0.55)
+}
+export function computeOpenerFacing3betEV(
+  facing: RangeScenario,            // {opener}-vs-{3better}-3bet (hero=opener の戦略: raise=4bet/call/fold)
+  villain3betFreq: Float64Array,    // 3better の 3bet レンジ (= buildOpenerRaiseFreq({3better}-vs-{opener}))
+  eq: number[][],
+  opts: OpenerFacing3betOptions = {},
+): NodeSolution {
+  const o = opts.openBB ?? 2.5
+  const t = opts.threeBetBB ?? 11
+  const f = opts.fourBetBB ?? 24
+  const openerBlind = opts.openerBlind ?? 0
+  const tbBlind = opts.threeBetterBlind ?? 0
+  const F3 = opts.threeBetFactor ?? 45
+  const F4 = opts.fourBetFactor ?? 60
+  const FT4 = opts.foldToFourBet ?? 0.55
+  const DEAD4 = t + (1.5 - tbBlind)
+  const foldEV = -(o - openerBlind)
+
+  const evCallAll = new Float64Array(NCAT)
+  const ev4betAll = new Float64Array(NCAT)
+  for (let ci = 0; ci < NCAT; ci++) {
+    const av = AVAIL[ci]
+    let num = 0, den = 0
+    for (let cj = 0; cj < NCAT; cj++) {
+      const a = av[cj], w = villain3betFreq[cj]
+      if (a <= 0 || w <= 0) continue
+      num += a * w * (eq[ci][cj] - 0.5); den += a * w
+    }
+    const avgEdge = den > 0 ? num / den : 0
+    evCallAll[ci] = avgEdge * F3
+    ev4betAll[ci] = FT4 * DEAD4 + (1 - FT4) * avgEdge * F4
+  }
+
+  const strategy: Record<string, ActionSolution[]> = {}
+  for (const [hand, cell] of Object.entries(facing.cells)) {
+    const ci = CAT_INDEX.get(hand)
+    if (ci == null) continue
+    const acts: ActionSolution[] = []
+    if (cell.raise > 0) acts.push({ action: 'raise', sizeBB: f, frequency: cell.raise, ev: +ev4betAll[ci].toFixed(3) }) // 4bet
+    if (cell.call > 0) acts.push({ action: 'call', frequency: cell.call, ev: +evCallAll[ci].toFixed(3) })
+    if (cell.fold > 0) acts.push({ action: 'fold', frequency: cell.fold, ev: +foldEV.toFixed(3) })
+    strategy[hand] = acts
+  }
+  return {
+    street: 'preflop',
+    spotId: facing.id,
+    strategy,
+    potBB: +(o + t + (1.5 - tbBlind)).toFixed(2),
+    source: 'approximate_with_ev',
+    meta: {
+      sourceName: `hand-built opener strategy + heuristic call/4bet EV (3bet factor=${F3}, 4bet factor=${F4}, fold-to-4bet=${FT4} 推定)`,
       license: 'original',
       version: '1',
     },

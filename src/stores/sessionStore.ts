@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { ActionRecord } from '../types/game'
+import type { ActionRecord, Position } from '../types/game'
 import type { CoachFeedback } from '../types/coach'
 import type { MistakeRecord } from '../types/stats'
 import { idbStorage } from '../lib/storage/idbStorage'
@@ -14,6 +14,8 @@ interface SessionStore {
   mistakes: MistakeRecord[]
   evaluatedCount: number          // 評価されたヒーロー判断数 (精度の母数)
   correctCount: number            // 正解 (correct + mixed)
+  // R20: ポジション別の厳密な精度母数。decisions(全HU判断)でなく「実際にコーチが評価した数」を持つ。
+  evalByPosition: Partial<Record<Position, { evaluated: number; correct: number }>>
   sessionHandCount: number
   hintedHandIds: Set<string>      // ヒント参照ハンド (精度サンプルから除外)
 
@@ -31,6 +33,7 @@ export const useSessionStore = create<SessionStore>()(
   mistakes: [],
   evaluatedCount: 0,
   correctCount: 0,
+  evalByPosition: {},
   sessionHandCount: 0,
   hintedHandIds: new Set(),
 
@@ -45,10 +48,20 @@ export const useSessionStore = create<SessionStore>()(
             category: fb.category!, severity: fb.severity!, evLoss: fb.evLoss, timestamp: Date.now(),
           } satisfies MistakeRecord]
         : s.mistakes
+      // R20: ポジション別にも評価/正解を計上 (ヒント参照ハンドは同様に除外)。
+      let evalByPosition = s.evalByPosition
+      if (counted) {
+        const prev = s.evalByPosition[ctx.position] ?? { evaluated: 0, correct: 0 }
+        evalByPosition = {
+          ...s.evalByPosition,
+          [ctx.position]: { evaluated: prev.evaluated + 1, correct: prev.correct + (isCorrect ? 1 : 0) },
+        }
+      }
       return {
         mistakes,
         evaluatedCount: s.evaluatedCount + (counted ? 1 : 0),
         correctCount: s.correctCount + (counted && isCorrect ? 1 : 0),
+        evalByPosition,
       }
     }),
 
@@ -69,7 +82,7 @@ export const useSessionStore = create<SessionStore>()(
   clearSession: () =>
     set({
       handHistory: [], mistakes: [], evaluatedCount: 0, correctCount: 0,
-      sessionHandCount: 0, hintedHandIds: new Set(),
+      evalByPosition: {}, sessionHandCount: 0, hintedHandIds: new Set(),
     }),
     }),
     {
@@ -79,6 +92,7 @@ export const useSessionStore = create<SessionStore>()(
       partialize: s => ({
         handHistory: s.handHistory, mistakes: s.mistakes,
         evaluatedCount: s.evaluatedCount, correctCount: s.correctCount,
+        evalByPosition: s.evalByPosition,
         sessionHandCount: s.sessionHandCount, hintedHandIds: [...s.hintedHandIds],
       }),
       merge: (persisted, current) => {

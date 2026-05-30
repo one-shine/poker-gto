@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PREFLOP_SCENARIOS } from './preflop'
+import { rangeStats } from '../../lib/ranges/rangeStats'
 
 const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
 const HAND_RE = /^([AKQJT2-9])\1$|^([AKQJT2-9])([AKQJT2-9])(s|o)$/
@@ -56,6 +57,25 @@ describe('PREFLOP_SCENARIOS', () => {
       const cells = Object.values(sc.cells)
       expect(cells.some(c => c.call > 0), `${id} はフラットを含む`).toBe(true)
       expect(cells.some(c => c.raise > 0), `${id} は3betを含む`).toBe(true)
+    }
+  })
+
+  // R11: ドリフトガード。各スポットの combo比 widthPct (RangesPage「レンジ比較」が表示する権威メトリクス)
+  // を preflop.ts の見出しコメント値に固定。頻度を編集してコメントと乖離させたら落ちる = 両者を必ず同期させる。
+  it('combo-weighted width matches the documented per-spot comments (drift guard)', () => {
+    const EXPECTED: Record<string, number> = {
+      'btn-open': 0.368, 'co-open': 0.247, 'mp-open': 0.173, 'utg-open': 0.130, 'sb-open': 0.497,
+      'bb-vs-btn': 0.430, 'bb-vs-sb': 0.250, 'bb-vs-utg': 0.166, 'bb-vs-mp': 0.219, 'bb-vs-co': 0.268,
+      'sb-vs-btn': 0.069, 'btn-vs-co': 0.164, 'sb-vs-co': 0.057, 'btn-vs-utg': 0.110,
+      'btn-vs-mp': 0.146, 'co-vs-utg': 0.087,
+      'btn-vs-sb-3bet': 0.066, 'btn-vs-bb-3bet': 0.077, 'co-vs-sb-3bet': 0.056,
+      'co-vs-bb-3bet': 0.064, 'co-vs-btn-3bet': 0.047,
+    }
+    for (const sc of PREFLOP_SCENARIOS) {
+      const want = EXPECTED[sc.id]
+      expect(want, `${sc.id} は EXPECTED に登録が必要 (新スポットはコメント%とここを同時更新)`).toBeDefined()
+      const got = rangeStats(sc).widthPct
+      expect(Math.abs(got - want), `${sc.id} combo比=${(got * 100).toFixed(1)}% が文書値 ${(want * 100).toFixed(1)}% と乖離`).toBeLessThan(0.025)
     }
   })
 

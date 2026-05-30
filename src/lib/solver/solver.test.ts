@@ -344,6 +344,24 @@ describe('getSolution', () => {
     expect(call99?.ev).not.toBe(0)
   })
 
+  it('serves approximate_with_ev for non-BB defender sb-vs-btn (R4 16/21 拡張)', async () => {
+    const node = await getSolution({ baseSpotId: 'sb-vs-btn', street: 'preflop' })
+    expect(node?.spotId).toBe('sb-vs-btn')
+    expect(node?.source).toBe('approximate_with_ev')
+    // SB は 3bet-or-fold → fold EV は SB ブラインドロス -0.5。
+    const fold = node?.strategy['99']?.find(a => a.action === 'fold')
+    expect(fold?.ev).toBeCloseTo(-0.5)
+  })
+
+  it('serves approximate_with_ev for non-BB defender btn-vs-co with non-zero call EV (R4)', async () => {
+    const node = await getSolution({ baseSpotId: 'btn-vs-co', street: 'preflop' })
+    expect(node?.spotId).toBe('btn-vs-co')
+    expect(node?.source).toBe('approximate_with_ev')
+    const callTT = node?.strategy['TT']?.find(a => a.action === 'call')
+    expect(callTT).toBeTruthy()
+    expect(callTT?.ev).toBeGreaterThan(0)
+  })
+
   it('returns null for an unknown spot id', async () => {
     expect(await getSolution({ baseSpotId: 'mp-vs-utg', street: 'preflop' })).toBeNull()
   })

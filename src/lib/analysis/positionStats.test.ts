@@ -111,3 +111,32 @@ describe('estimateAccuracy (R22-A)', () => {
     expect(estimateAccuracy(row)).toBe(1.0)
   })
 })
+
+describe('R20: strict accuracy from evaluated/correct (coach-evaluated only)', () => {
+  it('estimateAccuracy uses correct/evaluated when evaluated is defined', () => {
+    const row = { position: 'BTN' as Position, hands: 12, decisions: 12, vpip: 9, pfr: 8, mistakes: 2, evLost: 1, evaluated: 8, correct: 6 }
+    // 厳密母数: 8 評価中 6 正解 = 0.75 (楽観の decisions ベース 0.83 ではない)
+    expect(estimateAccuracy(row)).toBeCloseTo(0.75)
+  })
+
+  it('evaluated=0 → null (データ不足) instead of optimistic decisions-based accuracy', () => {
+    const row = { position: 'BTN' as Position, hands: 6, decisions: 6, vpip: 4, pfr: 3, mistakes: 0, evLost: 0, evaluated: 0, correct: 0 }
+    // 未評価ポジは「100%」と出さず null。
+    expect(estimateAccuracy(row)).toBeNull()
+  })
+
+  it('aggregatePositionStats fills evaluated/correct from evalByPosition map', () => {
+    const hand: ActionRecord[] = [
+      { playerId: HERO_ID, heroPosition: 'CO', actorPosition: 'CO', street: 'preflop', action: 'raise', amountBB: 2.5, villainPositions: ['BB'] } as ActionRecord,
+    ]
+    const rows = aggregatePositionStats([hand], [], { CO: { evaluated: 10, correct: 7 } })
+    const co = rows.find(r => r.position === 'CO')!
+    expect(co.evaluated).toBe(10)
+    expect(co.correct).toBe(7)
+    expect(estimateAccuracy(co)).toBeCloseTo(0.7)
+    // map に無いポジは evaluated=0 → 精度 null。
+    const utg = rows.find(r => r.position === 'UTG')!
+    expect(utg.evaluated).toBe(0)
+    expect(estimateAccuracy(utg)).toBeNull()
+  })
+})

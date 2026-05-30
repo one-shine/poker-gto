@@ -13,7 +13,11 @@ function build(spec: Record<string, Spec>): Record<string, RangeCell> {
   )
 }
 
-// ── BTN Open 2.5BB (≈44%) ────────────────────────────────────────────────────
+// 各レンジ見出しの「combo比」= 実コンボ重み (ペア6/スーテッド4/オフスート12, /1326)。
+// これが RangesPage「レンジ比較」タブが表示する widthPct と一致する権威メトリクス。
+// 「169セル比」= 13×13グリッドのセル平均 (/169) で参考値。両者は近似手作りの実データ値で、
+// 標準理論の目標値とは乖離しうる (既知の近似限界・実解化は R4)。preflop.test.ts のドリフトガードが固定。
+// ── BTN Open 2.5BB · combo比 ≈37% (169セル比 ≈48%) ───────────────────────────
 
 const btnOpen = build({
   'AA':1,'KK':1,'QQ':1,'JJ':1,'TT':1,'99':1,'88':1,'77':1,'66':1,'55':1,'44':1,'33':1,'22':1,
@@ -38,7 +42,7 @@ const btnOpen = build({
   'T9o':0.8,'T8o':0.3,'98o':0.5,'87o':0.2,
 })
 
-// ── CO Open 2.5BB (≈28%) ────────────────────────────────────────────────────
+// ── CO Open 2.5BB · combo比 ≈25% (169セル比 ≈30%) ────────────────────────────
 
 const coOpen = build({
   'AA':1,'KK':1,'QQ':1,'JJ':1,'TT':1,'99':1,'88':1,'77':1,'66':1,'55':1,'44':1,'33':1,'22':1,
@@ -59,7 +63,7 @@ const coOpen = build({
   'T9o':0.5,'98o':0.3,
 })
 
-// ── SB Open 3BB (≈58%, vs BB) ───────────────────────────────────────────────
+// ── SB Open 3BB · combo比 ≈50% (169セル比 ≈59%, vs BB) ───────────────────────
 // SB vs BB (only SB and BB remaining). Modern GTO opens 55-65% with 3BB.
 
 const sbOpen = build({
@@ -87,7 +91,8 @@ const sbOpen = build({
 })
 
 // ── BB vs BTN (facing 2.5x) — raise=3bet, call=call ─────────────────────────
-// Modern GTO defends ~55% of hands. A2s/A3s mixed 3bet (blocker theory).
+// continue ≈43% combo (call ≈40% / 3bet ≈3% · 169セル比 ≈54%)。A2s/A3s mixed 3bet (blocker theory)。
+// 注: 3bet が薄い (理論 ~13-15% combo) = 近似の既知の限界。実解化は R4。
 
 const bbVsBtn = build({
   // 3-bet (raise) hands - includes Ax bluffs (A2s-A5s) and value
@@ -140,7 +145,7 @@ const bbVsSb = build({
   'T9o':[0,0.6],
 })
 
-// ── UTG Open 2.5BB (≈16%) — 最もタイトな RFI ─────────────────────────────────
+// ── UTG Open 2.5BB · combo比 ≈13% (169セル比 ≈18%) — 最もタイトな RFI ─────────
 
 const utgOpen = build({
   'AA':1,'KK':1,'QQ':1,'JJ':1,'TT':1,'99':1,'88':1,'77':1,'66':1,'55':1,'44':0.5,'33':0.5,'22':0.5,
@@ -154,7 +159,7 @@ const utgOpen = build({
   'KQo':1,
 })
 
-// ── MP Open 2.5BB (≈19%) ─────────────────────────────────────────────────────
+// ── MP Open 2.5BB · combo比 ≈17% (169セル比 ≈24%) ────────────────────────────
 
 const mpOpen = build({
   'AA':1,'KK':1,'QQ':1,'JJ':1,'TT':1,'99':1,'88':1,'77':1,'66':1,'55':1,'44':1,'33':1,'22':1,
@@ -171,7 +176,7 @@ const mpOpen = build({
   'QJo':0.5,
 })
 
-// ── BB vs UTG 2.5BB (defense ≈38%、タイト) ───────────────────────────────────
+// ── BB vs UTG 2.5BB · continue ≈17% combo (169セル比 ≈24%、タイト) ────────────
 
 const bbVsUtg = build({
   'AA':[1,0],'KK':[1,0],'QQ':[0.7,0.3],'JJ':[0.2,0.8],
@@ -189,7 +194,7 @@ const bbVsUtg = build({
   'QJo':[0,0.4],
 })
 
-// ── BB vs MP 2.5BB (defense ≈44%) ────────────────────────────────────────────
+// ── BB vs MP 2.5BB · continue ≈22% combo (169セル比 ≈30%) ────────────────────
 
 const bbVsMp = build({
   'AA':[1,0],'KK':[1,0],'QQ':[0.6,0.4],'JJ':[0.3,0.7],'TT':[0.15,0.85],
@@ -208,7 +213,7 @@ const bbVsMp = build({
   'JTo':[0,0.5],
 })
 
-// ── BB vs CO 2.5BB (defense ≈52%、ワイド) ────────────────────────────────────
+// ── BB vs CO 2.5BB · continue ≈27% combo (169セル比 ≈36%、ワイド) ────────────
 
 const bbVsCo = build({
   'AA':[1,0],'KK':[1,0],'QQ':[0.5,0.5],'JJ':[0.3,0.7],'TT':[0.2,0.8],
@@ -228,7 +233,7 @@ const bbVsCo = build({
   'T9o':[0,0.5],
 })
 
-// ── SB vs BTN open 2.5BB (3bet-or-fold、OOPなのでフラットしない ≈13%) ──────────
+// ── SB vs BTN open 2.5BB (3bet-or-fold、OOPなのでフラットしない · combo比 ≈7%) ──
 // heuristic approximate: SB は BTN の広いオープンに対しポラライズした 3bet で応戦。
 
 const sbVsBtn = build({
@@ -244,7 +249,7 @@ const sbVsBtn = build({
   'KQo':0.3,
 })
 
-// ── BTN vs CO open 2.5BB (3bet + コールドコール、IPで広くフラット ≈33%) ────────
+// ── BTN vs CO open 2.5BB (3bet + コールドコール、IPで広くフラット · combo比 ≈16%) ──
 // heuristic approximate: BTN はポジションを活かしフラットを多用しつつ、上位+ブラフで3bet。
 
 const btnVsCo = build({
@@ -262,7 +267,7 @@ const btnVsCo = build({
   'QJo':[0,0.5],
 })
 
-// ── SB vs CO open 2.5BB (3bet-or-fold、OOP・CO は BTN より狭いオープン ≈10%) ──
+// ── SB vs CO open 2.5BB (3bet-or-fold、OOP・CO は BTN より狭いオープン · combo比 ≈6%) ──
 // heuristic approximate: not GTO-exact。SB は OOP のためフラットせず、バリュー + ブロッカーで 3bet。
 // CO のレンジ (≈28%) は BTN (≈44%) より強いので sb-vs-btn よりタイト。
 
@@ -278,7 +283,7 @@ const sbVsCo = build({
   'KQo':0.2,
 })
 
-// ── BTN vs UTG open 2.5BB (3bet + コールドコール、IP・UTG は最強レンジ ≈22%) ──
+// ── BTN vs UTG open 2.5BB (3bet + コールドコール、IP・UTG は最強レンジ · combo比 ≈11%) ──
 // heuristic approximate: not GTO-exact。UTG (≈16%) は強いので BTN はフラット主体・3betは絞る。
 
 const btnVsUtg = build({
@@ -293,7 +298,7 @@ const btnVsUtg = build({
   'KQo':[0,0.6],
 })
 
-// ── BTN vs MP open 2.5BB (3bet + コールドコール、IP・btn-vs-utg より広い ≈30%) ──
+// ── BTN vs MP open 2.5BB (3bet + コールドコール、IP・btn-vs-utg より広い · combo比 ≈15%) ──
 // heuristic approximate: not GTO-exact。MP (≈19%) は UTG より広いのでフラット拡大 + ブラフ3bet増。
 
 const btnVsMp = build({
@@ -310,7 +315,7 @@ const btnVsMp = build({
   'QJo':[0,0.4],
 })
 
-// ── CO vs UTG open 2.5BB (3bet + 少しのフラット、IP・背後に3人=スクイーズ懸念 ≈18%) ──
+// ── CO vs UTG open 2.5BB (3bet + 少しのフラット、IP・背後に3人=スクイーズ懸念 · combo比 ≈9%) ──
 // heuristic approximate: not GTO-exact。CO は BTN ほどフラットできない (背後の squeeze リスク) → 3bet 寄り。
 
 const coVsUtg = build({

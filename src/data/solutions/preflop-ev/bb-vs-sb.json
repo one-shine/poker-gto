@@ -675,7 +675,7 @@
   "potBB": 1.5,
   "source": "approximate_with_ev",
   "meta": {
-    "sourceName": "hand-built defender strategy + heuristic call EV (factor=30, 3bet EV未計上)",
+    "sourceName": "hand-built defender strategy + heuristic call EV (factor=30, 3bet EV未計上=opener応答データ無し)",
     "license": "original",
     "version": "1"
   }

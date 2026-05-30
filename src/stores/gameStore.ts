@@ -37,6 +37,12 @@ function setPaused(p: boolean): void {
 // 既存スケジューラの送出をゲート経由にラップする。
 const gated = (sched: ActionScheduler): ActionScheduler => emit => sched(() => gate(emit))
 
+// R12: study モードを離れたら一時停止を確実に解除する (resetGame を経由しない appMode 切替の安全網)。
+// paused は study のミス時のみ立つので、非 study になったら必ず flush して残留を防ぐ。
+useSettingsStore.subscribe(s => {
+  if (s.appMode !== 'study' && paused) setPaused(false)
+})
+
 // 評価種別 → XP (docs/PHASE_4.md)。
 function xpForFeedback(fb: CoachFeedback): number {
   if (fb.kind === 'correct' || fb.kind === 'mixed') return 10

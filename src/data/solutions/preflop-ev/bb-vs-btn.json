@@ -63,7 +63,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 0
+        "ev": 5.412
       }
     ],
     "KK": [
@@ -71,7 +71,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 0
+        "ev": 4.288
       }
     ],
     "QQ": [
@@ -79,7 +79,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 0
+        "ev": 3.377
       }
     ],
     "JJ": [
@@ -87,7 +87,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.4,
-        "ev": 0
+        "ev": 2.811
       },
       {
         "action": "call",
@@ -100,7 +100,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.15,
-        "ev": 0
+        "ev": 2.295
       },
       {
         "action": "call",
@@ -113,7 +113,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 0
+        "ev": 2.949
       }
     ],
     "AQs": [
@@ -121,7 +121,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.3,
-        "ev": 0
+        "ev": 2.389
       },
       {
         "action": "call",
@@ -134,7 +134,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.3,
-        "ev": 0
+        "ev": 1.434
       },
       {
         "action": "call",
@@ -147,7 +147,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.2,
-        "ev": 0
+        "ev": 1.399
       },
       {
         "action": "call",
@@ -160,7 +160,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.15,
-        "ev": 0
+        "ev": 1.399
       },
       {
         "action": "call",
@@ -173,7 +173,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.1,
-        "ev": 0
+        "ev": 1.39
       },
       {
         "action": "call",
@@ -186,7 +186,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.2,
-        "ev": 0
+        "ev": 1.808
       },
       {
         "action": "call",
@@ -199,7 +199,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 0
+        "ev": 2.726
       }
     ],
     "AQo": [
@@ -207,7 +207,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.2,
-        "ev": 0
+        "ev": 2.252
       },
       {
         "action": "call",
@@ -957,7 +957,7 @@
   "potBB": 1.5,
   "source": "approximate_with_ev",
   "meta": {
-    "sourceName": "hand-built defender strategy + heuristic call EV (factor=30, 3bet EV未計上)",
+    "sourceName": "hand-built defender strategy + heuristic call+3bet EV (SRP factor=30, 3bet factor=45, opener応答=手作りレンジ推定)",
     "license": "original",
     "version": "1"
   }
