@@ -147,7 +147,24 @@ turn (board=4) を「turn ベッティング → ChanceNode(river札) → river 
 - **配線**: `getSolution` が turn(board=4)で `useChanceCFR:true`(全48 runout 列挙・combo cap 50・iters 40)。Worker/solverClient が solveTurn へ振替。`NodeSolution.bettingAware/runoutN` → `CoachFeedback` → `StrategyDetail` バッジ「賭け考慮済 (runout 48)」(flop は従来「簡易: 賭け未考慮」)。PostflopDrillPanel フッター注記も是正。
 - **性能**: 代表 turn スポット 6.9–9.9s・exploitability 4.3–5.3%(目標 <10% に対し十分収束)。全48 runout は 12 の 4x のため iters 40・combo 50 で budget(5–15s)内に収めた(runout 完全列挙を優先し iters/combo で調整)。
 - **検証**: turnSolver.test.ts 16件(ground-truth ベットなし=エクイティ近似一致 / マルチコンボ会計 / 分極化 EV 順序 / 支配ハンド / exploit 収束 / 会計&カード除去ストレス / **ランナウト被覆回帰**)+ solver.test.ts turn を chance-CFR 契約に更新。レビューワークフローの probe(マルチコンボ ground-truth・短スタック・除去 finiteness)を恒久テスト化。**259テスト緑**・build/lint/型 0。
-- **スコープ**: turn 限定 MVP。flop(3ストリート2チャンス層)は事前計算ライブラリ案件として見送り。river サブツリーのノードコーチングは対象外(turn 判断のみ・river は従来 riverSolver 経路)。
+- **スコープ**: turn 限定 MVP。flop(3ストリート2チャンス層)は下記参照。river サブツリーのノードコーチングは対象外(turn 判断のみ・river は従来 riverSolver 経路)。
+
+## flop 完全チャンス CFR: エンジン実装 + 実現可能性調査 (2026-05-30)
+R14② の turn チャンス CFR を 1層深くした **flop 3街・2チャンス層 CFR** を実装・検証したが、**GTO 品質のライブラリ生成は当環境では不可**と結論。エンジンは将来用(サーバ事前計算 / カードアブストラクション導入時)に保持する。
+
+- **共有コア抽出 (`chanceCfr.ts`)**: turnSolver の再利用可能部分(ノード型 / `buildBettingLayer` / `strictEquity5` / runout 列挙 / `solveChanceTree`=CFR+本体・eq明示パラメータ・チャンス分岐・massAvg EV正規化・exploitability)を切り出し。`traverse`/`valueAvg`/`brValue` は `node.kind==='chance'` で再帰するため**チャンス層の深さに非依存**(turn=1層 / flop=2層が同一コード)。turnSolver は木構築のみに縮小し 16 テスト緑維持=リファクタ安全網。riverSolver は別アルゴリズムで不変。
+- **`flopSolver.ts`**: flop ベッティング→ChanceNode(turn札)→turn ベッティング→ChanceNode(river札)→river ベッティング→厳密ショーダウンのネスト木を構築し `solveChanceTree` で求解。中間(turn)チャンスは eq=null(直下に showdown 無し)、最終(river)チャンスのみ厳密 eq。turn/river のランナウトは独立サブサンプル可(turnRunoutN/riverRunoutN)。テスト 6 件(**ground-truth: ベット無=flop equity 近似(riverSolver board=3)一致** で3街会計を検証 / 分極化 / 正規化 / exploit 収束<12% / 乖離 / カード除去合成)。
+- **⚠ 実現可能性の結論(ハードデータ)**: 実レンジ(bb-vs-btn flop=OOP 567×IP 431 combos)で計測:
+  | combos | turn/river runout | iters | 時間 | exploitability |
+  |---|---|---|---|---|
+  | 30×30 | 6×6 | 30 | 7s | 0.19 |
+  | 30×30 | 6×6 | 150 | 35s | **0.138** |
+  | 30×30 | 6×6 | 400 | 93s | **0.137(プラトー)** |
+  | 60×60 | 8×8 | 40 | 63s | 0.18 |
+  | 80×80 | 8×8 | 40 | 111s | 0.17 |
+  反復を 150→400 に増やしても exploitability は 0.138→0.137 と**頭打ち**=反復不足ではなく**アブストラクション(combo cap + runout サブサンプル)の構造的下限**。turn(全48 runout・4–5%)と違い flop は 2チャンス層の組合せ(49×48)で全列挙が非現実的(全列挙×150反復 ≈ 38分/ボード)。runout を削るとサンプリング誤差が支配的になり ~13–17% で頭打ち。
+- **判断(CLAUDE.md ルール1=正直な GTO 精度)**: exploitability ~13% を「GTOソルバー解」と称するのは過大表示。turn(<5%)/river(<5%)と格が違う。**13% 品質のライブラリは solver_precomputed として同梱しない**。flop は引き続きエクイティ近似(「簡易: 賭け未考慮」バッジ)を配給する。
+- **将来の選択肢**: ①サーバ/オフラインで分単位×多ボードの事前計算(自社生成=L1 適合) ②スート同型 + 戦略的コンボバケッティング(カードアブストラクション)で runout/combo を圧縮(別途専用作業・要アドバーサリアル検証) のいずれかが前提。エンジン(`flopSolver.ts`)は両者でそのまま使える。
 
 ## Phase 3.5 ソルバー実装トラック: 完了
 river/turn/flop の自前 CFR 求解 + Worker + getSolution 配線 + 永続キャッシュ + 取込器雛形が揃った。

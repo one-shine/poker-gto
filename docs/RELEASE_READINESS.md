@@ -13,7 +13,7 @@
 - ポストフロップ: hero=OOP/IP × lead/被ベット/被レイズ × SRP/3betポットで Coach 稼働 (R16)
 - プリフロップ: 21/21 スポット網羅 + opener 5 + defender 5 で概算 EV 稼働 (R4-A/B) + push/fold 7 段階で厳密解
 - 全スポットで `source` バッジ + EV 数値表示 (approximate / approximate_with_ev / solver_live / solver_precomputed の 4 段階)
-- 「学習アプリとして公開水準」を**満たすライン**に到達。R14② (turn 賭け考慮・完全チャンス CFR) ✅ 完了。残る精度向上は R4 (100BB 厳密解)・flop 賭け考慮 (事前計算案件)・R11/R19 (近似レンジ監修) 等の漸進的改善。
+- 「学習アプリとして公開水準」を**満たすライン**に到達。R14② (turn 賭け考慮・完全チャンス CFR) ✅ 完了。flop 賭け考慮は **エンジン実装済だが GTO 品質のライブラリ生成は当環境では不可**(full-tree CFR が exploitability ~13% で頭打ち=アブストラクション下限・サーバ/カードアブストラクション前提)→ flop はエクイティ近似のまま正直に表示。残る精度向上は R4 (100BB 厳密解)・R11/R19 (近似レンジ監修) 等の漸進的改善。
 
 ## 対応表
 
