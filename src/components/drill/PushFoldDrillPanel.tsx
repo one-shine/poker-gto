@@ -155,6 +155,9 @@ export function PushFoldDrillPanel() {
       <p className="text-[11px] text-zinc-500">
         正解 +{XP_CORRECT}XP / 挑戦 +{XP_WRONG}XP。
         <span className="text-emerald-300/80">✓ GTOソルバー解 (厳密・自社生成)</span> 基準。
+        {judgement?.exploitability != null && (
+          <span className="text-emerald-300/80"> exploitability {judgement.exploitability.toFixed(4)} BB/hand (≈Nash)。</span>
+        )}
         ショーダウン=オールイン勝率=真値のため実 EV 付き。頻度10%以上の行動が正解 (ミックス対応)。
       </p>
     </div>

@@ -48,6 +48,7 @@ export interface PushFoldJudgement {
   best: PFActionInfo[] // 頻度 ≥ 0.10 の正解アクション
   all: PFActionInfo[]
   source: SolutionSource | null
+  exploitability?: number | null // 厳密解の到達 exploitability (BB/hand)
 }
 
 const MIXED_THRESHOLD = 0.10
@@ -65,7 +66,7 @@ function promptFor(stack: number, role: PushFoldRole): string {
 }
 
 // NodeSolution の strategy[hand] を PFActionInfo[] に正規化 ('raise'→'push')。
-function infosFor(stack: number, role: PushFoldRole, hand: string): { all: PFActionInfo[]; source: SolutionSource | null } {
+function infosFor(stack: number, role: PushFoldRole, hand: string): { all: PFActionInfo[]; source: SolutionSource | null; exploitability: number | null } {
   const sol = SOLUTIONS.get(spotId(stack, role))
   const opts = optionsFor(role).map(o => o.action)
   const acts = sol?.strategy[hand] ?? []
@@ -74,7 +75,7 @@ function infosFor(stack: number, role: PushFoldRole, hand: string): { all: PFAct
     const sa = acts.find(a => (a.action === 'raise' ? 'push' : a.action) === opt)
     return { action: opt, freq: sa?.frequency ?? 0, ev: sa ? sa.ev : NaN }
   })
-  return { all, source: sol?.source ?? null }
+  return { all, source: sol?.source ?? null, exploitability: sol?.exploitability ?? null }
 }
 
 export function generatePushFoldQuestion(
@@ -97,8 +98,8 @@ export function explainPushFold(judgement: PushFoldJudgement): string {
 }
 
 export function judgePushFold(question: PushFoldQuestion, chosen: PFAction): PushFoldJudgement {
-  const { all, source } = infosFor(question.stack, question.role, question.hand)
+  const { all, source, exploitability } = infosFor(question.stack, question.role, question.hand)
   const best = all.filter(a => a.freq >= MIXED_THRESHOLD)
   const chosenFreq = all.find(a => a.action === chosen)?.freq ?? 0
-  return { correct: chosenFreq >= MIXED_THRESHOLD, chosen, best, all, source }
+  return { correct: chosenFreq >= MIXED_THRESHOLD, chosen, best, all, source, exploitability }
 }

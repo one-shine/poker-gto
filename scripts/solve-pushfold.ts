@@ -34,6 +34,7 @@ interface NodeSolution {
   strategy: Record<string, ActionSolution[]>
   potBB: number
   source: 'solver_precomputed'
+  exploitability?: number // fictitious play 到達 exploitability (BB/hand) = Nash 品質の検証用
   meta: { sourceName: string; license: string; version: string }
 }
 
@@ -72,7 +73,8 @@ function main() {
   for (const S of stacks) {
     const r = solvePushFold(eq, { effStackBB: S, iterations: pfIters })
     console.log(`solve ${S}BB: exploitability=${r.exploitability} BB/hand`)
-    const meta = { sourceName: `self push/fold Nash (HU ${S}BB, MC eq ${eqIters})`, license: 'self-generated', version: '1' }
+    const expl = +r.exploitability.toFixed(5) // Nash 品質を出荷物に残す (検証可能性)
+    const meta = { sourceName: `self push/fold Nash (HU ${S}BB, MC eq ${eqIters}, exploitability ${expl} BB/hand)`, license: 'self-generated', version: '1' }
 
     // SB: push(オールイン raise) / fold
     const sbStrategy: Record<string, ActionSolution[]> = {}
@@ -83,7 +85,7 @@ function main() {
       if (1 - d.freq > 0.0005) acts.push({ action: 'fold', frequency: +(1 - d.freq).toFixed(4), ev: d.evFold })
       sbStrategy[cat] = acts
     }
-    writeNode({ street: 'preflop', spotId: `hu-pf-${S}bb-sb`, strategy: sbStrategy, potBB: 1.5, source: 'solver_precomputed', meta })
+    writeNode({ street: 'preflop', spotId: `hu-pf-${S}bb-sb`, strategy: sbStrategy, potBB: 1.5, source: 'solver_precomputed', exploitability: expl, meta })
 
     // BB: push に直面して call / fold
     const bbStrategy: Record<string, ActionSolution[]> = {}
@@ -94,7 +96,7 @@ function main() {
       if (1 - d.freq > 0.0005) acts.push({ action: 'fold', frequency: +(1 - d.freq).toFixed(4), ev: d.evFold })
       bbStrategy[cat] = acts
     }
-    writeNode({ street: 'preflop', spotId: `hu-pf-${S}bb-bb`, strategy: bbStrategy, potBB: +(S + 1).toFixed(1), source: 'solver_precomputed', meta })
+    writeNode({ street: 'preflop', spotId: `hu-pf-${S}bb-bb`, strategy: bbStrategy, potBB: +(S + 1).toFixed(1), source: 'solver_precomputed', exploitability: expl, meta })
   }
   console.log('done.')
 }

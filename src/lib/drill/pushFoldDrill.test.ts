@@ -37,6 +37,19 @@ describe('pushFoldDrill', () => {
     expect(f(shallow)).toBeGreaterThan(f(deep))
   })
 
+  // 唯一の厳密 GTO(push/fold)の Nash 品質を出荷物から検証可能にする (rule 1)。
+  // 求解が劣化したら CI で落ちる = 「solver_precomputed と称せる」根拠を自己強制。
+  it('every bundled push/fold solution ships a near-Nash exploitability (< 0.005 BB/hand)', () => {
+    for (const stack of PUSHFOLD_STACKS) {
+      for (const role of ['sb', 'bb'] as const) {
+        const j = judgePushFold({ ...generatePushFoldQuestion(stack, role, () => 0), hand: 'AA' }, 'fold')
+        expect(j.source).toBe('solver_precomputed')
+        expect(j.exploitability, `${stack}BB ${role} に exploitability が同梱される`).not.toBeNull()
+        expect(j.exploitability!, `${stack}BB ${role} は near-Nash`).toBeLessThan(0.005)
+      }
+    }
+  })
+
   describe('explainPushFold', () => {
     it('SB push (AA 10BB) → +EV push rationale', () => {
       const j = judgePushFold({ ...generatePushFoldQuestion(10, 'sb', () => 0), hand: 'AA' }, 'push')

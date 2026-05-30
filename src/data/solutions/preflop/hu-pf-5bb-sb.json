@@ -1602,8 +1602,9 @@
   },
   "potBB": 1.5,
   "source": "solver_precomputed",
+  "exploitability": 0.0003,
   "meta": {
-    "sourceName": "self push/fold Nash (HU 5BB, MC eq 2500)",
+    "sourceName": "self push/fold Nash (HU 5BB, MC eq 2500, exploitability 0.0003 BB/hand)",
     "license": "self-generated",
     "version": "1"
   }

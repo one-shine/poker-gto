@@ -39,7 +39,7 @@ export interface NodeSolution {
   strategy: Record<string, ActionSolution[]>
   potBB: number
   source: SolutionSource
-  exploitability?: number // solver_live が到達した exploitability (% pot)
+  exploitability?: number // 到達 exploitability。postflop solver_live は pot比 / push-fold solver_precomputed は BB/hand (Nash 品質の検証用)
   // R14②: turn を完全チャンスノード CFR で解いた解 (river ベッティング考慮済み)。
   // turn の solver_live でも「簡易: 賭け未考慮」ではなく「賭け考慮済」と表示するためのフラグ。
   bettingAware?: boolean
