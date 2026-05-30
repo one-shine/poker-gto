@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { AgentBus } from './AgentBus'
-import { CoachAgent } from './CoachAgent'
+import { CoachAgent, evaluateHeroDecision } from './CoachAgent'
 import type { ActionRecord, Card, GameState, Player } from '../../types/game'
 import type { CoachFeedback } from '../../types/coach'
 
@@ -111,4 +111,18 @@ describe('CoachAgent postflop (river self-solver = R1/R3)', () => {
     expect(fb!.showEv).toBe(true) // 実EV が表示される (R3)
     expect(fb!.strategy.length).toBeGreaterThan(0)
   })
+})
+
+// ── play モードのハンド後 postflop 復習が使う共有評価関数 ──────────────────────────
+// 注: allowLiveSolve=false でも solveCache に解があれば配給される (cold spot のみ null)。
+// play 中はライブ「求解の起動」をしないだけ → 未キャッシュの postflop はこの復習に回す。
+describe('evaluateHeroDecision (post-hand review の共有関数)', () => {
+  it('allowLiveSolve=true で実ボードを live solve し solver_live フィードバックを返す (復習の経路)', async () => {
+    const state = riverState([c('A', 'hearts'), c('A', 'clubs')])
+    const fb = await evaluateHeroDecision(state, 'hero', 'raise', 8, true)
+    expect(fb).not.toBeNull()
+    expect(fb!.source).toBe('solver_live')
+    expect(fb!.showEv).toBe(true)
+    expect(fb!.street).toBe('river')
+  }, 15000)
 })

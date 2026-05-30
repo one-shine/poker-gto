@@ -19,6 +19,11 @@ let bus: AgentBus | null = null
 // ヒーローの意思決定コンテキスト (FEEDBACK_READY 受信時に評価の文脈として使う)。
 let heroDecisionCtx: { handId: string; street: Street; position: Position } | null = null
 
+// 代替案: play モードでも postflop コーチを出す。ハンド中に hero の postflop 決定 (実ボード込みの
+// state) を捕捉し、ハンド後に on-demand で live solve して復習表示する (求解が重いので都度でなく後で)。
+let pendingHeroState: GameState | null = null
+let handDecisions: HeroDecision[] = []
+
 // study モードの「一時停止」ゲート (R7)。ミス(major+)時に AI の送出を保留し、「次へ」で再開する。
 // engine は純粋同期のまま。保留は UI 層 (スケジューラ) で実現する。
 let paused = false
@@ -51,11 +56,15 @@ function xpForFeedback(fb: CoachFeedback): number {
   return 1 // critical
 }
 
+// hero の postflop 決定 (実ボード込みの state)。ハンド後の復習で live solve する。
+export interface HeroDecision { state: GameState; action: PlayerAction; amount: number }
+
 interface GameStore {
   gameState: GameState | null
   pendingHeroAction: ActionRequiredPayload | null // != null のとき ActionPanel 表示
   lastResults: ShowdownResult[] | null
   lastFeedback: CoachFeedback | null              // 直近のコーチ評価 (CoachPanel/トースト)
+  handReview: HeroDecision[] | null               // play モードの直近ハンドの postflop 決定 (復習用)
   handCount: number
   initialized: boolean
 
@@ -71,6 +80,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   pendingHeroAction: null,
   lastResults: null,
   lastFeedback: null,
+  handReview: null,
   handCount: 0,
   initialized: false,
 
@@ -104,7 +114,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     new CoachAgent(bus, HERO_ID, allowLiveSolve)
 
     bus.on('HAND_START', ({ state }) => {
-      set({ gameState: state, lastResults: null, pendingHeroAction: null, lastFeedback: null })
+      handDecisions = []
+      pendingHeroState = null
+      set({ gameState: state, lastResults: null, pendingHeroAction: null, lastFeedback: null, handReview: null })
     })
     bus.on('STREET_DEALT', ({ state }) => set({ gameState: state }))
     bus.on('ACTION_REQUIRED', payload => {
@@ -115,6 +127,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           street: payload.state.street,
           position: hero?.position ?? 'BTN',
         }
+        pendingHeroState = payload.state // 復習用: 決定時点の実 state を保持
       }
       set({
         gameState: payload.state,
@@ -147,10 +160,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
       useSessionStore.getState().recordHand(handActions)
       useProgressStore.getState().recordHandPlayed()
       useProgressStore.getState().addXP(5) // 結果ではなく判断にXP (ハンド完了ボーナス)
+      // 代替案: play モードは postflop をライブ求解しない (ハンドを止めない)。
+      // 捕捉した postflop 決定をハンド後の復習に回す (実ボードを on-demand で求解)。
+      const play = useSettingsStore.getState().appMode === 'play'
+      const review = play && handDecisions.length > 0 ? handDecisions : null
       set(s => ({
         gameState: state,
         lastResults: results,
         pendingHeroAction: null,
+        handReview: review,
         handCount: s.handCount + 1,
       }))
     })
@@ -168,6 +186,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   submitHeroAction: (action, amount = 0) => {
     const pending = get().pendingHeroAction
     if (!pending || !bus) return // 自分のターンでなければ無視
+    // 復習用: postflop の hero 決定を実 state ごと捕捉 (preflop はライブで既にコーチ可)。
+    if (pendingHeroState && pendingHeroState.street !== 'preflop') {
+      handDecisions.push({ state: pendingHeroState, action, amount })
+    }
+    pendingHeroState = null
     set({ pendingHeroAction: null })
     bus.emit('PLAYER_ACTION', { playerId: HERO_ID, action, amount })
   },
@@ -182,11 +205,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resetGame: () => {
     bus = null
     heroDecisionCtx = null
+    pendingHeroState = null
+    handDecisions = []
     setPaused(false)
     emitQueue.length = 0
     set({
       gameState: null, pendingHeroAction: null, lastResults: null,
-      lastFeedback: null, handCount: 0, initialized: false,
+      lastFeedback: null, handReview: null, handCount: 0, initialized: false,
     })
   },
 }))

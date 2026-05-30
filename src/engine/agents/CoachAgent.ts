@@ -42,21 +42,8 @@ export class CoachAgent {
   }
 
   private async evaluate(state: GameState, action: PlayerAction, amount: number): Promise<void> {
-    const spot = resolveSpotKey(state, this.heroId)
-    if (!spot) return // 評価対象外スポット → スキップ (誤判定より安全)
-
-    const node = await getSolution(spot, { allowLiveSolve: this.allowLiveSolve })
-    if (!node) return // 解未供給 → スキップ
-
-    const hero = state.players.find(p => p.id === this.heroId)
-    if (!hero?.holeCards) return
-    // preflop はカテゴリ("AKs")、postflop は具体コンボキー("AsKc")で戦略を引く
-    const handKey = node.street === 'preflop'
-      ? handCategory(hero.holeCards)
-      : comboKey([hero.holeCards[0], hero.holeCards[1]])
-
-    const fb = evaluateAction(node, handKey, action, hero.position, amount)
-    if (!fb) return
+    const fb = await evaluateHeroDecision(state, this.heroId, action, amount, this.allowLiveSolve)
+    if (!fb) return // 評価対象外/解未供給 → スキップ (誤判定より安全)
 
     this.bus.emit('FEEDBACK_READY', { playerId: this.heroId, feedback: fb })
     if (fb.kind === 'mistake') {
@@ -67,6 +54,28 @@ export class CoachAgent {
       })
     }
   }
+}
+
+// ヒーローの1決定を NodeSolution 基準で評価する (resolveSpotKey→getSolution→evaluateAction)。
+// CoachAgent (ライブ) と「ハンド後の postflop 復習」(play モードで実ボードを live solve) が共有する。
+export async function evaluateHeroDecision(
+  state: GameState,
+  heroId: string,
+  action: PlayerAction,
+  amount: number,
+  allowLiveSolve: boolean,
+): Promise<CoachFeedback | null> {
+  const spot = resolveSpotKey(state, heroId)
+  if (!spot) return null
+  const node = await getSolution(spot, { allowLiveSolve })
+  if (!node) return null
+  const hero = state.players.find(p => p.id === heroId)
+  if (!hero?.holeCards) return null
+  // preflop はカテゴリ("AKs")、postflop は具体コンボキー("AsKc")で戦略を引く
+  const handKey = node.street === 'preflop'
+    ? handCategory(hero.holeCards)
+    : comboKey([hero.holeCards[0], hero.holeCards[1]])
+  return evaluateAction(node, handKey, action, hero.position, amount)
 }
 
 // ── 評価ロジック (純関数・テスト可能) ─────────────────────────────────────────

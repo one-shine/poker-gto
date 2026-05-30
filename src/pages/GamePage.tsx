@@ -10,12 +10,13 @@ import { HandResultOverlay } from '../components/game/HandResultOverlay'
 import { ActionPanel } from '../components/game/ActionPanel'
 import { GameFooter } from '../components/game/GameFooter'
 import { CoachPanel } from '../components/coach/CoachPanel'
+import { PostflopReviewPanel } from '../components/coach/PostflopReviewPanel'
 import { CoachToast } from '../components/coach/CoachToast'
 import { LiveStrategyPanel } from '../components/coach/LiveStrategyPanel'
 import { useProgressStore } from '../stores/progressStore'
 
 export function GamePage() {
-  const { gameState, pendingHeroAction, lastResults, lastFeedback, initialized, initGame, startNewHand, submitHeroAction, dismissFeedback } =
+  const { gameState, pendingHeroAction, lastResults, lastFeedback, handReview, initialized, initGame, startNewHand, submitHeroAction, dismissFeedback } =
     useGameStore()
   const appMode = useSettingsStore(s => s.appMode)
   const stackBB = useSettingsStore(s => s.stackBB)
@@ -111,6 +112,13 @@ export function GamePage() {
         {/* ショーダウン結果 */}
         {handComplete && gameState && lastResults && (
           <HandResultOverlay results={lastResults} players={gameState.players} />
+        )}
+
+        {/* play モード: ハンド後に postflop をソルバーで復習 (実ボードを on-demand 求解) */}
+        {handComplete && appMode === 'play' && handReview && handReview.length > 0 && (
+          <div className="w-full max-w-md">
+            <PostflopReviewPanel key={handReview.length + '-' + (gameState?.handId ?? '')} decisions={handReview} />
+          </div>
         )}
 
         {/* コーチフィードバック (study)。ミスは「次へ」まで保持 (一時停止)、mixedは自動再開。 */}
