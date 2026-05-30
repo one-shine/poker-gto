@@ -17,6 +17,7 @@ const SOURCE_INFO: Record<SolutionSource, { icon: string; label: string; cls: st
 
 export function GameFooter({ source }: GameFooterProps) {
   const stackBB = useSettingsStore(s => s.stackBB)
+  const opponentMode = useSettingsStore(s => s.opponentMode)
   const [open, setOpen] = useState(false)
 
   // Escape で詳細モーダルを閉じる
@@ -106,6 +107,17 @@ export function GameFooter({ source }: GameFooterProps) {
                   ✓ = 本物のソルバー解 / △ = 手作り近似 (ソルバー解への置換予定)。
                   スポットごとに信頼度が変わります。
                 </p>
+              </Item>
+              <Item term="対戦相手">
+                {opponentMode === 'trainer' ? (
+                  <>
+                    GTO (trainer): 相手は上記「解の出典」と同じ解を頻度サンプリングして打ちます。
+                    <span className="text-zinc-400"> 相手の精度もバッジと同じで、△ のスポットでは相手も GTO近似で打ちます</span>
+                    (真のGTOボットではありません)。
+                  </>
+                ) : (
+                  <>Fish (exploit): リーク持ちの相手。固定解との突合は「GTO近似に照らすと」の参考値です。</>
+                )}
               </Item>
             </dl>
           </div>

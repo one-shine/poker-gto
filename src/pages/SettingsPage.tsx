@@ -80,7 +80,7 @@ export function SettingsPage() {
             value={s.opponentMode}
             onChange={setOpponent}
             options={[
-              { value: 'trainer', label: 'GTO (trainer)', desc: '相手もGTO解で打つ。最適解との乖離を正しく測れる。GTO Wizard 流。' },
+              { value: 'trainer', label: 'GTO (trainer)', desc: '相手は本アプリの解を頻度サンプリングして打つ(GTO Wizard 流)。解の精度はスポット次第で、100BBプリフロップの多くは GTO近似(フッターの △/✓ source バッジ参照)。' },
               { value: 'exploit', label: 'Fish (exploit)', desc: 'リーク持ちの相手。実戦的だが固定解突合は「GTO近似に照らすと」の参考値。' },
             ]}
           />
