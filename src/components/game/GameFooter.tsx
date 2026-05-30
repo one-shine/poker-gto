@@ -78,6 +78,11 @@ export function GameFooter({ source }: GameFooterProps) {
             </div>
 
             <dl className="flex flex-col gap-2.5">
+              <Item term="用途">
+                教育・学習用のシミュレーションです。
+                <span className="text-zinc-100 font-semibold">実際の金銭の賭け・換金・賞金は一切ありません。</span>
+                「GTO Wizard」「PokerSnowie」等とは無関係・非提携です(各社の商標)。
+              </Item>
               <Item term="ゲーム形式">
                 6-max ノーリミットホールデム · キャッシュゲーム
               </Item>

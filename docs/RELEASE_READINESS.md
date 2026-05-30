@@ -78,8 +78,8 @@
 
 ## S. ストア要件(スマホアプリ化)
 - [ ] **S1 開発者アカウント**: Apple Developer($99/年)、Google Play($25 一回)。
-- [ ] **S2 ギャンブルポリシー**: 賞金の無い**学習/シミュレーション**は通常可だが、Apple/Google とも「ギャンブル類似」審査が厳しい。実マネー無し・年齢レーティング **17+/Teen以上**・「ギャンブルではない」明記。
-- [ ] **S3 プライバシー要件**: プライバシーポリシー URL 必須(ローカル保存のみでも)。Apple **Privacy Nutrition Labels** / Google **Data Safety** 申告。
+- [🔄] **S2 ギャンブルポリシー** (調査済 ✅ 2026-05-30 → [RELEASE_PREP.md](RELEASE_PREP.md) §2): 実マネー無しトレーナーは**両ストア許可**(simulated gambling 扱い)。安全側で **Apple 17+/Google Teen**、実マネー無し明示、購入通貨を作らない(現設計=最小摩擦)、casino/win money 等の語回避。**アプリ内に「教育用・実マネー無し・非提携」明示を実装済**(GameFooter モーダル「用途」項目)。残=ストア申告は提出時。
+- [🔄] **S3 プライバシー要件** (草案 ✅ 2026-05-30 → [RELEASE_PREP.md](RELEASE_PREP.md) §3): データは全ローカル=Apple **Data Not Collected** / Google **No data collected** で申告可。`PRIVACY_POLICY.md` 作成済。**推奨**: Google Fonts をセルフホストし「第三者送信ゼロ」を成立(現状 CDN→IP 到達)。残=事業者名/連絡先/施行日確定 + 公開 URL 化。
 - [ ] **S4 ストア素材**: アイコン、スクショ、説明文、サポート URL、レビュー対応。
 
 ## P. データ・プライバシー
@@ -92,7 +92,7 @@
 - [ ] **M2 広告ポリシー順守**: 同意(P2)、子ども向け除外、不適切配置の回避。代替収益(買い切り/サブスク/レンジパック販売)も検討。
 
 ## T. 技術・運用(配信)
-- [ ] **T1 モバイル化方式**: PWA(手軽)か Capacitor(ストア配信)。Phase 6 で WASM 用 **COOP/COEP** とオフライン対応。
+- [🔄] **T1 モバイル化方式** (方針決定 ✅ 2026-05-30 → [RELEASE_PREP.md](RELEASE_PREP.md) §1): **PWA-first 推奨**(manifest+sw.js+icons 既存・完全オフライン動作=即配信可・審査/手数料/$なし)。Capacitor は同じ dist で後日 ~3-5日で店舗提出可(手順記載・⚠ capacitor:// で sw.js 要調整)。**残(PWA公開前 gap)**: `manifest.screenshots`(Google Play 必須)追加 + 静的ホスティング(HTTPS)へデプロイ。
 - [🔄] **T2 観測**: **エラー境界+クラッシュレポート ✅** 2026-05-30(軽量・依存追加なし)。`src/components/error/ErrorBoundary.tsx`(リポジトリ唯一のクラスコンポーネント・`getDerivedStateFromError`/`componentDidCatch`・日本語フォールバック UI=Felt&Brass ダーク・⚠グリフ+テキスト併記で色覚配慮・「再読み込み」・DEV のみ stack 詳細=プライバシー P1)。`src/lib/monitoring/reporter.ts`: `captureError` は常に console.error、`VITE_SENTRY_DSN` 設定時のみ `@sentry/browser` を**動的import**(`new Function` で specifier を不透明化しバンドル非同梱・未インストールでも握りつぶし)。`initErrorReporting()` が window error/unhandledrejection を登録(冪等)。既定リモート送信ゼロ。`main.tsx` で `<App/>` をラップ。テスト7件(ErrorBoundary 3+reporter 4)。残: 解析(プライバシー配慮)・バージョン更新フロー・本番 Sentry DSN 配線は任意。
 - [x] **T3 git化 + CI** (2026-05-25): `git init`→ 初回コミット → private repo `github.com/one-shine/poker-gto` に push。`.github/workflows/ci.yml` で push/PR 時に **lint → build(tsc -b 型チェック込) → test → npm audit(high以上で失敗)** を Node22 で実行。**初回CI緑・脆弱性0件**。残(公開前): XSS/インジェクション・データ取り扱いの観点レビュー、actions の Node20ランタイム非推奨警告(将来 v5 等へ更新)。
 - [ ] **T4 国際化(任意)**: 現状 UI は日本語のみ。英語化で市場拡大。
