@@ -382,6 +382,55 @@ const coVsBtn3bet = build({
   'KQo':[0,0.15],
 })
 
+// ── 残り opener (UTG/MP/SB) が 3bet に直面 (4bet/call/fold)。non-BB defender の 3bet EV を埋める ──
+// heuristic approximate: not GTO-exact。opener別生成WF + 整合監修(タイトopenerほど降りない/
+// vs BB は vs BTN/CO より広くフラット/4betブラフはブロッカーのみ)。raise=4bet, call=コール。
+
+// UTG open(最強・狭い)が 3bet に直面。IP(vs BB)では広くフラット、OOP(vs BTN/CO)は 4bet-or-fold 寄り。
+const utgVsBb3bet = build({
+  'AA':[1,0],'KK':[1,0],'QQ':[0.85,0.15],'JJ':[0.4,0.6],'TT':[0.15,0.85],'99':[0,1],'88':[0,1],'77':[0,1],'66':[0,1],'55':[0,1],
+  'AKs':[0.7,0.3],'AQs':[0.2,0.8],'AJs':[0,1],'ATs':[0,1],'A9s':[0,1],'A5s':[0.35,0.15],'A4s':[0.25,0.1],
+  'AKo':[0.75,0.25],'AQo':[0.15,0.85],
+  'KQs':[0,1],'KJs':[0,1],'KTs':[0,1],'K9s':[0,0.6],'QJs':[0,1],'QTs':[0,1],'Q9s':[0,0.6],'JTs':[0,1],'J9s':[0,0.8],'T9s':[0,1],'T8s':[0,0.6],'98s':[0,1],'87s':[0,0.8],'76s':[0,0.6],
+})
+
+const utgVsBtn3bet = build({
+  'AA':[1,0],'KK':[1,0],'QQ':[0.9,0.1],'JJ':[0.55,0.45],'TT':[0.2,0.8],'99':[0,1],'88':[0,1],'77':[0,1],'66':[0,1],'55':[0,1],
+  'AKs':[0.65,0.35],'AQs':[0.25,0.75],'AJs':[0.05,0.95],'ATs':[0,1],'A9s':[0,0.5],'A5s':[0.3,0.05],'A4s':[0.2,0],
+  'AKo':[0.7,0.3],'AQo':[0.1,0.9],
+  'KQs':[0,1],'KJs':[0,1],'KTs':[0,1],'K9s':[0,0.3],'QJs':[0,1],'QTs':[0,1],'Q9s':[0,0.3],'JTs':[0,1],'J9s':[0,0.4],'T9s':[0,1],'T8s':[0,0.3],'98s':[0,0.7],'87s':[0,0.5],'76s':[0,0.3],
+})
+
+const utgVsCo3bet = build({
+  'AA':[1,0],'KK':[1,0],'QQ':[0.92,0.08],'JJ':[0.6,0.4],'TT':[0.25,0.75],'99':[0,1],'88':[0,1],'77':[0,1],'66':[0,1],'55':[0,1],
+  'AKs':[0.68,0.32],'AQs':[0.25,0.75],'AJs':[0.08,0.92],'ATs':[0,1],'A9s':[0,0.5],'A5s':[0.32,0.08],'A4s':[0.22,0.03],
+  'AKo':[0.72,0.28],'AQo':[0.12,0.88],
+  'KQs':[0,1],'KJs':[0,1],'KTs':[0,1],'K9s':[0,0.4],'QJs':[0,1],'QTs':[0,1],'Q9s':[0,0.4],'JTs':[0,1],'J9s':[0,0.5],'T9s':[0,1],'T8s':[0,0.4],'98s':[0,0.7],'87s':[0,0.5],'76s':[0,0.4],
+})
+
+// MP open(~17%・UTGより少し広い)。降りる割合は UTG より多い。
+const mpVsBb3bet = build({
+  'AA':[1,0],'KK':[0.9,0.1],'QQ':[0.4,0.55],'JJ':[0.15,0.7],'TT':[0.05,0.75],'99':[0,0.65],'88':[0,0.55],'77':[0,0.45],'66':[0,0.35],
+  'AKs':[0.5,0.5],'AKo':[0.6,0.3],'AQs':[0.1,0.75],'AQo':[0.05,0.4],'AJs':[0,0.55],'ATs':[0,0.4],'A9s':[0,0.25],'A8s':[0,0.15],
+  'A5s':[0.3,0.3],'A4s':[0.2,0.2],'A3s':[0.1,0.1],
+  'KQs':[0,0.65],'KQo':[0,0.3],'KJs':[0,0.45],'KTs':[0,0.25],'K9s':[0,0.15],'QJs':[0,0.4],'QTs':[0,0.25],'JTs':[0,0.4],'J9s':[0,0.15],'T9s':[0,0.35],'98s':[0,0.2],'87s':[0,0.15],'76s':[0,0.2],'65s':[0,0.15],
+})
+
+const mpVsBtn3bet = build({
+  'AA':[1,0],'KK':[0.95,0.05],'QQ':[0.55,0.35],'JJ':[0.2,0.5],'TT':[0.1,0.35],'99':[0,0.2],
+  'AKs':[0.5,0.45],'AKo':[0.6,0.25],'AQs':[0.12,0.6],'AQo':[0,0.25],'AJs':[0,0.4],'ATs':[0,0.25],'A9s':[0,0.1],
+  'A5s':[0.25,0.15],'A4s':[0.15,0.1],'A3s':[0.08,0.05],
+  'KQs':[0,0.5],'KQo':[0,0.15],'KJs':[0,0.25],'KTs':[0,0.15],'QJs':[0,0.25],'JTs':[0,0.25],'T9s':[0,0.15],'98s':[0,0.1],
+})
+
+// SB open(~50%・盲対盲)。BB の 3bet に対し多くを降り、プレミアム 4bet + ブロッカー + 一部フラット。SB はオープン 3BB。
+const sbVsBb3bet = build({
+  'AA':[1,0],'KK':[1,0],'QQ':[1,0],'JJ':[0.4,0.6],'TT':[0.15,0.85],'99':[0.05,0.7],'88':[0,0.5],'77':[0,0.3],
+  'AKs':[0.85,0.15],'AKo':[0.9,0.1],'AQs':[0.25,0.75],'AQo':[0.2,0.6],'AJs':[0.05,0.7],'AJo':[0,0.4],'ATs':[0,0.5],'A9s':[0,0.25],
+  'A5s':[0.3,0.35],'A4s':[0.25,0.25],'A3s':[0.2,0.15],'A2s':[0.15,0.1],
+  'KQs':[0.1,0.8],'KQo':[0.05,0.5],'KJs':[0,0.6],'KJo':[0,0.3],'QJs':[0,0.5],'QJo':[0,0.25],'JTs':[0,0.4],'T9s':[0,0.2],'98s':[0,0.1],
+})
+
 // ── Exports ──────────────────────────────────────────────────────────────────
 
 export const PREFLOP_SCENARIOS: RangeScenario[] = [
@@ -407,4 +456,11 @@ export const PREFLOP_SCENARIOS: RangeScenario[] = [
   { id: 'co-vs-sb-3bet', label:'CO vs SB 3Bet', position:'CO', raiseSize:11, cells: coVsSb3bet },
   { id: 'co-vs-bb-3bet', label:'CO vs BB 3Bet', position:'CO', raiseSize:11, cells: coVsBb3bet },
   { id: 'co-vs-btn-3bet',label:'CO vs BTN 3Bet',position:'CO', raiseSize:11, cells: coVsBtn3bet },
+  // UTG/MP/SB opener が 3bet に直面 (non-BB defender + bb-vs-{mp,utg,sb} の 3bet EV を埋める)
+  { id: 'utg-vs-bb-3bet', label:'UTG vs BB 3Bet', position:'UTG',raiseSize:11, cells: utgVsBb3bet },
+  { id: 'utg-vs-btn-3bet',label:'UTG vs BTN 3Bet',position:'UTG',raiseSize:11, cells: utgVsBtn3bet },
+  { id: 'utg-vs-co-3bet', label:'UTG vs CO 3Bet', position:'UTG',raiseSize:11, cells: utgVsCo3bet },
+  { id: 'mp-vs-bb-3bet',  label:'MP vs BB 3Bet',  position:'MP', raiseSize:11, cells: mpVsBb3bet },
+  { id: 'mp-vs-btn-3bet', label:'MP vs BTN 3Bet', position:'MP', raiseSize:11, cells: mpVsBtn3bet },
+  { id: 'sb-vs-bb-3bet',  label:'SB vs BB 3Bet',  position:'SB', raiseSize:11, cells: sbVsBb3bet },
 ]

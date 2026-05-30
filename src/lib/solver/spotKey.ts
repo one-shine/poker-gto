@@ -25,6 +25,9 @@ const POS_VS_SPOT: Partial<Record<Position, Partial<Record<Position, string>>>> 
 const OPENER_VS_3BET_SPOT: Partial<Record<Position, Partial<Record<Position, string>>>> = {
   BTN: { SB: 'btn-vs-sb-3bet', BB: 'btn-vs-bb-3bet' },
   CO: { SB: 'co-vs-sb-3bet', BB: 'co-vs-bb-3bet', BTN: 'co-vs-btn-3bet' },
+  UTG: { BB: 'utg-vs-bb-3bet', BTN: 'utg-vs-btn-3bet', CO: 'utg-vs-co-3bet' },
+  MP: { BB: 'mp-vs-bb-3bet', BTN: 'mp-vs-btn-3bet' },
+  SB: { BB: 'sb-vs-bb-3bet' },
 }
 
 // GameState からヒーロー視点の解スポットキーを決める。null = 評価対象外 (スキップ)。

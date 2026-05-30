@@ -70,6 +70,13 @@ const DEFENDER_TO_FACING3BET: Record<string, string> = {
   'sb-vs-btn': 'btn-vs-sb-3bet',
   'sb-vs-co': 'co-vs-sb-3bet',
   'btn-vs-co': 'co-vs-btn-3bet',
+  // 残り opener (UTG/MP/SB) 用 → non-BB defender + bb-vs-{mp,utg,sb} の 3bet EV を埋める
+  'bb-vs-mp': 'mp-vs-bb-3bet',
+  'bb-vs-utg': 'utg-vs-bb-3bet',
+  'bb-vs-sb': 'sb-vs-bb-3bet',
+  'btn-vs-utg': 'utg-vs-btn-3bet',
+  'btn-vs-mp': 'mp-vs-btn-3bet',
+  'co-vs-utg': 'utg-vs-co-3bet',
 }
 
 // facing-3bet スポット (hero=opener) → villain(3better) のレンジシナリオ (raise 列=3bet レンジ)。
@@ -79,6 +86,12 @@ const FACING3BET_TO_3BETTER: Record<string, string> = {
   'co-vs-sb-3bet': 'sb-vs-co',
   'co-vs-bb-3bet': 'bb-vs-co',
   'co-vs-btn-3bet': 'btn-vs-co',
+  'utg-vs-bb-3bet': 'bb-vs-utg',
+  'utg-vs-btn-3bet': 'btn-vs-utg',
+  'utg-vs-co-3bet': 'co-vs-utg',
+  'mp-vs-bb-3bet': 'bb-vs-mp',
+  'mp-vs-btn-3bet': 'btn-vs-mp',
+  'sb-vs-bb-3bet': 'bb-vs-sb',
 }
 
 const BLIND_POSTED: Record<string, number> = { BB: 1.0, SB: 0.5, BTN: 0, CO: 0, MP: 0, UTG: 0 }
@@ -168,10 +181,12 @@ function main() {
       continue
     }
     const villain3betFreq = buildOpenerRaiseFreq(threeBetter)
+    // opener のオープン額はポジション次第 (SB open=3.0, それ以外=2.5)。
+    const openerOpen = PREFLOP_SCENARIOS.find(s => s.id === `${facing.position.toLowerCase()}-open`)
     const node = computeOpenerFacing3betEV(facing, villain3betFreq, eq, {
-      openBB: 2.5,
+      openBB: openerOpen?.raiseSize ?? 2.5,
       threeBetBB: THREE_BET_BB,
-      openerBlind: BLIND_POSTED[facing.position] ?? 0,         // opener=BTN/CO → 0
+      openerBlind: BLIND_POSTED[facing.position] ?? 0,         // opener=BTN/CO → 0, SB → 0.5
       threeBetterBlind: BLIND_POSTED[threeBetter.position] ?? 0, // 3better=BB/SB/BTN
       threeBetFactor: F3, fourBetFactor: F4, foldToFourBet: 0.55,
     })

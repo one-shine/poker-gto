@@ -6,17 +6,18 @@ const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
 const HAND_RE = /^([AKQJT2-9])\1$|^([AKQJT2-9])([AKQJT2-9])(s|o)$/
 
 describe('PREFLOP_SCENARIOS', () => {
-  it('covers the expected 21 spots with unique ids', () => {
+  it('covers the expected 27 spots with unique ids', () => {
     const ids = PREFLOP_SCENARIOS.map(s => s.id)
     expect(new Set(ids).size).toBe(ids.length) // 重複なし
-    // R2 で追加した defender / facing-3bet スポットが含まれる
+    // R2 facing-3bet (BTN/CO opener) + UTG/MP/SB opener facing-3bet (3bet EV 拡張)
     for (const id of [
       'sb-vs-co', 'btn-vs-utg', 'btn-vs-mp', 'co-vs-utg',
       'btn-vs-sb-3bet', 'btn-vs-bb-3bet', 'co-vs-sb-3bet', 'co-vs-bb-3bet', 'co-vs-btn-3bet',
+      'utg-vs-bb-3bet', 'utg-vs-btn-3bet', 'utg-vs-co-3bet', 'mp-vs-bb-3bet', 'mp-vs-btn-3bet', 'sb-vs-bb-3bet',
     ]) {
       expect(ids).toContain(id)
     }
-    expect(PREFLOP_SCENARIOS.length).toBe(21)
+    expect(PREFLOP_SCENARIOS.length).toBe(27)
   })
 
   it('every cell has valid frequencies that sum to ~1 with non-negative fold', () => {
@@ -70,6 +71,8 @@ describe('PREFLOP_SCENARIOS', () => {
       'btn-vs-mp': 0.146, 'co-vs-utg': 0.087,
       'btn-vs-sb-3bet': 0.066, 'btn-vs-bb-3bet': 0.077, 'co-vs-sb-3bet': 0.056,
       'co-vs-bb-3bet': 0.064, 'co-vs-btn-3bet': 0.047,
+      'utg-vs-bb-3bet': 0.117, 'utg-vs-btn-3bet': 0.108, 'utg-vs-co-3bet': 0.110,
+      'mp-vs-bb-3bet': 0.069, 'mp-vs-btn-3bet': 0.045, 'sb-vs-bb-3bet': 0.083,
     }
     for (const sc of PREFLOP_SCENARIOS) {
       const want = EXPECTED[sc.id]
@@ -80,7 +83,8 @@ describe('PREFLOP_SCENARIOS', () => {
   })
 
   it('facing-3bet spots: AA always 4bets, mix call+4bet, and raiseSize reflects the 3bet', () => {
-    for (const id of ['btn-vs-sb-3bet', 'btn-vs-bb-3bet', 'co-vs-sb-3bet', 'co-vs-bb-3bet', 'co-vs-btn-3bet']) {
+    for (const id of ['btn-vs-sb-3bet', 'btn-vs-bb-3bet', 'co-vs-sb-3bet', 'co-vs-bb-3bet', 'co-vs-btn-3bet',
+      'utg-vs-bb-3bet', 'utg-vs-btn-3bet', 'utg-vs-co-3bet', 'mp-vs-bb-3bet', 'mp-vs-btn-3bet', 'sb-vs-bb-3bet']) {
       const sc = PREFLOP_SCENARIOS.find(s => s.id === id)!
       expect(sc.cells['AA'].raise, `${id} AA は 4bet`).toBe(1)
       const cells = Object.values(sc.cells)

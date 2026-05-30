@@ -1,0 +1,408 @@
+{
+  "street": "preflop",
+  "spotId": "sb-vs-bb-3bet",
+  "strategy": {
+    "77": [
+      {
+        "action": "call",
+        "frequency": 0.3,
+        "ev": -6.313
+      },
+      {
+        "action": "fold",
+        "frequency": 0.7,
+        "ev": -2.5
+      }
+    ],
+    "88": [
+      {
+        "action": "call",
+        "frequency": 0.5,
+        "ev": -6.216
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": -2.5
+      }
+    ],
+    "99": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.05,
+        "ev": 2.593
+      },
+      {
+        "action": "call",
+        "frequency": 0.7,
+        "ev": -6.219
+      },
+      {
+        "action": "fold",
+        "frequency": 0.25,
+        "ev": -2.5
+      }
+    ],
+    "AA": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 1,
+        "ev": 15.454
+      }
+    ],
+    "KK": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 1,
+        "ev": 8.892
+      }
+    ],
+    "QQ": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 1,
+        "ev": 4.682
+      }
+    ],
+    "JJ": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.4,
+        "ev": 3.122
+      },
+      {
+        "action": "call",
+        "frequency": 0.6,
+        "ev": -5.338
+      }
+    ],
+    "TT": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.15,
+        "ev": 2.636
+      },
+      {
+        "action": "call",
+        "frequency": 0.85,
+        "ev": -6.148
+      }
+    ],
+    "AKs": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.85,
+        "ev": 4.592
+      },
+      {
+        "action": "call",
+        "frequency": 0.15,
+        "ev": -2.888
+      }
+    ],
+    "AKo": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.9,
+        "ev": 3.723
+      },
+      {
+        "action": "call",
+        "frequency": 0.1,
+        "ev": -4.337
+      }
+    ],
+    "AQs": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.25,
+        "ev": 1.28
+      },
+      {
+        "action": "call",
+        "frequency": 0.75,
+        "ev": -8.409
+      }
+    ],
+    "AQo": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.2,
+        "ev": 0.064
+      },
+      {
+        "action": "call",
+        "frequency": 0.6,
+        "ev": -10.435
+      },
+      {
+        "action": "fold",
+        "frequency": 0.2,
+        "ev": -2.5
+      }
+    ],
+    "AJs": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.05,
+        "ev": 0.982
+      },
+      {
+        "action": "call",
+        "frequency": 0.7,
+        "ev": -8.905
+      },
+      {
+        "action": "fold",
+        "frequency": 0.25,
+        "ev": -2.5
+      }
+    ],
+    "AJo": [
+      {
+        "action": "call",
+        "frequency": 0.4,
+        "ev": -10.765
+      },
+      {
+        "action": "fold",
+        "frequency": 0.6,
+        "ev": -2.5
+      }
+    ],
+    "ATs": [
+      {
+        "action": "call",
+        "frequency": 0.5,
+        "ev": -8.684
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": -2.5
+      }
+    ],
+    "A9s": [
+      {
+        "action": "call",
+        "frequency": 0.25,
+        "ev": -9.227
+      },
+      {
+        "action": "fold",
+        "frequency": 0.75,
+        "ev": -2.5
+      }
+    ],
+    "A5s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.3,
+        "ev": 1.279
+      },
+      {
+        "action": "call",
+        "frequency": 0.35,
+        "ev": -8.41
+      },
+      {
+        "action": "fold",
+        "frequency": 0.35,
+        "ev": -2.5
+      }
+    ],
+    "A4s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.25,
+        "ev": 0.903
+      },
+      {
+        "action": "call",
+        "frequency": 0.25,
+        "ev": -9.036
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": -2.5
+      }
+    ],
+    "A3s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.2,
+        "ev": 0.914
+      },
+      {
+        "action": "call",
+        "frequency": 0.15,
+        "ev": -9.018
+      },
+      {
+        "action": "fold",
+        "frequency": 0.65,
+        "ev": -2.5
+      }
+    ],
+    "A2s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.15,
+        "ev": 0.945
+      },
+      {
+        "action": "call",
+        "frequency": 0.1,
+        "ev": -8.967
+      },
+      {
+        "action": "fold",
+        "frequency": 0.75,
+        "ev": -2.5
+      }
+    ],
+    "KQs": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.1,
+        "ev": 0.055
+      },
+      {
+        "action": "call",
+        "frequency": 0.8,
+        "ev": -10.45
+      },
+      {
+        "action": "fold",
+        "frequency": 0.1,
+        "ev": -2.5
+      }
+    ],
+    "KQo": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.05,
+        "ev": -0.905
+      },
+      {
+        "action": "call",
+        "frequency": 0.5,
+        "ev": -12.049
+      },
+      {
+        "action": "fold",
+        "frequency": 0.45,
+        "ev": -2.5
+      }
+    ],
+    "KJs": [
+      {
+        "action": "call",
+        "frequency": 0.6,
+        "ev": -10.447
+      },
+      {
+        "action": "fold",
+        "frequency": 0.4,
+        "ev": -2.5
+      }
+    ],
+    "KJo": [
+      {
+        "action": "call",
+        "frequency": 0.3,
+        "ev": -12.696
+      },
+      {
+        "action": "fold",
+        "frequency": 0.7,
+        "ev": -2.5
+      }
+    ],
+    "QJs": [
+      {
+        "action": "call",
+        "frequency": 0.5,
+        "ev": -9.396
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": -2.5
+      }
+    ],
+    "QJo": [
+      {
+        "action": "call",
+        "frequency": 0.25,
+        "ev": -11.052
+      },
+      {
+        "action": "fold",
+        "frequency": 0.75,
+        "ev": -2.5
+      }
+    ],
+    "JTs": [
+      {
+        "action": "call",
+        "frequency": 0.4,
+        "ev": -9.122
+      },
+      {
+        "action": "fold",
+        "frequency": 0.6,
+        "ev": -2.5
+      }
+    ],
+    "T9s": [
+      {
+        "action": "call",
+        "frequency": 0.2,
+        "ev": -8.825
+      },
+      {
+        "action": "fold",
+        "frequency": 0.8,
+        "ev": -2.5
+      }
+    ],
+    "98s": [
+      {
+        "action": "call",
+        "frequency": 0.1,
+        "ev": -9.287
+      },
+      {
+        "action": "fold",
+        "frequency": 0.9,
+        "ev": -2.5
+      }
+    ]
+  },
+  "potBB": 14.5,
+  "source": "approximate_with_ev",
+  "meta": {
+    "sourceName": "hand-built opener strategy + heuristic call/4bet EV (3bet factor=45, 4bet factor=60, fold-to-4bet=0.55 推定)",
+    "license": "original",
+    "version": "1"
+  }
+}
