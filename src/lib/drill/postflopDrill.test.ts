@@ -141,9 +141,9 @@ describe('explainPostflop', () => {
     board, heroCards: hero, heroHand: 'XX', heroIsOOP: false, facing: false, facingRaise: false, potType: 'srp', potBB: 5.5, prompt: '',
   })
 
-  it('names the made hand and ties the principle to the recommended action', () => {
-    // セット (AA on A-K-7) + ベット推奨 → 強い手のバリュー文言
-    const q = mkQ([cc('A', 'spades'), cc('K', 'diamonds'), cc('7', 'clubs')], [cc('A', 'hearts'), cc('A', 'clubs')])
+  it('names the made hand, board texture, position, and sizing rationale on a bet', () => {
+    // セット (AA on A-7-2 ドライ Aハイ・レインボー) + ベット推奨 → バリュー + 盤面分類 + IP + サイズ根拠
+    const q = mkQ([cc('A', 'spades'), cc('7', 'diamonds'), cc('2', 'clubs')], [cc('A', 'hearts'), cc('A', 'clubs')])
     const all: PostflopActionInfo[] = [
       { action: 'check', label: 'チェック', freq: 0.2, ev: 1 },
       { action: 'raise', label: 'ベット', sizeBB: 3.6, freq: 0.8, ev: 1.5 },
@@ -151,9 +151,18 @@ describe('explainPostflop', () => {
     const text = explainPostflop(q, all)
     expect(text).toContain('スリーカード')
     expect(text).toContain('バリュー')
+    expect(text).toContain('ドライ')   // ボードテクスチャ分類 (A-7-2 レインボー)
+    expect(text).toContain('IP')        // ポジション (q.heroIsOOP=false)
+    expect(text).toContain('2/3')       // サイジング根拠 (約2/3ポット)
   })
 
-  it('weak hand + fold recommended → fold rationale', () => {
+  it('OOP hero shows the OOP position note', () => {
+    const q = { ...mkQ([cc('A', 'spades'), cc('7', 'diamonds'), cc('2', 'clubs')], [cc('A', 'hearts'), cc('A', 'clubs')]), heroIsOOP: true }
+    const all: PostflopActionInfo[] = [{ action: 'raise', label: 'ベット', sizeBB: 3.6, freq: 1, ev: 1.5 }]
+    expect(explainPostflop(q, all)).toContain('OOP')
+  })
+
+  it('weak hand + fold recommended → fold rationale (no sizing line on a fold)', () => {
     const q = mkQ([cc('A', 'spades'), cc('K', 'diamonds'), cc('7', 'clubs')], [cc('3', 'hearts'), cc('2', 'clubs')])
     const all: PostflopActionInfo[] = [
       { action: 'fold', label: 'フォールド', freq: 0.9, ev: -1 },
@@ -162,6 +171,7 @@ describe('explainPostflop', () => {
     const text = explainPostflop(q, all)
     expect(text).toContain('ノーペア')
     expect(text).toContain('フォールド')
+    expect(text).not.toContain('2/3') // フォールド推奨にサイジング根拠は出さない
   })
 })
 

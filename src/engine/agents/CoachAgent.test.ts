@@ -47,4 +47,32 @@ describe('CoachAgent.evaluateAction (approximate / 頻度ベース)', () => {
     const fb = evaluateAction(btn, 'AKs', 'raise', 'BTN', 2.5)
     expect(fb?.strategy.some(s => s.action === 'raise')).toBe(true)
   })
+
+  // A1: ミス文に概念ラベルが入る (「概念: オープン硬すぎ」など)。
+  it('injects the mistake-category concept label into the message (A1)', () => {
+    const fb = evaluateAction(btn, 'AA', 'fold', 'BTN')
+    expect(fb?.message).toContain('概念: オープン硬すぎ')
+  })
+
+  // A2: プリフロップでハンド階層が文脈として現れる (AA = プレミアム)。
+  it('adds the preflop hand-tier context (A2)', () => {
+    const fb = evaluateAction(btn, 'AA', 'fold', 'BTN')
+    expect(fb?.message).toContain('プレミアム')
+  })
+
+  // A4: 近似モード (EV非提示) では頻度ギャップでスケール感を出す。
+  it('shows a frequency gap instead of EV in approximate mode (A4)', () => {
+    const fb = evaluateAction(btn, 'AA', 'fold', 'BTN')
+    expect(fb?.showEv).toBe(false)
+    expect(fb?.message).toContain('推奨頻度との差')
+    expect(fb?.message).toContain('100% vs 0%')
+  })
+
+  // A6: mixed/correct も端的な定型でなく手固有の原則を添える。
+  it('adds a spot-specific principle to mixed/correct messages (A6)', () => {
+    const mixed = evaluateAction(co, 'A7s', 'raise', 'CO', 2.5)
+    expect(mixed?.kind).toBe('mixed')
+    expect(mixed?.message).toContain(' — ') // 推奨 + 原則
+    expect(mixed?.message).toContain('スーテッドエース')
+  })
 })

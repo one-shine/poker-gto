@@ -10,11 +10,12 @@ describe('OnboardingFlow', () => {
     render(<OnboardingFlow onComplete={onComplete} />)
 
     expect(screen.getByText('ようこそ')).toBeInTheDocument()
-    // 5枚目までは「次へ」、最後は「プレイ開始」
+    // 最終スライド手前までは「次へ」、最後は「プレイ開始」
     fireEvent.click(screen.getByText('次へ')) // → ポジション
     fireEvent.click(screen.getByText('次へ')) // → グリッド
-    fireEvent.click(screen.getByText('次へ')) // → モード
-    fireEvent.click(screen.getByText('次へ')) // → 始めましょう
+    fireEvent.click(screen.getByText('次へ')) // → プレイ vs スタディ
+    fireEvent.click(screen.getByText('次へ')) // → 学習の流れ
+    fireEvent.click(screen.getByText('次へ')) // → 最初のハンド
     fireEvent.click(screen.getByText('プレイ開始'))
 
     expect(onComplete).toHaveBeenCalledOnce()

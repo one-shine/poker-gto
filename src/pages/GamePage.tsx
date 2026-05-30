@@ -13,6 +13,7 @@ import { CoachPanel } from '../components/coach/CoachPanel'
 import { PostflopReviewPanel } from '../components/coach/PostflopReviewPanel'
 import { CoachToast } from '../components/coach/CoachToast'
 import { LiveStrategyPanel } from '../components/coach/LiveStrategyPanel'
+import { KeyboardHelp } from '../components/game/KeyboardHelp'
 import { useProgressStore } from '../stores/progressStore'
 
 export function GamePage() {
@@ -107,6 +108,18 @@ export function GamePage() {
           )}
         </div>
 
+        {/* D1: 初回の空状態 (まだ1ハンドも回していない) は指針ゼロになりやすいので導線を出す */}
+        {sessionHandCount === 0 && showStartButton && (
+          <div className="w-full max-w-md shrink-0 rounded-xl border border-brass-500/30 bg-base-800/60 p-4 text-sm leading-relaxed text-zinc-300">
+            <p className="font-display font-bold text-brass-200 mb-1.5">はじめ方</p>
+            <ol className="list-decimal list-inside space-y-1 text-zinc-300">
+              <li><strong className="text-zinc-100">New Hand</strong>(または Space キー)で最初のハンドを開始。</li>
+              <li>アクション後、<strong className="text-zinc-100">コーチ</strong>が「なぜ」を解説します(スタディモードはその場、プレイモードはハンド後に復習)。</li>
+              <li>分からない用語は <strong className="text-zinc-100">理論</strong> タブの用語集で確認できます。</li>
+            </ol>
+          </div>
+        )}
+
         {/* 結果 / コーチ / アクション領域: 縮まずに常に表示される (卓が先に縮む) */}
         <div ref={actionRef} className="w-full flex flex-col items-center gap-3 shrink-0">
         {/* ショーダウン結果 */}
@@ -133,13 +146,16 @@ export function GamePage() {
         {/* アクション領域 */}
         <div className="w-full max-w-2xl flex flex-col items-center gap-3">
           {showStartButton ? (
-            <button
-              type="button"
-              onClick={startNewHand}
-              className="group relative min-h-12 px-8 rounded-xl brass font-display font-extrabold tracking-wide shadow-[0_6px_20px_rgba(212,175,55,0.3),inset_0_1px_0_rgba(255,255,255,0.5)] hover:brightness-110 active:translate-y-px transition-all"
-            >
-              New Hand <span className="font-data text-ink/60 text-xs font-bold">(Space)</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={startNewHand}
+                className="group relative min-h-12 px-8 rounded-xl brass font-display font-extrabold tracking-wide shadow-[0_6px_20px_rgba(212,175,55,0.3),inset_0_1px_0_rgba(255,255,255,0.5)] hover:brightness-110 active:translate-y-px transition-all"
+              >
+                New Hand <span className="font-data text-ink/60 text-xs font-bold">(Space)</span>
+              </button>
+              <KeyboardHelp />
+            </div>
           ) : pendingHeroAction ? (
             <>
               {/* A1: study モードは GTO 戦略を常時表示 (+A2 ポットオッズ)。

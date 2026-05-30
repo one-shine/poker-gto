@@ -1,8 +1,12 @@
 import type { Card, Rank, Suit } from '../../types/game'
 import { CardDisplay } from '../game/CardDisplay'
 import { explainPreflop, type PreflopDrillQuestion, type DrillAction, type DrillJudgement } from '../../lib/drill/preflopDrill'
+import { TermChips, ConceptLink } from '../common/TermChips'
 
 const ACTION_JP: Record<DrillAction, string> = { raise: 'レイズ', call: 'コール', fold: 'フォールド' }
+
+// プリフロップ ドリルで関連する用語 (GLOSSARY に無いものは TermChips が黙って除外)。
+const PREFLOP_TERMS = ['レンジ', 'ポジション', 'ブロッカー', 'エクイティ実現', 'ポットオッズ', '3bet', '4bet']
 
 // カテゴリ ('AKs'/'AKo'/'AA') を代表的な2枚に変換 (表示用)。
 function representativeCards(hand: string): [Card, Card] {
@@ -21,11 +25,21 @@ interface Props {
   onNext: () => void
 }
 
+// スポット種別に応じた関連理論コンセプト ID (deep-link 先)。
+function conceptForScenario(scenarioId: string): string {
+  if (scenarioId.endsWith('-3bet')) return 'facing-3bet'
+  if (scenarioId.startsWith('bb-vs-')) return 'bb-defense'
+  if (scenarioId === 'sb-open') return 'no-limp'
+  return 'rfi-ranges'
+}
+
 export function DrillQuestion({ question, judgement, onAnswer, onNext }: Props) {
   const [a, b] = representativeCards(question.hand)
-  const recommend = (judgement?.best ?? [])
+  const best = judgement?.best ?? []
+  const recommend = best
     .map(x => `${ACTION_JP[x.action]} ${Math.round(x.freq * 100)}%`)
     .join(' / ')
+  const isMixed = best.length > 1
 
   return (
     <div className="rounded-2xl border border-white/10 bg-base-800/60 p-5 space-y-4">
@@ -69,12 +83,19 @@ export function DrillQuestion({ question, judgement, onAnswer, onNext }: Props) 
               <span aria-hidden="true">{judgement.correct ? '✓' : '✗'}</span>{' '}
               {judgement.correct ? '正解' : `${ACTION_JP[judgement.chosen]} は不正解`}
             </p>
-            <p className="text-sm text-zinc-300 mt-1">推奨: {recommend || 'フォールド 100%'}</p>
+            <p className="text-sm text-zinc-300 mt-1">
+              推奨: <span className="font-bold text-zinc-100">{recommend || 'フォールド 100%'}</span>
+              {isMixed && <span className="ml-1 text-brass-300 font-bold">(どちらも正解)</span>}
+            </p>
           </div>
-          <p className="text-sm text-zinc-100 leading-relaxed rounded-lg bg-base-900/70 border border-brass-400/30 p-3">
-            <span aria-hidden="true" className="mr-1">💡</span>{explainPreflop(question, judgement)}
-          </p>
-          <div className="flex justify-center">
+          <div className="rounded-lg bg-base-900/70 border border-brass-400/30 p-3 space-y-2">
+            <p className="text-sm text-zinc-100 leading-relaxed">
+              <span aria-hidden="true" className="mr-1">💡</span>{explainPreflop(question, judgement)}
+            </p>
+            <TermChips terms={PREFLOP_TERMS} />
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <ConceptLink conceptId={conceptForScenario(question.scenarioId)} />
             <button
               type="button"
               onClick={onNext}

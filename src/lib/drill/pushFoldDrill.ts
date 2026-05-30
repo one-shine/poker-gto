@@ -1,5 +1,6 @@
 import type { NodeSolution, SolutionSource } from '../../types/solver'
 import { allHandCategories } from './preflopDrill'
+import { handTier } from '../coach/coachConcepts'
 
 // HU プッシュ/フォールド ドリル。R4 で自前生成した厳密解 (hu-pf-*.json, solver_precomputed)
 // を出題基準にする。ショーダウン=オールイン勝率=真値のため**実 EV** が使える。
@@ -88,12 +89,43 @@ export function generatePushFoldQuestion(
   return { stack, role, hand, prompt: promptFor(stack, role), options: optionsFor(role) }
 }
 
-// 短い説明文。プッシュ/フォールドは実EV(厳密解)があるので EV 比較に紐づけられる。
-export function explainPushFold(judgement: PushFoldJudgement): string {
+// EV 値を BB 表記に (厳密解の実 EV)。
+const fmtEv = (ev: number) => `${ev > 0 ? '+' : ''}${ev.toFixed(2)}BB`
+
+// スタック深度の一般原則 (浅いほど広く押せる)。エクイティ実現が縮む = ポストフロップで
+// 価値を取りにくいため、フォールドエクイティ主体のオールインが相対的に有利になる。
+function depthRationale(stack: number, role: PushFoldRole): string {
+  if (role === 'sb') {
+    if (stack <= 12) return `${stack}BBは浅く、ポストフロップでのエクイティ実現が縮むぶん広く押せる。`
+    return `${stack}BBはやや深く、押せる手が締まる (実現できるエクイティが増えるほどレンジは狭くなる)。`
+  }
+  // BB のコール (vs shove)。浅いほど割安なポットオッズで広くコールできる。
+  if (stack <= 12) return `${stack}BBは浅く、コール額に対しポットが大きいため広くコールできる。`
+  return `${stack}BBはやや深く、コールに必要な勝率が上がるためレンジは狭くなる。`
+}
+
+// 短い説明文。プッシュ/フォールドは実EV(厳密解=solver_precomputed)があるので EV 比較に紐づけられる。
+// question を渡すとスタック深度の根拠 (浅いほど広く押せる) を添える。
+export function explainPushFold(judgement: PushFoldJudgement, question?: PushFoldQuestion): string {
   const primary = [...judgement.best].sort((a, b) => b.freq - a.freq)[0]?.action
-  if (!primary || primary === 'fold') return 'プッシュ/コールは期待値マイナス。フォールドが正しい。'
-  if (primary === 'push') return 'このスタックではプッシュが+EV(降りるより期待値が高い)。'
-  if (primary === 'call') return 'オールインに対しコールが+EV。'
+  const depth = question ? depthRationale(question.stack, question.role) : ''
+  const tier = question ? handTier(question.hand) : null
+  const pushEv = judgement.all.find(a => a.action === 'push')?.ev
+  const callEv = judgement.all.find(a => a.action === 'call')?.ev
+  const foldNote = '厳密解 (Nash) なので、各アクションの EV を直接比較できる。'
+
+  if (!primary || primary === 'fold') {
+    const lead = tier ? `${tier.label}。プッシュ/コールは期待値マイナスで、フォールド (EV 0) が最善。` : 'プッシュ/コールは期待値マイナス。フォールドが正しい。'
+    return [lead, depth, foldNote].filter(Boolean).join(' ')
+  }
+  if (primary === 'push') {
+    const evTxt = Number.isFinite(pushEv ?? NaN) ? `プッシュ ${fmtEv(pushEv!)} > フォールド 0BB。` : 'プッシュが+EV (降りるより期待値が高い)。'
+    return [tier ? `${tier.label}。${evTxt}` : evTxt, depth].filter(Boolean).join(' ')
+  }
+  if (primary === 'call') {
+    const evTxt = Number.isFinite(callEv ?? NaN) ? `オールインに対しコール ${fmtEv(callEv!)} > フォールド 0BB。` : 'オールインに対しコールが+EV。'
+    return [tier ? `${tier.label}。${evTxt}` : evTxt, depth].filter(Boolean).join(' ')
+  }
   return ''
 }
 

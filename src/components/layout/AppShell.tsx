@@ -36,7 +36,7 @@ export function AppShell({ active, onNavigate, children }: AppShellProps) {
       {/* メインコンテンツ (mobile はボトムタブ分の余白を確保) */}
       <main className="flex-1 overflow-auto pb-16 md:pb-0">{children}</main>
 
-      {/* mobile: ボトムタブバー */}
+      {/* mobile: ボトムタブバー。学習系(学習/分析/理論)を細い区切りで視覚グルーピング (D7・軽量) */}
       <nav
         className="flex md:hidden fixed bottom-0 inset-x-0 h-16 border-t border-white/8 bg-base-900/95 backdrop-blur-md z-40"
         aria-label="メインナビゲーション"
@@ -48,6 +48,8 @@ export function AppShell({ active, onNavigate, children }: AppShellProps) {
             active={active === item.id}
             onClick={() => onNavigate(item.id)}
             layout="horizontal"
+            // 学習クラスタの先頭(学習)と設定の前(レンジ→設定)に区切りを入れて群を分ける
+            separatorBefore={item.id === 'learn' || item.id === 'settings'}
           />
         ))}
       </nav>
@@ -60,16 +62,20 @@ function NavButton({
   active,
   onClick,
   layout,
+  separatorBefore = false,
 }: {
   item: NavItem
   active: boolean
   onClick: () => void
   layout: 'vertical' | 'horizontal'
+  separatorBefore?: boolean
 }) {
-  // アクティブ表示は色だけに頼らず、ブラスバー + 塗り背景 + 太字 + aria-current で示す
+  // アクティブ表示は色だけに頼らず、ブラスバー + 塗り背景 + 太字 + aria-current で示す。
+  // タップ域は min-h-11 (44px) を保証。横レイアウトは flex-1 で幅も均等確保。
   const base =
     'relative flex flex-col items-center justify-center gap-0.5 transition-all min-h-11 ' +
-    (layout === 'vertical' ? 'mx-2 py-2 rounded-xl' : 'flex-1')
+    (layout === 'vertical' ? 'mx-2 py-2 rounded-xl' : 'flex-1') +
+    (separatorBefore ? ' border-l border-white/8' : '')
   const state = active
     ? 'bg-brass-400/12 text-brass-200 font-bold'
     : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'

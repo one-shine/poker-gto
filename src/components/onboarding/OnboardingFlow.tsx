@@ -56,15 +56,42 @@ const SLIDES: Slide[] = [
     title: 'プレイ vs スタディ',
     body: (
       <div className="flex flex-col gap-2">
-        <p><strong className="text-zinc-100">プレイモード</strong>: フィードバック最小。ハンドが止まらず実戦感覚で回せます。</p>
-        <p><strong className="text-zinc-100">スタディモード</strong>: ミスをするとパネルが表示され、ヒント(H キー)も使えます。学習向け。</p>
-        <p className="text-zinc-400 text-sm">設定ページでいつでも切り替えられます。</p>
+        <p><strong className="text-zinc-100">プレイモード</strong>: ハンドが止まらず実戦感覚で回せます。critical なミスだけ短いトーストで知らせ、<span className="text-zinc-200">ハンド終了後にポストフロップをまとめて復習</span>できます。</p>
+        <p><strong className="text-zinc-100">スタディモード</strong>: ミスをするとその場でパネルが開き、推奨と「なぜ」を解説します。GTO戦略バー(? キー)も表示でき、じっくり学べます。</p>
+        <p className="text-zinc-400 text-sm">迷ったらスタディから。設定ページでいつでも切り替えられます。</p>
       </div>
     ),
   },
   {
-    title: '始めましょう',
-    body: <p>Game ページで <strong className="text-zinc-100">New Hand</strong>(または Space キー)を押すとプリフロップが始まります。準備ができたらプレイ開始！</p>,
+    title: '学習の流れ',
+    body: (
+      <div className="flex flex-col gap-3">
+        <p>このアプリは「回して終わり」ではなく、ミスを起点に学べるよう各ページがつながっています。</p>
+        <ol className="flex flex-col gap-1.5 text-sm">
+          {[
+            ['ゲーム', 'ハンドを回してコーチの解説を受ける'],
+            ['分析', '繰り返しやすい弱点(ミス傾向)を確認'],
+            ['理論', '弱点に紐づく概念・用語を読む'],
+            ['学習(ドリル)', '弱点スポットを反復練習(正解は頻度10%以上で判定)'],
+          ].map(([step, desc], i) => (
+            <li key={step} className="flex items-start gap-2">
+              <span className="shrink-0 mt-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-brass-500/20 text-brass-200 font-data text-[11px] font-bold">{i + 1}</span>
+              <span><strong className="text-zinc-100">{step}</strong> — <span className="text-zinc-400">{desc}</span></span>
+            </li>
+          ))}
+        </ol>
+        <p className="text-zinc-400 text-sm">→ 分析と理論とドリルを往復することで、同じミスが減っていきます。</p>
+      </div>
+    ),
+  },
+  {
+    title: '最初のハンド',
+    body: (
+      <div className="flex flex-col gap-2">
+        <p>Game ページで <strong className="text-zinc-100">New Hand</strong>(または Space キー)を押すとプリフロップが始まります。</p>
+        <p className="text-zinc-400 text-sm">最初のハンドの後にコーチ解説が出ます。用語が分からなければ「理論」タブの用語集で確認しましょう。準備ができたらプレイ開始！</p>
+      </div>
+    ),
   },
 ]
 

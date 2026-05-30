@@ -32,24 +32,42 @@ describe('preflop drill', () => {
   })
 
   describe('explainPreflop', () => {
-    it('open spot + raise → open-range rationale', () => {
-      const question = { ...q('btn-open', 'AA'), options: [{ action: 'raise' as const, label: 'レイズ' }, { action: 'fold' as const, label: 'フォールド' }] }
+    const mk = (scenarioId: string, hand: string, position: string, options: { action: 'raise' | 'call' | 'fold'; label: string }[]): PreflopDrillQuestion =>
+      ({ scenarioId, scenarioLabel: '', position, hand, options })
+
+    it('open spot + raise → multi-sentence rationale (hand tier + open-range + position freq)', () => {
+      const question = mk('btn-open', 'AA', 'BTN', [{ action: 'raise', label: 'レイズ' }, { action: 'fold', label: 'フォールド' }])
       const j = judge(question, 'raise')
-      expect(explainPreflop(question, j)).toContain('オープンレンジ')
+      const text = explainPreflop(question, j)
+      expect(text).toContain('オープンレンジ')
+      expect(text).toContain('プレミアム') // ハンド階層
+      expect(text).toContain('BTN')        // ポジション頻度の文脈
+      // 2〜3文に厚みが出ている (区切りが複数)
+      expect(text.split('。').filter(Boolean).length).toBeGreaterThanOrEqual(2)
     })
 
-    it('facing-3bet spot + raise → 4bet rationale', () => {
-      const question = { ...q('btn-vs-bb-3bet', 'AA'), options: [
-        { action: 'raise' as const, label: '4Bet' }, { action: 'call' as const, label: 'コール' }, { action: 'fold' as const, label: 'フォールド' },
-      ] }
+    it('facing-3bet spot + raise → 4bet rationale with value/blocker reason', () => {
+      const question = mk('btn-vs-bb-3bet', 'AA', 'BTN', [
+        { action: 'raise', label: '4Bet' }, { action: 'call', label: 'コール' }, { action: 'fold', label: 'フォールド' },
+      ])
       const j = judge(question, 'raise')
-      expect(explainPreflop(question, j)).toContain('4bet')
+      const text = explainPreflop(question, j)
+      expect(text).toContain('4bet')
+      expect(text).toContain('ブロッカー')
     })
 
-    it('out-of-range hand → fold rationale', () => {
-      const question = { ...q('utg-open', '72o'), options: [{ action: 'raise' as const, label: 'レイズ' }, { action: 'fold' as const, label: 'フォールド' }] }
+    it('out-of-range hand → fold rationale mentions position frequency / equity realization', () => {
+      const question = mk('utg-open', '72o', 'UTG', [{ action: 'raise', label: 'レイズ' }, { action: 'fold', label: 'フォールド' }])
       const j = judge(question, 'fold')
-      expect(explainPreflop(question, j)).toContain('フォールド')
+      const text = explainPreflop(question, j)
+      expect(text).toContain('フォールド')
+      expect(text).toContain('UTG') // 後ろの席ほど広く開ける根拠 (UTGは絞る)
+    })
+
+    it('mistake (chose fold for a raising hand) surfaces a frequency-gap line', () => {
+      const question = mk('btn-open', 'AA', 'BTN', [{ action: 'raise', label: 'レイズ' }, { action: 'fold', label: 'フォールド' }])
+      const j = judge(question, 'fold') // AA を降りる = ミス
+      expect(explainPreflop(question, j)).toContain('推奨頻度との差')
     })
   })
 })

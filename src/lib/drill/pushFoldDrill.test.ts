@@ -51,14 +51,40 @@ describe('pushFoldDrill', () => {
   })
 
   describe('explainPushFold', () => {
-    it('SB push (AA 10BB) → +EV push rationale', () => {
+    it('SB push (AA 10BB) → +EV push rationale (legacy 1-arg form, real EV vs fold)', () => {
       const j = judgePushFold({ ...generatePushFoldQuestion(10, 'sb', () => 0), hand: 'AA' }, 'push')
-      expect(explainPushFold(j)).toContain('プッシュが+EV')
+      const text = explainPushFold(j)
+      // 実 EV があるので「プッシュ +X.XXBB > フォールド 0BB」を提示する (厳密解=solver_precomputed)。
+      expect(text).toContain('プッシュ')
+      expect(text).toContain('フォールド 0BB')
     })
 
-    it('SB trash (72o 10BB) → fold rationale', () => {
+    it('SB trash (72o 10BB) → fold rationale (legacy 1-arg form)', () => {
       const j = judgePushFold({ ...generatePushFoldQuestion(10, 'sb', () => 0), hand: '72o' }, 'fold')
       expect(explainPushFold(j)).toContain('フォールド')
+    })
+
+    it('with question: SB push (AA 10BB) cites real EV vs fold and shallow-stack depth rationale', () => {
+      const q = { ...generatePushFoldQuestion(10, 'sb', () => 0), hand: 'AA' }
+      const j = judgePushFold(q, 'push')
+      const text = explainPushFold(j, q)
+      expect(text).toContain('プッシュ')
+      expect(text).toContain('BB') // 実 EV を BB 表記で提示
+      expect(text).toContain('浅') // 浅いほど広く押せる根拠
+    })
+
+    it('with question: deeper stack (20BB SB) frames the range as tighter', () => {
+      const q = { ...generatePushFoldQuestion(20, 'sb', () => 0), hand: 'AA' }
+      const text = explainPushFold(judgePushFold(q, 'push'), q)
+      expect(text).toContain('20BB')
+      expect(text).toContain('締まる')
+    })
+
+    it('with question: fold case names the hand tier and notes EV 0 fold', () => {
+      const q = { ...generatePushFoldQuestion(10, 'sb', () => 0), hand: '72o' }
+      const text = explainPushFold(judgePushFold(q, 'fold'), q)
+      expect(text).toContain('フォールド')
+      expect(text).toContain('低価値') // handTier('72o') ラベル
     })
   })
 })

@@ -4,6 +4,7 @@ import { CONCEPTS, CONCEPT_CATEGORY_JP, type ConceptCategory, type TheoryConcept
 import { GLOSSARY } from '../data/theory/glossary'
 import { useNavStore } from '../stores/navStore'
 import { TargetIcon } from '../components/icons/ActionIcons'
+import { TermChips } from '../components/common/TermChips'
 
 const LEVEL_JP: Record<SkillLevel, string> = {
   beginner: '入門', intermediate: '中級', advanced: '上級', pro: 'プロ',
@@ -34,6 +35,11 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
 function ConceptArticle({ concept, onClose }: { concept: TheoryConcept; onClose: () => void }) {
   const goTo = useNavStore(s => s.goTo)
   const drillCat = concept.relatedMistakes[0]
+  // D5: 本文中に登場する用語集の語をチップ化して即時に定義へアクセスできるようにする。
+  const terms = useMemo(
+    () => GLOSSARY.filter(e => concept.body.includes(e.term) || concept.summary.includes(e.term)).map(e => e.term),
+    [concept],
+  )
   return (
     <article className="rounded-2xl border border-brass-500/30 bg-base-800/70 p-5 space-y-3">
       <div className="flex items-start justify-between gap-3">
@@ -57,6 +63,12 @@ function ConceptArticle({ concept, onClose }: { concept: TheoryConcept; onClose:
       {concept.body.split('\n\n').map((para, i) => (
         <p key={i} className="text-sm text-zinc-200 leading-relaxed">{para}</p>
       ))}
+      {terms.length > 0 && (
+        <div className="pt-1">
+          <p className="text-[10px] font-bold text-brass-300/80 uppercase tracking-wider mb-1.5">この概念の用語</p>
+          <TermChips terms={terms} />
+        </div>
+      )}
       {drillCat && (
         <div className="pt-1">
           <button
@@ -159,7 +171,19 @@ function Glossary() {
               <dt className="font-display font-bold text-brass-200">{e.term}</dt>
               <dd className="text-sm text-zinc-300 leading-relaxed mt-0.5">{e.definition}</dd>
               {e.relatedTerms.length > 0 && (
-                <dd className="text-[11px] text-zinc-500 mt-1.5">関連: {e.relatedTerms.join(' · ')}</dd>
+                <dd className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-zinc-500">関連:</span>
+                  {e.relatedTerms.map(rt => (
+                    <button
+                      key={rt}
+                      type="button"
+                      onClick={() => setQ(rt)}
+                      className="text-[11px] font-bold text-brass-300 underline decoration-dotted underline-offset-2 hover:text-brass-200 transition-colors min-h-7 px-1"
+                    >
+                      {rt}
+                    </button>
+                  ))}
+                </dd>
               )}
             </div>
           ))}

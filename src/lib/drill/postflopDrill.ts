@@ -4,6 +4,7 @@ import { evaluateBestHand } from '../../engine/cards/HandEvaluator'
 import type { ActionSolution, SolutionSource, SpotKey } from '../../types/solver'
 import { getSolution } from '../solver/getSolution'
 import { comboKey, expandRange, heroRangeSpec } from '../solver/riverRanges'
+import { boardTexture } from '../coach/coachConcepts'
 
 // ポストフロップ ドリル (R23 + R16 3betポット)。HU の単一レイズド/3betポットを自前 CFR で
 // 都度求解し、solver_live 解を出題基準にする。turn/flop は showdown をエクイティ近似 (賭け未考慮)。
@@ -262,7 +263,15 @@ const PRINCIPLE: Record<Tier, Record<ActBucket, string>> = {
   },
 }
 
-// 推奨(最高頻度)アクションと hero の役から、1行の説明を作る。
+// ポジションごとのCベット観点 (一般原則・solver_live は簡易求解=参考値)。
+function positionNote(q: PostflopQuestion): string {
+  return q.heroIsOOP
+    ? 'OOP (先に行動・位置不利) のため、レンジ優位の無いボードはチェックを多めに混ぜる。'
+    : 'IP (後に行動・位置有利) のため、レンジ優位のあるボードは小さく高頻度に打てる。'
+}
+
+// 推奨(最高頻度)アクションと hero の役・ボードテクスチャ・位置から説明を作る。
+// solver_live (簡易求解) 基準なので、サイジング/頻度は一般原則として述べ厳密値とは称さない。
 export function explainPostflop(q: PostflopQuestion, all: PostflopActionInfo[]): string {
   const made = evaluateBestHand([...q.heroCards, ...q.board])
   const tier = TIER[made.rank]
@@ -270,7 +279,18 @@ export function explainPostflop(q: PostflopQuestion, all: PostflopActionInfo[]):
   const bucket: ActBucket = !top ? 'check'
     : top.action === 'raise' || top.action === 'allin' ? 'raise'
     : top.action === 'call' ? 'call' : top.action === 'fold' ? 'fold' : 'check'
-  return `${HAND_JP[made.rank]}。${PRINCIPLE[tier][bucket]}`
+
+  const texture = boardTexture(q.board)
+  const sentences = [
+    `${HAND_JP[made.rank]}。${PRINCIPLE[tier][bucket]}`,
+    `ボードは「${texture.label}」: ${texture.note}`,
+    positionNote(q),
+  ]
+  // 自分が先頭でベットする節のみサイジング根拠を添える (被ベット時のレイズ額は別ロジック)。
+  if (!q.facing && !q.facingRaise && bucket === 'raise') {
+    sentences.push('サイズはポットの約2/3 (≈67%) が基準で、手の強弱で変えず一定にする (読まれないため)。')
+  }
+  return sentences.join(' ')
 }
 
 export function judgePostflop(

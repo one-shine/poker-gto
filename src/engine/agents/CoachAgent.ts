@@ -1,4 +1,4 @@
-import type { GameState, PlayerAction, Position } from '../../types/game'
+import type { GameState, HandRank, PlayerAction, Position } from '../../types/game'
 import type { ActionSolution, NodeSolution } from '../../types/solver'
 import type { CoachFeedback } from '../../types/coach'
 import type { MistakeCategory, MistakeSeverity } from '../../types/stats'
@@ -7,6 +7,8 @@ import { resolveSpotKey } from '../../lib/solver/spotKey'
 import { getSolution } from '../../lib/solver/getSolution'
 import { comboKey } from '../../lib/solver/riverRanges'
 import { handCategory } from '../cards/handCategory'
+import { evaluateBestHand } from '../cards/HandEvaluator'
+import { CATEGORY_EXPLAIN, preflopPrinciple, postflopPrinciple } from '../../lib/coach/coachConcepts'
 import { AgentBus } from './AgentBus'
 
 const MIXED_THRESHOLD = 0.10 // 頻度10%以上は正解扱い (ミックス戦略)
@@ -75,7 +77,11 @@ export async function evaluateHeroDecision(
   const handKey = node.street === 'preflop'
     ? handCategory(hero.holeCards)
     : comboKey([hero.holeCards[0], hero.holeCards[1]])
-  return evaluateAction(node, handKey, action, hero.position, amount)
+  // postflop は実ボードで役を評価し「役の強さ」原則 (A5) に使う。
+  const madeRank = node.street !== 'preflop' && state.board.length >= 3
+    ? evaluateBestHand([...hero.holeCards, ...state.board]).rank
+    : undefined
+  return evaluateAction(node, handKey, action, hero.position, amount, madeRank)
 }
 
 // ── 評価ロジック (純関数・テスト可能) ─────────────────────────────────────────
@@ -147,6 +153,7 @@ export function evaluateAction(
   action: PlayerAction,
   position: Position,
   sizeBB?: number,
+  madeRank?: HandRank,
 ): CoachFeedback | null {
   if (!MATCHABLE.includes(action)) return null
   const showEv = node.source !== 'approximate'
@@ -177,7 +184,7 @@ export function evaluateAction(
     const category = categoryFor(position, action, best, node.street)
     return {
       ...base(), kind: 'mistake', severity, category, evLoss: loss,
-      message: mistakeMessage(handKey, action, sols, showEv, loss),
+      message: mistakeMessage(handKey, action, sols, showEv, loss, category, position, node.street, madeRank),
     }
   }
 
@@ -186,29 +193,57 @@ export function evaluateAction(
     const alts = sols.filter(s => s !== chosen && s.frequency >= MIXED_THRESHOLD)
     return alts.length > 0
       ? { ...base(), kind: 'mixed', evLoss: 0,
-          message: `ミックス戦略の許容内です。推奨: ${recommendText(sols)}` }
+          message: `ミックス戦略の許容内です。推奨: ${recommendText(sols)} — ${principleLine(handKey, chosen.action, position, node.street, madeRank)}` }
       : { ...base(), kind: 'correct', evLoss: 0,
-          message: `正解です。推奨: ${recommendText(sols)}` }
+          message: `正解です。推奨: ${recommendText(sols)} — ${principleLine(handKey, chosen.action, position, node.street, madeRank)}` }
   }
 
   // 頻度が閾値未満 → ミス
   const loss = showEv ? evLoss(sols, chosen) : 0
   if (showEv && loss <= 0) {
-    return { ...base(), kind: 'correct', evLoss: 0, message: `正解です。推奨: ${recommendText(sols)}` }
+    return { ...base(), kind: 'correct', evLoss: 0,
+      message: `正解です。推奨: ${recommendText(sols)} — ${principleLine(handKey, best.action, position, node.street, madeRank)}` }
   }
   const severity = showEv ? severityOfEv(loss) : severityOfFreqGap(best.frequency - chosen.frequency)
+  const category = categoryFor(position, action, best, node.street)
   return {
-    ...base(), kind: 'mistake', severity, category: categoryFor(position, action, best, node.street), evLoss: loss,
-    message: mistakeMessage(handKey, action, sols, showEv, loss),
+    ...base(), kind: 'mistake', severity, category, evLoss: loss,
+    message: mistakeMessage(handKey, action, sols, showEv, loss, category, position, node.street, madeRank),
   }
+}
+
+// 推奨アクション (最頻) を「なぜ」の一般原則1文に翻訳 (A2/A5/A6)。
+// approximate でも安全な定性的指針のみ。preflop はハンド階層、postflop は役の強さで述べる。
+function principleLine(
+  handKey: string, recAction: PlayerAction, position: Position,
+  street: NodeSolution['street'], madeRank?: HandRank,
+): string {
+  if (street === 'preflop') return preflopPrinciple(handKey, position, recAction)
+  // 役が判明していれば役の強さ階層、無ければ中庸として述べる (board 非提供時のフォールバック)。
+  return postflopPrinciple(madeRank ?? 'medium', recAction)
+}
+
+// 頻度ギャップを「78% vs 0% = タイト過ぎ」のスケール感に変換 (A4・EVが無い近似モード用)。
+function freqGapLine(sols: ActionSolution[], chosen: PlayerAction): string {
+  const best = bestAction(sols)
+  const mine = sols.find(s => s.action === chosen || (chosen === 'allin' && s.action === 'raise'))
+  const recPct = Math.round(best.frequency * 100)
+  const myPct = Math.round((mine?.frequency ?? 0) * 100)
+  return `推奨頻度との差 ${recPct}% vs ${myPct}%`
 }
 
 function mistakeMessage(
   handKey: string, action: PlayerAction,
   sols: ActionSolution[], showEv: boolean, loss: number,
+  category: MistakeCategory, position: Position, street: NodeSolution['street'], madeRank?: HandRank,
 ): string {
   const rec = recommendText(sols)
-  const head = showEv ? `-${loss.toFixed(1)}BB。` : ''
+  const best = bestAction(sols)
+  // 何を: EV損失(実解) か 頻度ギャップ(近似) でスケール感を出す。
+  const head = showEv ? `-${loss.toFixed(1)}BB。` : `${freqGapLine(sols, action)}。`
+  // なぜ: 概念ラベル + 推奨アクションの一般原則 (近似でも安全な定性論)。
+  const concept = CATEGORY_EXPLAIN[category].label
+  const why = principleLine(handKey, best.action, position, street, madeRank)
   const tail = showEv ? '' : '(参考: GTO近似レンジに照らすと)'
-  return `${head}${handKey} の ${ACTION_JP[action]} より、推奨は ${rec} です。${tail}`
+  return `${head}${handKey} の ${ACTION_JP[action]} より、推奨は ${rec}。概念: ${concept} — ${why}${tail}`
 }

@@ -7,9 +7,25 @@ import {
   type PostflopActionInfo, type PostflopJudgement, type PostflopQuestion, type PostflopStreet, type PotType,
 } from '../../lib/drill/postflopDrill'
 import type { SolutionSource } from '../../types/solver'
+import { TermChips, ConceptLink } from '../common/TermChips'
 
 const XP_CORRECT = 8
 const XP_WRONG = 3
+
+// ポストフロップで関連する用語 (GLOSSARY に無いものは TermChips が黙って除外)。
+const POSTFLOP_TERMS = ['レンジ優位', 'ナッツ優位', 'Cベット', 'ブロッカー', 'エクイティ実現', 'ポラライズ', 'IP', 'OOP']
+
+// 出題スポットに応じた関連理論コンセプト (deep-link 先)。
+function conceptForSpot(q: PostflopQuestion): string {
+  return q.heroIsOOP ? 'cbet-oop' : 'cbet-ip'
+}
+
+// source 信頼度を 1語で添える (C8)。solver_live=簡易求解・参考値 / precomputed=厳密解。
+function sourceWord(source: SolutionSource | null): string {
+  if (source === 'solver_precomputed') return '厳密解'
+  if (source === 'solver_live') return '簡易求解・参考値'
+  return '参考値'
+}
 
 type StreetMode = PostflopStreet | 'mix'
 
@@ -110,9 +126,11 @@ export function PostflopDrillPanel() {
   const changeStreet = (mode: StreetMode) => { setStreetMode(mode); next(mode, potType) }
   const changePotType = (pt: PotType) => { setPotType(pt); next(streetMode, pt) }
 
-  const recommend = (judgement?.best ?? [])
+  const best = judgement?.best ?? []
+  const recommend = best
     .map(x => `${x.label} ${Math.round(x.freq * 100)}%`)
     .join(' / ')
+  const isMixed = best.length > 1
 
   return (
     <div className="space-y-4">
@@ -167,6 +185,11 @@ export function PostflopDrillPanel() {
           )}
         </p>
 
+        {/* C6: サイズラベルの読み方 (ポット比の意味と「手で変えない」原則) */}
+        <p className="text-center text-[11px] text-zinc-500 -mt-2">
+          GTOはポット比約2/3 (≈67%) が基本・手で変えない (読まれるため)。
+        </p>
+
         {/* ボード */}
         <div className="flex items-center justify-center gap-1.5">
           {question.board.map((c, i) => <CardDisplay key={i} card={c} size="sm" />)}
@@ -208,13 +231,21 @@ export function PostflopDrillPanel() {
                 <span aria-hidden="true">{judgement.correct ? '✓' : '✗'}</span>{' '}
                 {judgement.correct ? '正解' : `${ACTION_JP[judgement.chosen]} は不正解`}
               </p>
-              <p className="text-sm text-zinc-300 mt-1">推奨: {recommend || 'チェック'}</p>
+              <p className="text-sm text-zinc-300 mt-1">
+                推奨: <span className="font-bold text-zinc-100">{recommend || 'チェック'}</span>
+                {isMixed && <span className="ml-1 text-brass-300 font-bold">(どちらも正解)</span>}
+              </p>
             </div>
 
             {solved && (
-              <p className="text-sm text-zinc-100 leading-relaxed rounded-lg bg-base-900/70 border border-brass-400/30 p-3">
-                <span aria-hidden="true" className="mr-1">💡</span>{explainPostflop(question, solved.all)}
-              </p>
+              <div className="rounded-lg bg-base-900/70 border border-brass-400/30 p-3 space-y-2">
+                <p className="text-sm text-zinc-100 leading-relaxed">
+                  <span aria-hidden="true" className="mr-1">💡</span>{explainPostflop(question, solved.all)}
+                  <span className="text-zinc-400"> (基準: {sourceWord(solved.source)})</span>
+                </p>
+                <TermChips terms={POSTFLOP_TERMS} />
+                <ConceptLink conceptId={conceptForSpot(question)} />
+              </div>
             )}
 
             <div className="flex flex-wrap justify-center gap-2 text-sm">

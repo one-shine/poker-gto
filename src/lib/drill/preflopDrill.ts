@@ -1,5 +1,6 @@
 import type { MistakeCategory } from '../../types/stats'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
+import { handTier, preflopPrinciple } from '../coach/coachConcepts'
 
 const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
 
@@ -93,21 +94,62 @@ export function generateQuestion(rng: () => number = Math.random, category?: Mis
   }
 }
 
-// 短い説明文 (なぜこの推奨か)。スポット種別 + 推奨アクションで一般原則を述べる。
-// approximate レンジのため実EVは無く、定性的な指針に留める。
+// ポジションごとの目安オープン頻度 (一般理論・近似)。後ろの席ほど広く開ける根拠の数値。
+// heuristic: not GTO-exact — 監修済みの代表値であり、ソルバー厳密値ではない。
+const POSITION_OPEN_FREQ: Record<string, string> = {
+  UTG: 'UTGは約13%', MP: 'MPは約17%', LJ: 'LJは約20%', HJ: 'HJは約23%',
+  CO: 'COは約27%', BTN: 'BTNは約44%', SB: 'SBは約35%',
+}
+
+// 推奨頻度のスケール感を1文で (近似レンジには実EVが無いので頻度ギャップで代替する)。
+function freqContext(judgement: DrillJudgement, chosen: DrillAction): string {
+  const chosenFreq = judgement.all.find(a => a.action === chosen)?.freq ?? 0
+  const top = [...judgement.best].sort((a, b) => b.freq - a.freq)[0]
+  if (!top) return ''
+  const pct = (f: number) => `${Math.round(f * 100)}%`
+  if (chosenFreq < MIXED_THRESHOLD) {
+    return `推奨頻度との差: ${pct(top.freq)} vs あなた ${pct(chosenFreq)}。`
+  }
+  return ''
+}
+
+// 短い説明文 (なぜこの推奨か)。スポット種別 + ポジション頻度 + ハンド階層で一般原則を述べる。
+// approximate レンジのため実EVは無く、定性的な指針 + 頻度スケールに留める (GTO厳密と称さない)。
 export function explainPreflop(question: PreflopDrillQuestion, judgement: DrillJudgement): string {
   const hasCall = question.options.some(o => o.action === 'call')
   const is3bet = question.scenarioId.endsWith('-3bet')
   const primary = [...judgement.best].sort((a, b) => b.freq - a.freq)[0]?.action
   const mixed = judgement.best.length > 1 ? 'ミックス: ' : ''
+  const tier = handTier(question.hand)
+  // coachConcepts の一般原則を1文目に据え、文脈 (オッズ/位置) を足して2〜3文にする。
+  const principle = preflopPrinciple(question.hand, question.position, primary ?? 'fold')
+  const posFreq = POSITION_OPEN_FREQ[question.position]
+  const ctx = freqContext(judgement, judgement.chosen)
+
   if (!primary || primary === 'fold') {
-    return hasCall ? 'このディフェンスレンジには入らず、フォールド。' : 'このポジション/対面ではレンジ外。フォールド。'
+    const lead = hasCall
+      ? `${tier.label}。このディフェンスレンジには入らずフォールド。`
+      : `${tier.label}。${question.position} のオープンレンジ外でフォールド。`
+    const why = hasCall
+      ? '勝率でオッズを満たしても、ポジション不利でエクイティ実現が下がる手は無理に続けない。'
+      : posFreq
+        ? `後ろの席ほど広く開ける (${posFreq}・BTNは約44%) ため、前ポジションでは強い手に絞る。`
+        : '後に行動される不利を考え、弱い手は降りる。'
+    return [lead, why, ctx].filter(Boolean).join(' ')
   }
-  if (primary === 'call') return `${mixed}ディフェンスレンジ。オッズに見合うのでコールで受ける。`
+  if (primary === 'call') {
+    return [`${mixed}${principle}`, 'プリフロップのコールはポットオッズと、フロップ以降のプレイアビリティで判断する。', ctx]
+      .filter(Boolean).join(' ')
+  }
   // raise
-  if (is3bet) return `${mixed}バリュー or ブロッカーの4bet候補。`
-  if (hasCall) return `${mixed}バリュー/ブロッカーの3bet候補。`
-  return `${mixed}オープンレンジに入る強さ。レイズ。`
+  const role = is3bet
+    ? 'バリューとブロッカー (Aを持つ手など) を混ぜた4bet候補。レイズし返して主導権を握る。'
+    : hasCall
+      ? 'バリュー/ブロッカーで3betし、相手のオープンに圧力をかける。'
+      : posFreq
+        ? `${question.position} のオープンレンジに入る強さ (${posFreq})。受動的に入らずレイズで主導権を取る。`
+        : 'オープンレンジに入る強さ。受動的に入らずレイズ。'
+  return [`${mixed}${principle}`, role, ctx].filter(Boolean).join(' ')
 }
 
 export function judge(question: PreflopDrillQuestion, chosen: DrillAction): DrillJudgement {

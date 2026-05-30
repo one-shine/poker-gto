@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { MistakeCategory } from '../types/stats'
 import { useSessionStore } from '../stores/sessionStore'
+import { useNavStore } from '../stores/navStore'
 import { WeaknessCard } from '../components/analysis/WeaknessCard'
 import { PositionStatsTable } from '../components/analysis/PositionStatsTable'
 
@@ -23,6 +24,7 @@ interface Agg { category: MistakeCategory; count: number; evLost: number }
 
 function Weaknesses() {
   const mistakes = useSessionStore(s => s.mistakes)
+  const goTo = useNavStore(s => s.goTo)
 
   const byCat = new Map<MistakeCategory, Agg>()
   for (const m of mistakes) {
@@ -34,10 +36,37 @@ function Weaknesses() {
   const top3 = [...byCat.values()].sort((a, b) => b.count - a.count).slice(0, 3)
 
   if (top3.length === 0) {
+    // D4: 静的な「Gameでプレイ」だけでなく、推奨パスとドリルCTAを提示する。
     return (
-      <p className="text-sm text-zinc-500">
-        まだミスの記録がありません。Game でプレイすると、繰り返しやすい弱点を分析します。
-      </p>
+      <div className="rounded-2xl border border-white/10 bg-base-800/60 p-4 space-y-3">
+        <p className="text-sm text-zinc-300 leading-relaxed">
+          まだミスの記録がありません。Game でプレイすると、繰り返しやすい弱点をここで分析します。
+        </p>
+        <div className="text-sm text-zinc-400 leading-relaxed">
+          <p className="font-bold text-brass-200 mb-1">おすすめの始め方</p>
+          <ol className="list-decimal list-inside space-y-0.5">
+            <li>まず基礎ドリルで主要スポットの感覚をつかむ</li>
+            <li>理論でポジション・レンジの考え方を読む</li>
+            <li>ゲームで実践 → ここに弱点が集まる</li>
+          </ol>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => goTo('learn', { drillCategory: 'preflop_too_wide' })}
+            className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-xl text-sm font-bold bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25 transition-colors"
+          >
+            ドリルで練習する ▸
+          </button>
+          <button
+            type="button"
+            onClick={() => goTo('theory')}
+            className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-xl text-sm font-bold bg-brass-500/15 text-brass-200 hover:bg-brass-500/25 transition-colors"
+          >
+            理論を読む ▸
+          </button>
+        </div>
+      </div>
     )
   }
 

@@ -6,10 +6,14 @@ import {
   explainPushFold, generatePushFoldQuestion, judgePushFold, PUSHFOLD_STACKS,
   type PushFoldQuestion, type PushFoldJudgement, type PushFoldRole, type PFAction,
 } from '../../lib/drill/pushFoldDrill'
+import { TermChips, ConceptLink } from '../common/TermChips'
 
 const XP_CORRECT = 5
 const XP_WRONG = 2
 const PF_JP: Record<PFAction, string> = { push: 'オールイン', call: 'コール', fold: 'フォールド' }
+
+// プッシュ/フォールドで関連する用語 (GLOSSARY に無いものは TermChips が黙って除外)。
+const PUSHFOLD_TERMS = ['EV', 'エクイティ', 'エクイティ実現', 'ポットオッズ', 'ナッシュ均衡', 'リンプ']
 
 type RoleMode = 'sb' | 'bb' | 'mix'
 
@@ -64,9 +68,11 @@ export function PushFoldDrillPanel() {
   const changeRole = (mode: RoleMode) => { setRoleMode(mode); setQuestion(fresh(stack, mode)); setJudgement(null) }
 
   const [a, b] = representativeCards(question.hand)
-  const recommend = (judgement?.best ?? [])
+  const best = judgement?.best ?? []
+  const recommend = best
     .map(x => `${PF_JP[x.action]} ${Math.round(x.freq * 100)}%`)
     .join(' / ')
+  const isMixed = best.length > 1
 
   return (
     <div className="space-y-4">
@@ -126,12 +132,19 @@ export function PushFoldDrillPanel() {
                 <span aria-hidden="true">{judgement.correct ? '✓' : '✗'}</span>{' '}
                 {judgement.correct ? '正解' : `${PF_JP[judgement.chosen]} は不正解`}
               </p>
-              <p className="text-sm text-zinc-300 mt-1">推奨: {recommend || 'フォールド 100%'}</p>
+              <p className="text-sm text-zinc-300 mt-1">
+                推奨: <span className="font-bold text-zinc-100">{recommend || 'フォールド 100%'}</span>
+                {isMixed && <span className="ml-1 text-brass-300 font-bold">(どちらも正解)</span>}
+              </p>
             </div>
 
-            <p className="text-sm text-zinc-100 leading-relaxed rounded-lg bg-base-900/70 border border-brass-400/30 p-3">
-              <span aria-hidden="true" className="mr-1">💡</span>{explainPushFold(judgement)}
-            </p>
+            <div className="rounded-lg bg-base-900/70 border border-brass-400/30 p-3 space-y-2">
+              <p className="text-sm text-zinc-100 leading-relaxed">
+                <span aria-hidden="true" className="mr-1">💡</span>{explainPushFold(judgement, question)}
+              </p>
+              <TermChips terms={PUSHFOLD_TERMS} />
+              <ConceptLink conceptId="no-limp" />
+            </div>
 
             {/* 各アクションの実 EV (solver_precomputed) */}
             <div className="flex justify-center gap-2 text-sm">

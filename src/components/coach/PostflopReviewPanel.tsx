@@ -2,9 +2,12 @@ import { useState } from 'react'
 import type { HeroDecision } from '../../stores/gameStore'
 import { HERO_ID } from '../../stores/gameStore'
 import { evaluateHeroDecision } from '../../engine/agents/CoachAgent'
+import { evaluateBestHand } from '../../engine/cards/HandEvaluator'
+import { boardTexture, postflopPrinciple, conceptIdForCategory } from '../../lib/coach/coachConcepts'
 import type { CoachFeedback } from '../../types/coach'
-import type { PlayerAction, Street } from '../../types/game'
+import type { GameState, PlayerAction, Street } from '../../types/game'
 import { StrategyDetail } from './StrategyDetail'
+import { ConceptLink } from '../common/TermChips'
 import { CardDisplay } from '../game/CardDisplay'
 
 // play モードはハンドを止めないので postflop をライブ求解しない。代わりにハンド後、
@@ -17,6 +20,57 @@ const ACTION_JP: Record<PlayerAction, string> = {
 }
 
 interface ReviewResult { decision: HeroDecision; feedback: CoachFeedback | null }
+
+// 解の戦略から最頻アクション (= GTO推奨) を取り出す。
+function recommendedAction(feedback: CoachFeedback): PlayerAction {
+  let best = feedback.strategy[0]
+  for (const s of feedback.strategy) if (s.frequency > (best?.frequency ?? -1)) best = s
+  return best?.action ?? feedback.chosen
+}
+
+// hero のホールカード + ボードから現状の役を評価する (一般原則を述べるため)。
+function heroMadeRank(state: GameState) {
+  const hero = state.players.find(p => p.id === HERO_ID)
+  if (!hero?.holeCards || hero.holeCards.length < 2) return null
+  return evaluateBestHand([...hero.holeCards, ...state.board]).rank
+}
+
+// D8: 各決定の 💡 展開。一般原則 (近似なので断定しない) + 理論ディープリンク。
+function DecisionInsight({ result }: { result: ReviewResult }) {
+  const [open, setOpen] = useState(false)
+  const fb = result.feedback
+  if (!fb) return null
+
+  const texture = boardTexture(result.decision.state.board)
+  const rank = heroMadeRank(result.decision.state)
+  const principle = rank ? postflopPrinciple(rank, recommendedAction(fb)) : null
+  const conceptId = fb.category ? conceptIdForCategory(fb.category) : null
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="inline-flex items-center gap-1 min-h-7 text-[11px] font-bold text-brass-300 hover:text-brass-200 transition-colors"
+      >
+        <span aria-hidden="true">💡</span> {open ? '解説を閉じる' : 'なぜ? 解説を見る'}
+      </button>
+      {open && (
+        <div className="mt-1.5 rounded-lg bg-black/30 p-2.5 space-y-1.5 text-[12px] leading-relaxed text-zinc-300">
+          <p>
+            <span className="font-bold text-zinc-200">{texture.label}</span>
+            <span className="text-zinc-400"> — {texture.note}</span>
+          </p>
+          {principle && <p className="text-zinc-300">{principle}</p>}
+          {/* 近似/簡易求解のため、一般原則として提示する旨を明記 (断定を避ける) */}
+          <p className="text-[10px] text-zinc-500">※ 一般原則です。盤面・相手・スタックで変わります。</p>
+          {conceptId && <ConceptLink conceptId={conceptId} label="関連理論を読む ▶" />}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function PostflopReviewPanel({ decisions }: { decisions: HeroDecision[] }) {
   const [results, setResults] = useState<ReviewResult[] | null>(null)
@@ -70,6 +124,7 @@ export function PostflopReviewPanel({ decisions }: { decisions: HeroDecision[] }
                 {r.feedback.message}
               </p>
               <StrategyDetail feedback={r.feedback} />
+              <DecisionInsight result={r} />
             </>
           ) : (
             <p className="text-xs text-zinc-500">この局面は評価対象外でした(未対応スポット)。</p>
