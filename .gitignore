@@ -22,6 +22,10 @@ scripts/.cache/*
 # Playwright MCP の実機確認アーティファクト (スナップショット/ログ/スクショ)
 .playwright-mcp
 
+# Tauri ビルド成果物 (Rust target / 生成物・大きい)。設定/ソース/icons は追跡する。
+src-tauri/target
+src-tauri/gen
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -74,10 +74,18 @@
 | パス | 対象 | アカウント/$ | 別OS機 | 主作業 |
 |------|------|------------|--------|--------|
 | **① PWA**(最有力・個人/ローカル) | Mac/Win=Edge/Chrome「インストール」, iPhone=Safari「ホーム画面に追加」 | 不要・$0 | 不要 | HTTPS 配信 or localhost。共通土台で実質完成 |
-| **② Tauri デスクトップ** | Mac(.dmg)+ Windows(.msi) | 署名時 Apple ID $99 / Win 証明書(任意) | **Win は要 Windows/CI** | wrapper + OS別ビルド + 署名/notarize。ネイティブでは sw.js 無効化 |
+| **② Tauri デスクトップ** ✅Mac | Mac(.dmg/.app)=**実装済** / Windows(.msi)=未 | 署名時 Apple ID $99 / Win 証明書(任意) | **Win は要 Windows/CI** | `src-tauri/` 追加済・`npm run tauri:build`。下記「実装」参照 |
 | **③ Capacitor** | iPhone(App Store) | **Apple $99 必須** | **要 Mac + Xcode** | wrapper + 署名 + 審査。simulated gambling=17+ 申告。手順は [`./RELEASE.md`](./RELEASE.md) §1/§2/§5。`capacitor://` で sw.js 無効化 |
 
 > Electron は Tauri の代替(楽だが ~100MB+)。Android は Capacitor で iOS と同時に出せる(Google Play $25・要 screenshots)。
+
+### Tauri デスクトップ実装 ✅ Mac(2026-05-31)
+- `src-tauri/`(Tauri v2)を追加。**`npm run tauri:dev`**(開発・ホットリロード)/ **`npm run tauri:build`**(配布物生成)。
+- 成果物: `src-tauri/target/release/bundle/macos/GTO Lab.app`(16MB)+ `.../dmg/GTO Lab_0.1.0_aarch64.dmg`(**約11MB の単一ファイル = 「1ファDLで実行」**)。Rust コンパイル ~57s。
+- `tauri.conf.json`: frontendDist=`../dist` / beforeBuildCommand=`npm run build` / window 1200×820(min 900×600)/ CSP=null(起動優先・後で厳格化可)/ identifier `com.gtolab.app`(商標 L4 は後で変更可)。
+- `src/main.tsx`: Tauri 配下(`__TAURI_INTERNALS__` 検出)では SW を登録しない(資産バイナリ同梱で不要・stale 回避)。**Web/PWA 経路は不変**(ブラウザでは従来どおり SW 登録)。
+- 前提: Rust(rustup)導入済・Xcode あり・Apple Silicon。`src-tauri/target` `gen` は gitignore。検証: 338テスト緑・lint0・build緑・bundle 生成確認。
+- 残(任意): **Apple Developer ID 署名 + notarize**(未署名は初回起動で「未確認の開発元」警告 → 右クリック→開く で回避)/ **Windows ビルド**(要 Windows マシン or CI・同手順)/ CSP 厳格化。
 
 ---
 

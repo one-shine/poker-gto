@@ -26,7 +26,9 @@ createRoot(document.getElementById('root')!).render(
 )
 
 // PWA: Service Worker 登録 (本番ビルドのみ。dev では HMR 干渉を避ける)
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+// Tauri(ネイティブ)配下では登録しない: 資産はバイナリ同梱で SW 不要、かつ tauri:// で stale/ルーティング問題を避ける。
+const isTauri = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || 'isTauri' in window)
+if (import.meta.env.PROD && !isTauri && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => { /* 登録失敗は致命的でない */ })
   })

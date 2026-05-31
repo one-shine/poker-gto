@@ -10,7 +10,10 @@
     "type-check": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build:icons": "tsx scripts/build-icons.ts"
+    "build:icons": "tsx scripts/build-icons.ts",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",
@@ -26,6 +29,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource/zen-kaku-gothic-new": "^5.2.7",
     "@tailwindcss/vite": "^4.3.0",
+    "@tauri-apps/cli": "^2.11.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
