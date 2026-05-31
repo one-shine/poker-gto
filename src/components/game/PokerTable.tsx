@@ -15,7 +15,7 @@ interface PokerTableProps {
 
 type Pos = { left: number; top: number }
 
-// seatIndex → テーブル上の絶対座標 (left%, top%)。ポジション名ではなく席で固定 (docs/PHASE_3.md)。
+// seatIndex → テーブル上の絶対座標 (left%, top%)。ポジション名ではなく席で固定 (docs/archive/PHASE_3.md)。
 // ヒーロー(seat 0)を最も目立つ「下中央」に置き、残り5席を周回配置する。
 // デスクトップ = 横長オーバル。狭幅では席が画面端で見切れるため mobile は縦長 + 内側に寄せる (R28)。
 const SEAT_POS_DESKTOP: Record<number, Pos> = {
@@ -174,6 +174,7 @@ export function PokerTable({ state, winnerIds }: PokerTableProps) {
               lastAction={lastAction}
               isWinner={showdown && winners.has(p.id)}
               compact={isMobile}
+              dealKey={state.handId}
             />
             {p.seatIndex === state.buttonSeatIndex && (
               <span

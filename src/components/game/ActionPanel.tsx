@@ -124,17 +124,28 @@ export function ActionPanel({ pending, onAction }: ActionPanelProps) {
       {canRaise && (
         <>
           <div className="flex flex-wrap gap-1.5">
-            {presets.map(p => (
-              <button key={p.label}
-                className={`min-h-11 px-3 rounded-lg text-xs font-bold border transition-all ${
-                  amount === p.toAmount
-                    ? 'brass border-brass-300 shadow-[0_0_12px_rgba(212,175,55,0.4)]'
-                    : 'bg-base-700 border-white/10 text-zinc-300 hover:bg-base-700/60 hover:border-brass-500/40'
-                }`}
-                onClick={() => setAmount(p.toAmount)} aria-label={`${p.label} (${fmt(p.toAmount)}BB)`}>
-                {p.label}
-              </button>
-            ))}
+            {presets.map(p => {
+              const selected = amount === p.toAmount
+              // プリフロップは label 自体が BB (例 "2.5BB") なので総額併記は冗長。
+              const showAmount = !isPreflop && p.label !== `${fmt(p.toAmount)}BB`
+              return (
+                <button key={p.label}
+                  className={`min-h-11 px-3 rounded-lg text-xs font-bold border transition-all flex flex-col items-center justify-center leading-tight ${
+                    selected
+                      ? 'brass border-brass-300 shadow-[0_0_12px_rgba(212,175,55,0.4)]'
+                      : 'bg-base-700 border-white/10 text-zinc-300 hover:bg-base-700/60 hover:border-brass-500/40'
+                  }`}
+                  onClick={() => setAmount(p.toAmount)} aria-label={`${p.label} (${fmt(p.toAmount)}BB)`}>
+                  <span>{p.label}</span>
+                  {showAmount && (
+                    <span aria-hidden="true"
+                      className={`font-data text-[10px] font-semibold ${selected ? 'text-base-900/80' : 'text-brass-300/80'}`}>
+                      {fmt(p.toAmount)}BB
+                    </span>
+                  )}
+                </button>
+              )
+            })}
             {canAllIn && (
               <button className="min-h-11 px-3 rounded-lg text-xs font-extrabold bg-gradient-to-b from-[#a5352e] to-[#7e2620] hover:brightness-110 text-rose-50 border border-rose-400/40 flex items-center gap-1"
                 onClick={() => onAction('allin', maxRaiseTo)} aria-label="オールイン">

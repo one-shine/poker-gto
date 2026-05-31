@@ -6,6 +6,7 @@ import { useSettingsStore } from '../stores/settingsStore'
 import { useSolution } from '../hooks/useSolution'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { PokerTable } from '../components/game/PokerTable'
+import { BetLine } from '../components/game/BetLine'
 import { HandResultOverlay } from '../components/game/HandResultOverlay'
 import { ActionPanel } from '../components/game/ActionPanel'
 import { GameFooter } from '../components/game/GameFooter'
@@ -15,8 +16,11 @@ import { CoachToast } from '../components/coach/CoachToast'
 import { LiveStrategyPanel } from '../components/coach/LiveStrategyPanel'
 import { KeyboardHelp } from '../components/game/KeyboardHelp'
 import { useProgressStore } from '../stores/progressStore'
+import { useSoundEffects } from '../hooks/useSoundEffects'
 
 export function GamePage() {
+  useSoundEffects()
+
   const { gameState, pendingHeroAction, lastResults, lastFeedback, handReview, initialized, initGame, startNewHand, submitHeroAction, dismissFeedback } =
     useGameStore()
   const appMode = useSettingsStore(s => s.appMode)
@@ -122,6 +126,13 @@ export function GamePage() {
 
         {/* 結果 / コーチ / アクション領域: 縮まずに常に表示される (卓が先に縮む) */}
         <div ref={actionRef} className="w-full flex flex-col items-center gap-3 shrink-0">
+        {/* B2: ハンド内アクション履歴 (ストリート別ベットライン)。履歴が空なら null=非表示。 */}
+        {gameState && (
+          <div className="w-full max-w-2xl">
+            <BetLine state={gameState} />
+          </div>
+        )}
+
         {/* ショーダウン結果 */}
         {handComplete && gameState && lastResults && (
           <HandResultOverlay results={lastResults} players={gameState.players} />

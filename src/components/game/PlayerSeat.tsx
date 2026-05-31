@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import type { Player, PlayerAction } from '../../types/game'
 import { CardDisplay } from './CardDisplay'
 
@@ -15,6 +15,8 @@ interface PlayerSeatProps {
   lastAction?: SeatLastAction | null
   isWinner?: boolean // ショーダウンの勝者ハイライト (B3)
   compact?: boolean  // モバイル: ヒーローカードを一回り小さく (重なり回避・R28)
+  // B6: ハンドごとに変わる識別子 (handId)。これを key に混ぜて配布アニメを毎ハンド再生する。
+  dealKey?: string
 }
 
 const ACTION_LABEL: Record<PlayerAction, string> = {
@@ -37,7 +39,8 @@ function actionText(la: SeatLastAction): string {
   return `${ACTION_LABEL[la.action]}${amt}`
 }
 
-export function PlayerSeat({ player, isActing = false, revealCards = false, lastAction, isWinner = false, compact = false }: PlayerSeatProps) {
+export function PlayerSeat({ player, isActing = false, revealCards = false, lastAction, isWinner = false, compact = false, dealKey }: PlayerSeatProps) {
+  const reduceMotion = useReducedMotion()
   const cardSize = player.isHero ? (compact ? 'md' : 'lg') : (compact ? 'xs' : 'sm')
   // ヒーローは常に自分の手札を見る。相手は revealCards のときだけ表向き。
   const faceDown = !player.isHero && !revealCards
@@ -77,6 +80,25 @@ export function PlayerSeat({ player, isActing = false, revealCards = false, last
           transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
         />
       )}
+      {/* B5: 控えめな「手番」の時間表現。ゆっくり一周するブラスのスイープ弧をループ。
+          完全に装飾 (カウントダウン/自動フォールドの圧は付けない・study トレーナーのため)。
+          色覚配慮: 動き + 既存の「手番中」テキスト/発光リングが本体の合図。reduced-motion では出さない。 */}
+      {isActing && !reduceMotion && (
+        <motion.span
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-px rounded-xl"
+          style={{
+            // 細いブラスのスイープ弧 (リング外周をなぞる)。conic で 1/4 周だけ発光。
+            background:
+              'conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(212,175,55,0.55) 320deg, rgba(244,209,107,0.95) 350deg, transparent 360deg)',
+            WebkitMask:
+              'radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px))',
+            mask: 'radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px))',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+        />
+      )}
       {isActing && <span className="sr-only">手番中</span>}
 
       {/* ヒーローを一目で識別できる「あなた」リボン (勝者バッジと重なるときは省略) */}
@@ -86,10 +108,24 @@ export function PlayerSeat({ player, isActing = false, revealCards = false, last
         </span>
       )}
 
+      {/* B6: ホール配布アニメ。ボード配布 (PokerTable) と一貫した opacity+y+rotateY のスタッガー。
+          key に dealKey(handId) を混ぜることで毎ハンド再マウントされ配布が再生される。
+          reduced-motion では静的描画。aria/role は CardDisplay 側で不変 (テスト契約保持)。 */}
       <div className={`flex gap-1 ${player.isHero ? 'mt-1' : ''}`}>
-        {(player.holeCards ?? [null, null]).map((c, i) => (
-          <CardDisplay key={i} card={c} faceDown={faceDown} size={cardSize} />
-        ))}
+        {(player.holeCards ?? [null, null]).map((c, i) =>
+          reduceMotion ? (
+            <CardDisplay key={i} card={c} faceDown={faceDown} size={cardSize} />
+          ) : (
+            <motion.div
+              key={`${dealKey ?? 'deal'}-${i}`}
+              initial={{ opacity: 0, y: -14, rotateY: 90 }}
+              animate={{ opacity: 1, y: 0, rotateY: 0 }}
+              transition={{ duration: 0.32, delay: i * 0.1, ease: 'easeOut' }}
+            >
+              <CardDisplay card={c} faceDown={faceDown} size={cardSize} />
+            </motion.div>
+          ),
+        )}
       </div>
 
       <div className="flex items-center gap-1">

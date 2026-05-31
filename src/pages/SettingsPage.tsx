@@ -47,6 +47,38 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
+// ON/OFF トグル (色 + テキスト + ✓ 記号で色覚配慮、タップ域 >=44px)。
+function Toggle({ checked, onChange, label, desc }: {
+  checked: boolean
+  onChange: (b: boolean) => void
+  label: string
+  desc: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      aria-pressed={checked}
+      className={`w-full text-left rounded-xl border p-3 min-h-12 transition-all ${
+        checked
+          ? 'border-brass-400 bg-brass-400/10'
+          : 'border-white/10 bg-base-800/60 hover:border-brass-500/40'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 font-display font-bold text-sm">
+          {checked && <span aria-hidden="true" className="text-brass-300">✓</span>}
+          {label}
+        </span>
+        <span className={`text-xs font-bold ${checked ? 'text-brass-300' : 'text-zinc-500'}`}>
+          {checked ? 'ON' : 'OFF'}
+        </span>
+      </div>
+      <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">{desc}</p>
+    </button>
+  )
+}
+
 export function SettingsPage() {
   const s = useSettingsStore()
   const resetProgress = useProgressStore(st => st.resetProgress)
@@ -145,6 +177,23 @@ export function SettingsPage() {
             </span>
           </div>
           <p className="text-[11px] text-zinc-500">学習機会(ミックス)カード後に自動で次へ進む秒数。0=手動。</p>
+        </Section>
+
+        <Section title="サウンド・ハプティクス">
+          <div className="flex flex-col gap-2">
+            <Toggle
+              checked={s.soundEnabled}
+              onChange={s.setSoundEnabled}
+              label="効果音"
+              desc="ベット/チェック/フォールド/配布/勝利を短い合成音で知らせる(既定OFF)。"
+            />
+            <Toggle
+              checked={s.hapticsEnabled}
+              onChange={s.setHapticsEnabled}
+              label="ハプティクス(振動)"
+              desc="対応端末で配布・勝利時に短く振動する。モバイル向け(既定OFF)。"
+            />
+          </div>
         </Section>
 
         <Section title="その他">
