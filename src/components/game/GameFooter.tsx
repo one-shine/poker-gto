@@ -109,7 +109,7 @@ export function GameFooter({ source }: GameFooterProps) {
                   <span className="text-zinc-400">このスポットはデータ準備中</span>
                 )}
                 <p className="mt-1 text-[11px] text-zinc-500 leading-relaxed">
-                  ✓ = 本物のソルバー解 / △ = 手作り近似 (ソルバー解への置換予定)。
+                  ✓ = 本物のソルバー解 / △ = GTO近似レンジ (一般理論ベースの手作り)。
                   スポットごとに信頼度が変わります。
                 </p>
               </Item>

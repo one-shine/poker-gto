@@ -35,7 +35,7 @@ function SingleRange() {
             セルにカーソルで詳細頻度を表示。
           </p>
           <p className="text-xs text-zinc-500 mt-0.5">
-            GTO近似レンジ (一般理論ベースの手作り) — 自社ソルバー解への置換予定 (source: approximate)
+            GTO近似レンジ (一般理論ベースの手作り・source: approximate)
           </p>
         </div>
 
