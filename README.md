@@ -56,6 +56,8 @@ npm run build:icons  # PWA アイコン (favicon.svg → PNG) 再生成
 
 | ファイル | 内容 |
 |---------|------|
+| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | 利用マニュアル(起動・画面・操作・解の信頼度の読み方) |
+| [`docs/OVERVIEW.md`](docs/OVERVIEW.md) | 説明資料(ソルバー解説・アピールポイント・開発概要)— PPT 化前提 |
 | [`docs/SPEC.md`](docs/SPEC.md) | 製品仕様の正典(スコープ・前提・GTO精度の保証・評価ルール・2モード) |
 | [`docs/BACKLOG.md`](docs/BACKLOG.md) | 残タスク・課題の一元トラッカー(進捗の正典) |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | デザイン仕様(Felt & Brass) |
