@@ -44,7 +44,7 @@
 ## 関連項目 (RELEASE_READINESS の他ライセンス論点)
 
 - **L2 OSS ライセンス**: 実行時依存は `react` / `react-dom` / `zustand` / `framer-motion` (いずれも MIT)、`idb` (ISC) と**すべて寛容ライセンス**でコピーレフト無し。配布時に `THIRD_PARTY_LICENSES` を同梱する。AGPL の postflop-solver は不採用 (依存に無し)。
-- **L3 フォント**: Google Fonts (Bricolage Grotesque / Hanken Grotesk / Zen Kaku Gothic New / JetBrains Mono) は OFL/Apache で商用可。セルフホスト時もライセンス表記を維持。
+- **L3 フォント**: Bricolage Grotesque / Hanken Grotesk / Zen Kaku Gothic New / JetBrains Mono を **@fontsource でセルフホスト化済み** (Google Fonts CDN 依存を撤去、完全オフライン)。いずれも OFL-1.1 (JetBrains Mono も OFL) で商用同梱可。OFL は配布時のライセンス同梱が条件のため、配布物の `THIRD_PARTY_LICENSES` に各 @fontsource パッケージ同梱の `LICENSE` (例: Zen Kaku Gothic New = "Copyright The Zen Project Authors") を含めること。
 
 ## 残作業 (この方針に基づく)
 

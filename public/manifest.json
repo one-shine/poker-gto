@@ -28,5 +28,21 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ライブ卓 — GTO 戦略・コーチ・アクション履歴(モバイル)"
+    },
+    {
+      "src": "/screenshots/desktop-1.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ライブ卓 — GTO 戦略・コーチ・アクション履歴(デスクトップ)"
+    }
   ]
 }

@@ -2,9 +2,9 @@
 
 /* ── デザイントークン (Felt & Brass) ───────────────────────────── */
 @theme {
-  --font-sans: "Hanken Grotesk", "Zen Kaku Gothic New", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque", "Zen Kaku Gothic New", ui-sans-serif, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: "Hanken Grotesk Variable", "Zen Kaku Gothic New", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Zen Kaku Gothic New", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", monospace;
 
   /* ブラス (真鍮) — プレミアム表現・ディーラーボタン・手番リング */
   --color-brass-300: #e6cd7a;

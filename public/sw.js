@@ -1,9 +1,15 @@
-// GTO Lab Service Worker — オフライン対応 (アプリシェル + 同一オリジン資産の runtime cache)。
-const CACHE = 'gto-lab-v1'
+// GTO Lab Service Worker — オフライン対応 (アプリシェル + フォント資産プリキャッシュ + 同一オリジン資産の runtime cache)。
+// CACHE 名と PRECACHE_FONTS はビルド後に scripts/inject-sw-precache.mjs がプレースホルダを実値へ置換する。
+const CACHE = '__CACHE_VERSION__'
 const SHELL = ['/', '/index.html', '/manifest.json', '/favicon.svg']
+const PRECACHE_FONTS = __PRECACHE_FONTS__ // ビルドで dist/assets/*.woff2 を注入 (完全オフライン保証)
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()))
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(c => c.addAll([...SHELL, ...PRECACHE_FONTS]))
+      .then(() => self.skipWaiting()),
+  )
 })
 
 self.addEventListener('activate', event => {
@@ -18,7 +24,7 @@ self.addEventListener('fetch', event => {
   const { request } = event
   if (request.method !== 'GET') return
   const url = new URL(request.url)
-  if (url.origin !== self.location.origin) return // クロスオリジン(フォント等)は素通し
+  if (url.origin !== self.location.origin) return // クロスオリジンは素通し
 
   // ナビゲーションは network-first(更新を優先)、オフライン時はキャッシュにフォールバック
   if (request.mode === 'navigate') {
@@ -33,7 +39,7 @@ self.addEventListener('fetch', event => {
     caches.match(request).then(cached => {
       const network = fetch(request)
         .then(res => {
-          if (res.ok) caches.open(CACHE).then(c => c.put(request, res.clone()))
+          if (res.ok && res.type !== 'opaque') caches.open(CACHE).then(c => c.put(request, res.clone()))
           return res
         })
         .catch(() => cached)
