@@ -42,6 +42,8 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds }: Prop
   const reqEquity = callAmount > 0 ? callAmount / (effPot + callAmount) : 0
 
   const strategy = node && handKey ? node.strategy[handKey] ?? null : null
+  // 対象外の理由説明用: フォールドしていない参加者数 (3+ = マルチウェイ)
+  const activeCount = pending.state.players.filter(p => !p.isFolded).length
 
   return (
     <div className="w-full max-w-2xl rounded-2xl border border-brass-500/25 bg-base-800/85 backdrop-blur-md p-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
@@ -93,7 +95,13 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds }: Prop
           GTO解を求めています…
         </span>
       ) : !node || !strategy ? (
-        <span className="text-xs text-zinc-500">このスポットは評価対象外です(未対応スポット)</span>
+        <span className="block text-xs text-zinc-500 leading-relaxed">
+          この局面は GTO 解の<strong className="text-zinc-400">対象外</strong>です(プレイは続行できます)。
+          {activeCount >= 3
+            ? ' 3人以上が参加するマルチウェイのため(本アプリの厳密評価はヘッズアップ限定)。'
+            : ' 未収録のプリフロップ状況・盲対盲・複雑なレイズ応酬などが該当します。'}
+          誤った評価を出さないため、ここではあえてスキップしています。
+        </span>
       ) : (
         <StrategyBars strategy={strategy} source={node.source} showEv={node.source !== 'approximate'} approxEv={node.source === 'approximate_with_ev'} />
       )}

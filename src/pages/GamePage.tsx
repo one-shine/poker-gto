@@ -183,6 +183,17 @@ export function GamePage() {
           ) : (
             <p className="text-zinc-500 text-sm">相手の番です…</p>
           )}
+          {/* ハンド進行中はいつでも中断して次のハンドへ移れる導線 (途中で終われない問題の解消) */}
+          {!showStartButton && (
+            <button
+              type="button"
+              onClick={startNewHand}
+              aria-label="このハンドを中断して新しいハンドを開始"
+              className="min-h-8 px-2 text-xs text-zinc-400 hover:text-zinc-200 underline underline-offset-2 transition-colors"
+            >
+              ↻ 新しいハンド(このハンドを中断)
+            </button>
+          )}
         </div>
         </div>
       </div>

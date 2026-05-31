@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { CoachFeedback } from '../../types/coach'
 import type { SolutionSource } from '../../types/solver'
@@ -19,11 +19,14 @@ const SOURCE_BADGE: Record<SolutionSource, { mark: string; text: string; cls: st
 }
 
 // play モード用の非ブロッキング・トースト (critical のみ)。ハンドは止めない。
-export function CoachToast({ feedback, onDismiss, durationMs = 5500 }: Props) {
+export function CoachToast({ feedback, onDismiss, durationMs = 8000 }: Props) {
+  // ホバー中は自動消滅を一時停止 (読みきれない問題の解消)。✕ で手動クローズも可。
+  const [paused, setPaused] = useState(false)
   useEffect(() => {
+    if (paused) return
     const t = setTimeout(onDismiss, durationMs)
     return () => clearTimeout(t)
-  }, [feedback, durationMs, onDismiss])
+  }, [feedback, durationMs, onDismiss, paused])
 
   const badge = SOURCE_BADGE[feedback.source]
   const subtitle = feedback.category ? CATEGORY_EXPLAIN[feedback.category].label : null
@@ -35,6 +38,8 @@ export function CoachToast({ feedback, onDismiss, durationMs = 5500 }: Props) {
       exit={{ opacity: 0, y: -16 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
       role="status"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
       className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-sm w-[calc(100%-2rem)]
         rounded-xl border border-rose-500/50 bg-rose-950/90 backdrop-blur-md px-4 py-2.5
         shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex items-start gap-2"
