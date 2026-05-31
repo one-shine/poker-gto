@@ -134,7 +134,7 @@ export function PostflopDrillPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-2 gap-x-2 sm:gap-x-4">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-zinc-500">ポット</span>
           <Seg active={potType === 'srp'} onClick={() => changePotType('srp')}>シングルレイズド</Seg>

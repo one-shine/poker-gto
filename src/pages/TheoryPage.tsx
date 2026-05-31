@@ -55,7 +55,7 @@ function ConceptArticle({ concept, onClose }: { concept: TheoryConcept; onClose:
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 min-h-8 px-3 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 text-zinc-100"
+          className="shrink-0 min-h-11 px-3 py-2 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brass-300"
         >
           一覧へ
         </button>
@@ -178,7 +178,7 @@ function Glossary() {
                       key={rt}
                       type="button"
                       onClick={() => setQ(rt)}
-                      className="text-[11px] font-bold text-brass-300 underline decoration-dotted underline-offset-2 hover:text-brass-200 transition-colors min-h-7 px-1"
+                      className="inline-flex items-center text-[11px] font-bold text-brass-300 underline decoration-dotted underline-offset-2 hover:text-brass-200 transition-colors min-h-9 px-2 py-1 rounded"
                     >
                       {rt}
                     </button>
@@ -199,7 +199,7 @@ export function TheoryPage() {
   const [tab, setTab] = useState<'concepts' | 'glossary'>('concepts')
 
   return (
-    <div className="h-full overflow-auto p-6 md:p-8">
+    <div className="h-full overflow-auto p-4 sm:p-6 md:p-8">
       <div className="max-w-3xl mx-auto space-y-5">
         <h1 className="text-2xl font-extrabold text-zinc-50">理論</h1>
         <div className="flex gap-2">

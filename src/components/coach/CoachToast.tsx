@@ -19,7 +19,7 @@ const SOURCE_BADGE: Record<SolutionSource, { mark: string; text: string; cls: st
 }
 
 // play モード用の非ブロッキング・トースト (critical のみ)。ハンドは止めない。
-export function CoachToast({ feedback, onDismiss, durationMs = 4500 }: Props) {
+export function CoachToast({ feedback, onDismiss, durationMs = 5500 }: Props) {
   useEffect(() => {
     const t = setTimeout(onDismiss, durationMs)
     return () => clearTimeout(t)

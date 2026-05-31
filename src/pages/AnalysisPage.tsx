@@ -93,7 +93,7 @@ function PositionStats() {
 export function AnalysisPage() {
   const [tab, setTab] = useState<'weakness' | 'position'>('weakness')
   return (
-    <div className="h-full overflow-auto p-6 md:p-8">
+    <div className="h-full overflow-auto p-4 sm:p-6 md:p-8">
       <div className="max-w-2xl mx-auto space-y-5">
         <h1 className="text-2xl font-extrabold text-zinc-50">分析</h1>
         <div className="flex gap-2">

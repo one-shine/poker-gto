@@ -99,7 +99,7 @@ export function MistakeCard({ feedback }: { feedback: CoachFeedback }) {
             type="button"
             onClick={() => setExpanded(e => !e)}
             aria-expanded={expanded}
-            className="inline-flex items-center gap-1.5 min-h-7 text-xs font-bold text-zinc-300 hover:text-zinc-100"
+            className="inline-flex items-center gap-1.5 min-h-10 px-2 py-1 rounded text-xs font-bold text-zinc-300 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brass-300"
           >
             <span aria-hidden="true" className={`transition-transform ${expanded ? 'rotate-90' : ''}`}>▶</span>
             背景説明

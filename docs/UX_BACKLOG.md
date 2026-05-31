@@ -26,6 +26,8 @@
 
 > ✅ **B の内容監修済**(2026-05-31・3視点レビューWF: GTO正確性/アプリ整合/ルール1)。修正適用: turn-play の盤面例破綻を是正・エクイティ分布の説明を実装(10分位ヒストグラム)に一致・value-bluff の33%を「目安」に hedge・**RFI頻度を概念とアプリ実装値(BTN37%等)で整合**・polarization を EV 駆動で再定義・overbet/SPR/range-advantage を精緻化。概念25/用語56維持・332テスト緑。
 
+> ✅ **使い勝手確認 + UX細部 polish 済**(2026-05-31・細部レビューWF + Playwright 実機)。実機: オンボ6枚・学習の流れ・D1空状態・D6キー操作モーダル すべて 0 console err で動作確認。修正: **TermChips ポップオーバーを Portal 化**(overflow 親でクリップする問題を根治・body に fixed 配置+viewport クランプ・実機で mountedOnBody/inViewport 確認)/ タップ域 <44px を是正(TermChip/ConceptLink/MistakeCard展開/WeaknessCardリンク/TheoryPage閉じる・用語ボタン → min-h-9〜11)/ focus-visible 追加(キーボードa11y)/ CoachToast 4.5→5.5秒(新文量に対応)/ モバイル折返し(ドリル制御行・復習パネル決定行・LearnPageグリッド・オンボモーダル max-h+overflow・各ページ padding p-4 sm:)。332テスト緑。
+
 ---
 
 ## テーマ A — コーチのアクション解説(オーナー #1)【最優先】

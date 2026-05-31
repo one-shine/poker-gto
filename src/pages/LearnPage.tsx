@@ -114,7 +114,7 @@ function Dashboard() {
       </div>
 
       {/* 主要スタッツ */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-2 gap-3">
         <div className="rounded-2xl border border-white/10 bg-base-800/60 p-4">
           <div className="text-xs text-zinc-400 mb-1 flex items-center gap-2">
             GTO精度 <SampleSizeBadge n={evaluated} />
@@ -262,7 +262,7 @@ export function LearnPage() {
   // 弱点ドリルのディープリンクで来たらドリルタブを初期表示 (LearnPage は遷移で再マウント)
   const [tab, setTab] = useState<'dashboard' | 'drill' | 'history'>(() => (drillCategory ? 'drill' : 'dashboard'))
   return (
-    <div className="h-full overflow-auto p-6 md:p-8">
+    <div className="h-full overflow-auto p-4 sm:p-6 md:p-8">
       <div className="max-w-2xl mx-auto space-y-5">
         <h1 className="text-2xl font-extrabold text-zinc-50">学習</h1>
         <div className="flex gap-2">

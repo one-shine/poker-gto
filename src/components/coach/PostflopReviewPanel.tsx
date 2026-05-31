@@ -111,7 +111,7 @@ export function PostflopReviewPanel({ decisions }: { decisions: HeroDecision[] }
       </h3>
       {results.map((r, i) => (
         <div key={i} className="space-y-1.5 border-t border-white/5 pt-2 first:border-0 first:pt-0">
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs text-zinc-400">
             <span className="font-semibold text-zinc-200">{STREET_JP[r.decision.state.street] ?? r.decision.state.street}</span>
             <span className="flex gap-0.5">
               {r.decision.state.board.map((c, j) => <CardDisplay key={j} card={c} size="xs" />)}

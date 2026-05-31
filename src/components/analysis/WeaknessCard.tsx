@@ -42,7 +42,7 @@ export function WeaknessCard({ category, count, evLost, rank }: Props) {
                 <button
                   type="button"
                   onClick={() => goTo('theory', { theoryConceptId: c.id })}
-                  className="w-full flex items-center gap-2 text-left min-h-8 px-2 rounded-lg text-xs font-bold text-brass-200 bg-brass-500/10 hover:bg-brass-500/20 transition-colors"
+                  className="w-full flex items-center gap-2 text-left min-h-11 px-2 py-1.5 rounded-lg text-xs font-bold text-brass-200 bg-brass-500/10 hover:bg-brass-500/20 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brass-300"
                 >
                   <span aria-hidden="true" className="font-data text-brass-400/70">{i + 1}.</span>
                   <BookIcon />

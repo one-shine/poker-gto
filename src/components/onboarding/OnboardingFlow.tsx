@@ -119,7 +119,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         initial={{ opacity: 0, y: 16, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="max-w-md w-full rounded-2xl bg-base-800/95 backdrop-blur-md border border-white/10 p-7 flex flex-col gap-5 shadow-[0_24px_70px_rgba(0,0,0,0.6)]"
+        className="max-w-md w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-base-800/95 backdrop-blur-md border border-white/10 p-5 sm:p-7 flex flex-col gap-5 shadow-[0_24px_70px_rgba(0,0,0,0.6)]"
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
