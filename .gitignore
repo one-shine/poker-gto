@@ -12,8 +12,12 @@ dist
 dist-ssr
 *.local
 
-# Solver equity-matrix cache (再生成可能・スタック非依存・大きいので非追跡)
-scripts/.cache
+# Solver equity-matrix cache (再生成可能・大きいので原則非追跡)。
+# ただし preflop-equity-400-1.json はテスト fixture として追跡する:
+# CI はクリーンチェックアウトでキャッシュが無く、heuristic EV テストの beforeAll が
+# 169×169 MC を再計算して hook timeout (30s) するため、確定値を同梱して即ロードさせる。
+scripts/.cache/*
+!scripts/.cache/preflop-equity-400-1.json
 
 # Playwright MCP の実機確認アーティファクト (スナップショット/ログ/スクショ)
 .playwright-mcp
