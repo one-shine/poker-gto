@@ -47,7 +47,7 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds }: Prop
     <div className="w-full max-w-2xl rounded-2xl border border-brass-500/25 bg-base-800/85 backdrop-blur-md p-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
       <div className="flex items-center justify-between mb-2">
         <span className="text-[11px] font-bold text-brass-300 flex items-center gap-1.5">
-          <span aria-hidden="true">📊</span> GTO 戦略
+          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3v18h18" /><rect x="7" y="11" width="3" height="6" rx="0.5" /><rect x="12" y="7" width="3" height="10" rx="0.5" /><rect x="17" y="13" width="3" height="4" rx="0.5" /></svg> GTO 戦略
           {handKey && node && <span className="text-zinc-400 font-normal">{handKey} @ {node.spotId}</span>}
         </span>
         {node && node.source === 'approximate' && (
