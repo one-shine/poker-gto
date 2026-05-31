@@ -118,10 +118,16 @@ stores間の整合性のため単一rootストアから派生させる設計。`
 | 5 | 学習 + ポストフロップドリル + リフレクション | 100ハンド後に振り返り。ソルバー解ベースのドリル |
 | 6 | ポリッシュ・最適化 + 事前計算ライブラリ拡充 | PWA/COOP-COEP/WASM遅延ロード |
 
-## 実装計画
+## 仕様・進捗・残課題
 
-詳細な全フェーズ計画・進捗チェックリスト・設計上の注意事項は **`docs/IMPLEMENTATION_PLAN.md`** を参照。
-セッション開始時は必ず同ファイルの「現在の進捗」セクションを確認してから作業を開始すること。
+Phase 1〜6 の主要スコープは完了済み。ドキュメントは「仕様(今の姿)+ 残課題」に再編済み:
+- 製品仕様の正典(スコープ・前提・GTO精度の保証・評価ルール): **`docs/SPEC.md`**
+- 残タスク・課題の正典(進捗を更新するファイル): **`docs/BACKLOG.md`**
+- 公開準備プレイブック: **`docs/RELEASE.md`** / データ権利: `docs/DATA_LICENSE.md`
+- 実装当時の全フェーズ計画・進捗チェックリスト・経緯(履歴): **`docs/archive/`**
+
+セッション開始時は `docs/BACKLOG.md`(残課題)と `docs/SPEC.md`(仕様)を確認してから作業を開始すること。
+進捗・新たな課題は `docs/BACKLOG.md` を正典として更新する。
 
 ## コーディング規約
 
@@ -130,3 +136,7 @@ stores間の整合性のため単一rootストアから派生させる設計。`
 - `src/engine/` のテストはVitest (jsdom不要、Node環境で動く)。
 - `HandEvaluator.ts` の変更後は必ず `npx vitest run src/engine/cards/HandEvaluator.test.ts` で確認。
 - プリフロップシナリオ: Phase 2で5件、Phase 4で+5件 (UTG/MP open + BB vs UTG/MP/CO)、Phase 5で+2件 (SB vs BTN, BTN vs CO)、Phase 6で残り。Phase 3.5以降は手作りレンジを実ソルバー解(`data/solutions/`)へ順次置換。
+
+## 共有ナレッジ（毎回参照）
+@../brain/30_Tech_Notes/coding-conventions.md
+@../brain/30_Tech_Notes/architecture-decisions.md

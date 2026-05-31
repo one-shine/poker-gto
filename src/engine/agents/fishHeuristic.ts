@@ -3,7 +3,7 @@ import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 import { handCategory } from '../cards/handCategory'
 
 // Fish AI / GTO 未カバースポットのフォールバック用ヒューリスティクス。
-// プリフロップ未オープン時は raise-or-fold (リンプ禁止) — RFI 前提を保つため (docs/PHASE_3.md)。
+// プリフロップ未オープン時は raise-or-fold (リンプ禁止) — RFI 前提を保つため (docs/archive/PHASE_3.md)。
 
 const OPEN_SCENARIO_BY_POSITION: Partial<Record<Position, string>> = {
   BTN: 'btn-open', CO: 'co-open', MP: 'mp-open', UTG: 'utg-open', SB: 'sb-open',

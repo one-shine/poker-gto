@@ -48,7 +48,7 @@ useSettingsStore.subscribe(s => {
   if (s.appMode !== 'study' && paused) setPaused(false)
 })
 
-// 評価種別 → XP (docs/PHASE_4.md)。
+// 評価種別 → XP (docs/archive/PHASE_4.md)。
 function xpForFeedback(fb: CoachFeedback): number {
   if (fb.kind === 'correct' || fb.kind === 'mixed') return 10
   if (fb.severity === 'minor') return 5

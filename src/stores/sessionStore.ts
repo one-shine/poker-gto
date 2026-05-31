@@ -39,7 +39,7 @@ export const useSessionStore = create<SessionStore>()(
 
   recordEvaluation: (fb, ctx) =>
     set(s => {
-      // ヒント参照ハンドは精度サンプルから除外 (実力測定の汚染防止・docs/PHASE_3.md)
+      // ヒント参照ハンドは精度サンプルから除外 (実力測定の汚染防止・docs/archive/PHASE_3.md)
       const counted = !s.hintedHandIds.has(ctx.handId)
       const isCorrect = fb.kind !== 'mistake'
       const mistakes = fb.kind === 'mistake'

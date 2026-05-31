@@ -78,5 +78,6 @@
 
 ---
 
-*このドラフトは [docs/RELEASE_READINESS.md](RELEASE_READINESS.md) の P1/P2/P3 と連動。配信・収益化の
-方針確定時に該当節 (外部通信・同意管理・子ども対応) を更新すること。*
+*このドラフトは公開準備プレイブック [RELEASE.md](RELEASE.md) の §3 / 残課題 [BACKLOG.md](BACKLOG.md) C節 と連動。
+配信・収益化の方針確定時に該当節 (外部通信・同意管理・子ども対応) を更新すること。
+公開準備レビューの全履歴は [archive/RELEASE_READINESS.md](archive/RELEASE_READINESS.md) の P1/P2/P3 を参照。*

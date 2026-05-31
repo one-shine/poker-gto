@@ -8,7 +8,7 @@
  * src/data/solutions/preflop/<spotId>.json に出力する。
  * getSolution はこの JSON があれば手作り近似 (approximate) より優先採用する。
  *
- * ⚠ ライセンス (docs/DATA_LICENSE.md / RELEASE_READINESS.md L1):
+ * ⚠ ライセンス (docs/DATA_LICENSE.md / docs/archive/RELEASE_READINESS.md L1):
  *    本アプリの方針は「自社ソルバーのみ」。他社ソルバー出力 (GTO Wizard / PioSOLVER 等) の
  *    商用再配布は規約・著作権違反の恐れがあるため **同梱禁止**。
  *    このスクリプトは --source / --license を必須とし、既知のプロプライエタリ出所は拒否する。
