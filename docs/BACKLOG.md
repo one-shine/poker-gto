@@ -7,6 +7,23 @@
 
 ---
 
+## 0. バグ・気になる点(プレイ検証で発見)
+
+> 実際に触って見つかった不具合・UX の引っかかりをここに集約しトリアージする。新しく気づいたら追記。
+> フォーマット: **現象 / 重大度(🔴致命 🟠中 🟡軽)/ 状態(⬜未対応 🔄対応中 ✅修正済)/ メモ(再現・原因・対応)**。
+> 修正したら ✅ にして1行残す(履歴)。設計レベルの大物は A〜D の該当セクションへ移す。
+
+| # | 現象 | 重大度 | 状態 | メモ(再現・原因/対応) |
+|---|------|--------|------|----------------------|
+| U1 | コーチのアドバイスがすぐ消えて読みきれない | 🟠 | ✅ | 2026-05-31: `CoachToast` 5.5→8s + ホバー中は自動消滅停止 / `CoachPanel` もホバー停止(ミスは元々「次へ」まで残る)。 |
+| U2 | GTO アドバイスが「対象外」になる局面の理由が不明 | 🟡 | ✅ | 2026-05-31: 対象外メッセージに理由(マルチウェイ=3人以上 / 未収録 / 盲対盲 / 深いレイズ応酬)を明示。スキップ自体は誤評価回避のため意図的。 |
+| U3 | ハンドの途中で終われない / 次へ進めない | 🟠 | ✅ | 2026-05-31: 進行中に「↻ 新しいハンド(このハンドを中断)」ボタンを常時表示(`GamePage`)。 |
+| U4 | 学習ドリルの履歴が残らない | 🟠 | ⬜ | ドリルは `addXP` で XP を加算するだけで、試行回数・正誤・カテゴリ別成績を永続化していない(`progressStore` は XP/level のみ・drill 専用記録なし)。→ カテゴリ別の試行/正解数・直近結果を `progressStore` か新規 `drillStore` に永続化し、ドリルタブ/ダッシュボードに表示。 |
+| U5 | ハンド履歴が並ぶだけで使い道がない | 🟠 | ⬜ | 現状 `handHistory`(ActionRecord 列)を一覧 + `HandReplay`(アクション再生)のみ。勝敗・自分のミス・GTO ライン比較が無く学びに繋がらない。→ 案: 各ハンドに勝敗/ミス印、ミス→該当ドリル・理論へ導線、「コーチ付きで再求解」。要設計判断(価値が薄ければ縮小/統合も検討)。 |
+| U6 | レンジ表をもっと一目で分かる色分けに | 🟡 | ⬜ | 現状 `RangeGrid` は既にアクション頻度のスプリット塗り(R=緑/C=青/F=暗灰)+ R/C/M トークン。さらに「一目で」分かる工夫の余地: アクション色のコントラスト強化 / raise頻度・EV・ハンド強度のヒートマップ表示オプション / 凡例の明確化 / ポジション横断の比較ビュー。**着手時に「ネットで見た例」(URL/サービス名)を共有してもらえると最短で寄せられる。** |
+
+---
+
 ## A. GTO 精度(本丸の残・主に環境制約)
 
 | ID | 課題 | 状態 | 担当 | なぜ残るか / 方針 |
@@ -59,7 +76,8 @@
 
 > 現状はクライアント完結の Vite SPA(PWA 足場・manifest・sw.js・アイコン・自前ソルバー・オフライン可)。
 > `dist/` を共通成果物として「包み方」を変えるだけ。
-> **方針: 公開は iPhone 個人確認後**(まず共通土台を整え、ホーム画面 PWA で個人検証 → その後に配布形態を選定)。
+> **方針(2026-05-31 決定)**: **iPhone は PWA で行く**(Safari「ホーム画面に追加」)。ネイティブ iOS(Capacitor / Tauri iOS = App Store)は当面**見送り**。公開は iPhone 個人確認後。
+> iPhone PWA に必要なのは **HTTPS 配信**のみ: 個人確認 = `cloudflared` 等の HTTPS トンネル経由で Safari → ホーム画面に追加 / 恒久 = 静的ホスティング(E② / C節)。共通土台(フォント/オフライン/screenshots)は完了済み。
 
 ### 共通土台(PWA を実質完成)— ✅ 完了(2026-05-31・dynamic workflow + Playwright 検証)
 - **Web フォントのセルフホスト** ✅ — `@fontsource-variable/{hanken-grotesk,bricolage-grotesque,jetbrains-mono}` + `@fontsource/zen-kaku-gothic-new`(japanese/latin 400/500/700)を `src/main.tsx` で import、`index.html` の Google Fonts CDN(preconnect+stylesheet)を削除、`index.css` の @theme family 名を可変フォントの **" Variable" サフィックス**に整合(=最大の落とし穴を回避)。**Playwright 実測: 外部フォントリクエスト 0 件・4フォント全て同一オリジンから適用**。woff2 計 3.1MB(和文 ~2.9MB が支配的)。
@@ -75,7 +93,7 @@
 |------|------|------------|--------|--------|
 | **① PWA**(最有力・個人/ローカル) | Mac/Win=Edge/Chrome「インストール」, iPhone=Safari「ホーム画面に追加」 | 不要・$0 | 不要 | HTTPS 配信 or localhost。共通土台で実質完成 |
 | **② Tauri デスクトップ** ✅Mac | Mac(.dmg/.app)=**実装済** / Windows(.msi)=未 | 署名時 Apple ID $99 / Win 証明書(任意) | **Win は要 Windows/CI** | `src-tauri/` 追加済・`npm run tauri:build`。下記「実装」参照 |
-| **③ Capacitor** | iPhone(App Store) | **Apple $99 必須** | **要 Mac + Xcode** | wrapper + 署名 + 審査。simulated gambling=17+ 申告。手順は [`./RELEASE.md`](./RELEASE.md) §1/§2/§5。`capacitor://` で sw.js 無効化 |
+| ③ Capacitor / Tauri iOS(ネイティブ)🧊 見送り | iPhone(App Store) | **Apple $99 必須** | **要 Mac + Xcode** | **当面見送り(2026-05-31)= iPhone は PWA 方針**。将来 App Store 配布が必要になれば: wrapper + 署名 + 審査(simulated gambling=17+ 申告)。手順は [`./RELEASE.md`](./RELEASE.md) §1/§2/§5。`capacitor://`/`tauri://` で sw.js 無効化要。 |
 
 > Electron は Tauri の代替(楽だが ~100MB+)。Android は Capacitor で iOS と同時に出せる(Google Play $25・要 screenshots)。
 
@@ -86,6 +104,23 @@
 - `src/main.tsx`: Tauri 配下(`__TAURI_INTERNALS__` 検出)では SW を登録しない(資産バイナリ同梱で不要・stale 回避)。**Web/PWA 経路は不変**(ブラウザでは従来どおり SW 登録)。
 - 前提: Rust(rustup)導入済・Xcode あり・Apple Silicon。`src-tauri/target` `gen` は gitignore。検証: 338テスト緑・lint0・build緑・bundle 生成確認。
 - 残(任意): **Apple Developer ID 署名 + notarize**(未署名は初回起動で「未確認の開発元」警告 → 右クリック→開く で回避)/ **Windows ビルド**(要 Windows マシン or CI・同手順)/ CSP 厳格化。
+
+---
+
+## E. CI/CD・リリース運用
+
+> 現状 CI(GitHub Actions・`.github/workflows/ci.yml`): push/PR で lint → build(tsc -b)→ test → `npm audit`。緑で稼働中。**CD(自動デプロイ/配布)は未整備**。
+> 「うまく回す」の具体像は要決定(下記候補)。
+
+| 項目 | 状態 | 担当 | メモ |
+|------|------|------|------|
+| CI ハードニング | ⬜ | 🤖 | Node20 actions 非推奨警告の解消(`actions/checkout`・`setup-node` を @v4→@v5)/ npm・cargo キャッシュで高速化 / 重い CFR テストの安定化(testTimeout 45s 済)。 |
+| CD: PWA 自動デプロイ | ⬜ | 👤🤖 | main push で `dist` を静的ホスティング(Vercel/Netlify/Cloudflare Pages)へ自動公開。要ホスティング選定([C節])。 |
+| **CD: Mac+Windows 配布物の自動ビルド** ✅採用 | 🔄 | 🤖 | **方針決定(2026-05-31・ユーザー採用)**: `v*` タグ push をトリガに GitHub Actions の**マトリクス**で自動ビルド → GitHub Releases に自動添付。<br>・`macos-latest` → `.dmg`/`.app`(aarch64)<br>・`windows-latest` → `.msi`/`.exe`(NSIS)。Windows は WebView2 標準搭載で追加不要<br>・新規 `.github/workflows/release.yml`。`tauri-apps/tauri-action` で build+Release 添付を一括(各 runner で `npm run tauri:build`)<br>・署名は別途・未署名でも動作(Mac=Gatekeeper / Win=SmartScreen 警告のみ)。Intel Mac も配るなら x86_64/universal を追加<br>・既存 `ci.yml`(lint/build/test)はそのまま、本ワークフローは tag 時のみ起動 |
+| リリースのバージョニング | ⬜ | 🤖 | `package.json` / `tauri.conf.json` の version 統一 + tag → Release のフロー化。 |
+
+> **方向決定済(2026-05-31)**: ③ **tag → Mac `.dmg` + Windows `.msi` を CI マトリクスで自動ビルド → GitHub Releases**(上記「✅採用」行)。これで Mac だけで Windows 版まで配れる。
+> ①CI ハードニング・②PWA 自動デプロイは未判断(別途)。実装は別タスクで着手予定。
 
 ---
 
