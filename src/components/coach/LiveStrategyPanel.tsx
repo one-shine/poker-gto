@@ -134,12 +134,9 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, revealActed }: Prop
         </span>
       ) : !node || !strategy ? (
         <div className="space-y-2">
-          <span className="block text-xs text-zinc-500 leading-relaxed">
-            この局面は GTO 解の<strong className="text-zinc-400">対象外</strong>です(プレイは続行できます)。
-            {activeCount >= 3
-              ? ' 3人以上が参加するマルチウェイのため(本アプリの厳密評価はヘッズアップ限定)。'
-              : ' 未収録のプリフロップ状況・盲対盲・複雑なレイズ応酬などが該当します。'}
-            誤った GTO 評価を出さないため、ここではあえてスキップしています。
+          <span className="block text-xs text-zinc-500">
+            GTO 解の<strong className="text-zinc-400">対象外</strong>
+            <span className="text-zinc-600">{activeCount >= 3 ? '(マルチウェイ)' : '(未収録スポット)'}</span>
           </span>
           {/* 対象外でも、オッズ目安は主表示として出す (U18)。 */}
           <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} />

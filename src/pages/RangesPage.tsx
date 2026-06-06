@@ -144,8 +144,9 @@ function SingleRange() {
 
         {/* GTO disclaimer (CLAUDE.md ルール1: 「GTO最適」断定は不可。手作り近似は approximate と明示) */}
         <p className="text-xs text-zinc-600 border-t border-zinc-800 pt-4">
-          ※ 表示中のレンジは GTO近似レンジ (一般理論ベースの手作り・source: approximate) です。
-          自社ソルバー解 (solver_precomputed) への置換は Phase 3.5 以降で順次進めます。
+          ※ 表示中のレンジは一般理論ベースの GTO 近似 (手作り・source: approximate) です。
+          100BB の厳密な Nash 解はサーバ規模の事前計算が前提のため別軸の課題で、現状は近似で提供しています
+          (「GTO最適」とは断定しません)。push/fold(≤25BB)のドリルは自社ソルバーの厳密解です。
         </p>
     </div>
   )
