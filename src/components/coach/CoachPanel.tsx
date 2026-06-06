@@ -35,6 +35,8 @@ export function CoachPanel({ feedback, onDismiss, autoAdvanceSeconds = 0 }: Coac
       role="status"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
       className={`relative w-full max-w-2xl rounded-2xl border p-4 pr-20 backdrop-blur-md shadow-[0_12px_40px_rgba(0,0,0,0.5)] ${frame}`}
     >
       <button

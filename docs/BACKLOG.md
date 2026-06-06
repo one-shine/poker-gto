@@ -164,6 +164,22 @@
 
 ---
 
+## F. 品質ハードニング(2026-06-06 全方位レビュー由来)
+
+> 64エージェントの全方位レビュー(find→敵対的verify→synthesis・確証42件)で、低リスク高価値分は即反映済
+> (commit `608420d` ポット二重計上 / `43a9454` 最小レイズ / `c412528` ラベル·コメント·重複·dead-code·タップ44px)。
+> 誤検出は却下済(isHeroIP の button 相対性・useEquity の cancelled ガード)。以下は妥当だが優先度中以下で保留したもの。
+
+| ID | 項目 | 種別 | 状態 | メモ |
+|----|------|------|------|------|
+| QR1 | テスト網羅の拡充 | テスト | ✅ 主要 | **2026-06-06**: `Showdown.test`(単独勝ち/上位ペア/分割/サイドポット)・`PositionManager.test`(`isHeroIP` を全 button 回転で検証=ルール3、T007 の誤検出を反証)・`monteCarlo.test` にマルチウェイ(N相手・相手増で勝率減)+12件。最小レイズ(`BettingEngine.test`)・ポット会計(`potAccounting.test`)も追加済。残(低優先): `GameStateMachine` 街遷移・`CoachAgent` マルチウェイ除外の専用ユニット。 |
+| QR2 | a11y: 色のみ強調の是正(ルール5) | a11y | ✅ | **2026-06-06**: 検証の結果ほとんどは**誤検出**(`WeaknessCard`=ランク#/回数/-BB の符号で text 伝達、`RangesPage`=「3-Bet:」「コール:」ラベル併記、`RangeGrid`=%/トークン角併記で色覚配慮済)。真の不足だった `ActionPanel` プリセット選択に `aria-pressed` を付与(視覚は明度差で可)。 |
+| QR3 | a11y: ホバー一時停止のキーボード対応 | a11y | ✅ | **2026-06-06**: `CoachToast`/`CoachPanel` に `onFocus`/`onBlur` を追加(キーボード/タッチでも自動消滅を停止・WCAG 2.2.1)。`TermChips` のツールチップに `id`+`aria-controls`/`aria-describedby` を付与しボタンと関連付け。`GameFooter` モーダルは既に `aria-label` 済(対応済)。 |
+| QR4 | データライセンスのビルド時強制(L1) | security | ✅ | **2026-06-06**: `scripts/check-data-license.mjs`(`src/data/solutions/**` の `meta.license` が `self-generated`/`original` か検証=201件全件OK)+ `npm run license:check` を **CI に追加**。他社ソルバー出力の誤混入をビルドで防止。 |
+| QR5 | multiway equity のサンプル下限警告 | 精度 | ⬜ 任意 | rejection sampling で `samples` が大きく減った場合に信頼度を下げる/注記(参考値ゆえ低優先)。実測ではサンプル効率は高く、当面保留。 |
+
+---
+
 ## 対象外(判断済み・やらない)
 
 - **WASM / COOP-COEP / SharedArrayBuffer**: 自前 TS ソルバーで非依存のため不要(R29)。`archive/` の WASM 関連項目(postflop-solver 配線等)は採用しない。

@@ -40,6 +40,8 @@ export function CoachToast({ feedback, onDismiss, durationMs = 8000 }: Props) {
       role="status"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
       className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-sm w-[calc(100%-2rem)]
         rounded-xl border border-rose-500/50 bg-rose-950/90 backdrop-blur-md px-4 py-2.5
         shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex items-start gap-2"

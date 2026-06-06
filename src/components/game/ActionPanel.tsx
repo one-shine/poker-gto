@@ -135,7 +135,7 @@ export function ActionPanel({ pending, onAction }: ActionPanelProps) {
                       ? 'brass border-brass-300 shadow-[0_0_12px_rgba(212,175,55,0.4)]'
                       : 'bg-base-700 border-white/10 text-zinc-300 hover:bg-base-700/60 hover:border-brass-500/40'
                   }`}
-                  onClick={() => setAmount(p.toAmount)} aria-label={`${p.label} (${fmt(p.toAmount)}BB)`}>
+                  onClick={() => setAmount(p.toAmount)} aria-pressed={selected} aria-label={`${p.label} (${fmt(p.toAmount)}BB)`}>
                   <span>{p.label}</span>
                   {showAmount && (
                     <span aria-hidden="true"

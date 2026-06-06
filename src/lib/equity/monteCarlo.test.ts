@@ -49,4 +49,29 @@ describe('computeEquity (Monte Carlo)', () => {
     expect(r.samples).toBe(0)
     expect(r.equity).toBe(0)
   })
+
+  // マルチウェイ(相手2人以上): hero は全員に勝って初めて勝ち。相手が増えると勝率は下がる。
+  it('multiway: equity drops as more opponents are added (must beat all)', () => {
+    const base = {
+      holeCards: [c('A', 'spades'), c('A', 'diamonds')] as [Card, Card],
+      board: [], iterations: 3000,
+    }
+    const hu = computeEquity({ ...base, opponentRanges: [['KK']] })
+    const threeWay = computeEquity({ ...base, opponentRanges: [['KK'], ['QQ']] })
+    expect(hu.samples).toBeGreaterThan(0)
+    expect(threeWay.samples).toBeGreaterThan(0)
+    expect(threeWay.equity).toBeLessThan(hu.equity) // 相手が増えるほど下がる
+    expect(threeWay.equity).toBeGreaterThan(0.5)    // AA は依然有利
+  })
+
+  it('multiway: AA vs KK vs QQ (set-mining domination) stays very high on a blank board', () => {
+    const r = computeEquity({
+      holeCards: [c('A', 'spades'), c('A', 'diamonds')],
+      board: [c('A', 'hearts'), c('7', 'spades'), c('2', 'clubs'), c('9', 'diamonds'), c('3', 'hearts')], // A高セット
+      opponentRanges: [['KK'], ['QQ']],
+      iterations: 2000,
+    })
+    expect(r.samples).toBeGreaterThan(0)
+    expect(r.equity).toBeGreaterThan(0.99) // セット vs オーバーペア2つは圧勝
+  })
 })

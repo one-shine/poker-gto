@@ -10,6 +10,7 @@
     "type-check": "tsc -b",
     "lint": "eslint .",
     "version:check": "node scripts/check-version.mjs",
+    "license:check": "node scripts/check-data-license.mjs",
     "preview": "vite preview",
     "build:icons": "tsx scripts/build-icons.ts",
     "tauri": "tauri",

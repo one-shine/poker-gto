@@ -23,6 +23,10 @@ jobs:
       - name: Version check
         run: npm run version:check
 
+      # 同梱ソルバー解の license が自社所有(self-generated/original)か検証(DATA_LICENSE.md L1)
+      - name: Data license check
+        run: npm run license:check
+
       - name: Lint
         run: npm run lint
 

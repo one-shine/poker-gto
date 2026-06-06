@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { GLOSSARY } from '../../data/theory/glossary'
 import { useNavStore } from '../../stores/navStore'
@@ -24,6 +24,7 @@ function TermChip({ term }: ChipProps) {
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
   const popRef = useRef<HTMLSpanElement>(null)
+  const tipId = useId() // ボタンとツールチップを関連付ける (SR が定義を読める)
 
   useEffect(() => {
     if (!open) return
@@ -60,6 +61,8 @@ function TermChip({ term }: ChipProps) {
         type="button"
         onClick={toggle}
         aria-expanded={open}
+        aria-controls={open ? tipId : undefined}
+        aria-describedby={open ? tipId : undefined}
         className="inline-flex items-center gap-1 min-h-9 px-2 rounded-md text-[11px] font-bold
           border border-brass-500/40 bg-brass-500/10 text-brass-200 underline decoration-dotted
           underline-offset-2 hover:bg-brass-500/20 transition-colors
@@ -71,6 +74,7 @@ function TermChip({ term }: ChipProps) {
       {open && pos && createPortal(
         <span
           ref={popRef}
+          id={tipId}
           role="tooltip"
           style={{ position: 'fixed', top: pos.top, left: pos.left, width: 240, maxWidth: 'calc(100vw - 1rem)' }}
           className="z-[60] block rounded-lg border border-white/15 bg-base-900/95 p-2.5 text-left shadow-xl backdrop-blur"
