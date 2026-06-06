@@ -4,6 +4,9 @@ import { evaluateBestHand } from '../../engine/cards/HandEvaluator'
 import type { ActionSolution, SolutionSource, SpotKey } from '../../types/solver'
 import { getSolution } from '../solver/getSolution'
 import { comboKey, expandRange, heroRangeSpec } from '../solver/riverRanges'
+import {
+  REPRESENTATIVE_BOARDS, REPRESENTATIVE_SPOTS, representativeHeroCombos,
+} from '../solver/representativeBoards'
 import { boardTexture } from '../coach/coachConcepts'
 
 // ポストフロップ ドリル (R23 + R16 3betポット)。HU の単一レイズド/3betポットを自前 CFR で
@@ -78,6 +81,8 @@ export interface PostflopQuestion {
   heroBetBB?: number  // facingRaise=true のとき hero 自身のリードベット額
   raiseToBB?: number  // facingRaise=true のとき相手のレイズ to 額
   prompt: string
+  // 代表ボード出題のとき: テクスチャ表示用 (事前計算済=厳密解が即時ヒットする)。
+  representative?: { id: string; label: string; note: string }
 }
 
 export interface PostflopActionInfo {
@@ -198,6 +203,33 @@ export function generatePostflopQuestion(
     facing: false, facingRaise: false, potType: 'srp', potBB: SRP_POT, effStackBB: SRP_STACK,
     prompt: promptFor({ baseLabel: 'BTN オープン vs BB', street: 'flop', heroIsOOP: false, facing: false, facingRaise: false }),
   }
+}
+
+// 代表ボード出題: 事前計算済 (turn/river・SRP・lead/facing) の盤面から出題する。
+// 盤面をこちらが選ぶのでヒット率100% = getSolution が JSON テーブルから即時・厳密解を返す
+// (live solve 不要 → モバイル/オフライン)。hero ハンドは事前計算と同一のコンボ集合から抽選し必ずヒットさせる。
+export function generateRepresentativePostflopQuestion(
+  rng: () => number = Math.random,
+): PostflopQuestion | null {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const rb = REPRESENTATIVE_BOARDS[(rng() * REPRESENTATIVE_BOARDS.length) | 0]
+    const spotId = REPRESENTATIVE_SPOTS[(rng() * REPRESENTATIVE_SPOTS.length) | 0]
+    const spot = SPOTS.find(s => s.id === spotId)
+    if (!spot) continue
+    const combos = representativeHeroCombos(spotId, rb.board, rb.street)
+    if (combos.length === 0) continue
+    const hero = combos[(rng() * combos.length) | 0]
+    const facing = rng() < 0.5 // lead / facing のみ (facingRaise=被レイズは事前計算の対象外)
+    return {
+      baseSpotId: spotId, baseLabel: spot.label, street: rb.street, board: rb.board,
+      heroCards: hero.cards, heroHand: comboToCategory(hero.cards), heroIsOOP: spot.heroIsOOP,
+      facing, facingRaise: false, potType: 'srp', potBB: spot.potBB, effStackBB: spot.effStackBB,
+      facedBetBB: facing ? +(spot.potBB * BET_FRAC).toFixed(1) : undefined,
+      prompt: promptFor({ baseLabel: spot.label, street: rb.street, heroIsOOP: spot.heroIsOOP, facing, facingRaise: false }),
+      representative: { id: rb.id, label: rb.label, note: rb.note },
+    }
+  }
+  return null
 }
 
 function toSpotKey(q: PostflopQuestion): SpotKey {

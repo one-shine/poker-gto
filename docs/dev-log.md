@@ -83,3 +83,10 @@ date: 2026-05-30
 - **既存資産の再利用**: 理論 `pot-odds`・用語集(ポットオッズ/エクイティ/アウツ/EV)・`TermChips`/`ConceptLink`・`drillStore`(U4)。`DrillKind` に `'odds'` 追加、`LearnPage` の DrillTab に4つ目タブ+`DRILL_KIND_JP`/`DRILL_KINDS`(ダッシュボード/通算が自動対応)。
 - **ゲーム側の導線**: `LiveStrategyPanel` の `OddsGuide`(U18)に `ConceptLink('pot-odds', 'オッズの理論 ▶')`+用語チップ。答え合わせのオッズ目安から理論/用語へ。
 - **検証**: 型0・lint0・全372テスト緑(oddsDrill 6 + LiveStrategyPanel リンク+2)。build緑。Playwright で「学習→ドリル→オッズ」タブ→必要勝率の問題に正解→計算解説+用語チップ+関連理論→pot-odds 理論ページ遷移・通算成績記録を実測。
+
+### 2026-06-06 CI(vitest 4.x で audit 緑化)+ 事前計算 postflop ライブラリ(代表ボードドリル)
+- **CI**: `vitest`/`@vitest/ui` を `^3.2.4 → ^4.1.8`(semver-major)に更新し GHSA-5xrq-8626-4rwp(critical 2件)を解消。`npm audit --audit-level=high` 0件・CI Audit 緑。vitest4 が node 型を transitive 供給しなくなり、scripts/.cache を読む2 test(attachHeuristicEV/heuristicPreflopEV)が `node:fs` 等を解決できず型エラー → ファイル局所に `/// <reference types="node" />` を付与(app 全体の types へ node を足すと本番 src へ process/Buffer が漏れバグを隠すため、影響を test に閉じ込め)。commit `0ea891c`。
+- **事前計算 postflop の設計判断**: ゲームもドリルも盤面はランダム(`shuffledDeck(rng)`)→ 完全一致の事前計算解はランダム盤面にほぼヒットしない。ランダム盤面をカバーするにはテクスチャ近似(カードアブストラクション)が要るが、それは**ルール1の正直表示に抵触**(近似を厳密と称せない)。→ 正直に価値が出る「こちらが盤面を選ぶ場面」=**代表ボードドリル**に限定(ユーザー承認済)。
+- **正直なストリート**: river=後続なし=厳密 / turn=完全チャンスCFR(river 全48 runout 織り込み)のみ `solver_precomputed` と名乗れる。flop は ~13% 下限(アブストラクション構造)で対象外=従来通りライブ/近似。
+- **実装**: ① `postflopNode.ts` に hero ノード特定(`heroNodeTarget`/`findHeroNode`)+ combo 行正規化(`comboActionsAt`・bet→raise)を抽出し、ライブ経路 `solveRiverSpot` をリファクタ(挙動不変・既存137テスト緑)→ スクリプトと共有しドリフト防止。② `representativeBoards.ts`(代表テクスチャ turn4/river4 + `representativeHeroCombos`= 事前計算と同一の narrow/cap でドリルの hero 抽選を必ずヒットさせる)。③ `getSolution` postflop に precomputed テーブル参照(盤面/pot/stack/betFrac 完全一致時のみ・**any mode で動く**=モバイル/オフライン可)。④ `scripts/precompute-postflop.ts`(オフライン生成・turn は iters160/cap64 で exploit 1〜2%台=ライブturn8%超を大幅改善 / river <1%)。⑤ ポストフロップドリルに「代表ボード」トグル+テクスチャ表示+厳密解バッジ。
+- **オフライン高品質**: ライブの時間予算(turn=40iters/cap50→8.4%)に縛られず、turn を 160iters/cap64 に上げて 1〜2%台へ。cap は O(combos²) なので 110/400 だと 0.6% だが 74s/spot と過大 → 64/160(≈12s/spot・1.8%)を採用。全64ファイル ≈7分のワンタイム生成。

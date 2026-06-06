@@ -1,0 +1,1253 @@
+{
+  "spotId": "bb-vs-co",
+  "street": "turn",
+  "board": [
+    {
+      "rank": "T",
+      "suit": "hearts"
+    },
+    {
+      "rank": "9",
+      "suit": "hearts"
+    },
+    {
+      "rank": "5",
+      "suit": "spades"
+    },
+    {
+      "rank": "2",
+      "suit": "diamonds"
+    }
+  ],
+  "phase": "facing",
+  "potBB": 5.5,
+  "effStackBB": 100,
+  "betFrac": 0.66,
+  "source": "solver_precomputed",
+  "exploitability": 0.0189,
+  "bettingAware": true,
+  "runoutN": 48,
+  "strategy": {
+    "2h2s": [
+      {
+        "action": "fold",
+        "frequency": 0.0068,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.9391,
+        "ev": 3.581
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0541,
+        "ev": 2.493
+      }
+    ],
+    "2c2s": [
+      {
+        "action": "fold",
+        "frequency": 0.007,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.9195,
+        "ev": 3.535
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0735,
+        "ev": 2.697
+      }
+    ],
+    "2c2h": [
+      {
+        "action": "fold",
+        "frequency": 0.0068,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.9391,
+        "ev": 3.581
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0541,
+        "ev": 2.493
+      }
+    ],
+    "3h3s": [
+      {
+        "action": "fold",
+        "frequency": 0.9939,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0011,
+        "ev": -8.443
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.005,
+        "ev": -8.201
+      }
+    ],
+    "3d3s": [
+      {
+        "action": "fold",
+        "frequency": 0.9938,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0011,
+        "ev": -8.445
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0051,
+        "ev": -8.19
+      }
+    ],
+    "3c3s": [
+      {
+        "action": "fold",
+        "frequency": 0.9938,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0011,
+        "ev": -8.445
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0051,
+        "ev": -8.19
+      }
+    ],
+    "3d3h": [
+      {
+        "action": "fold",
+        "frequency": 0.9939,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0011,
+        "ev": -8.443
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.005,
+        "ev": -8.201
+      }
+    ],
+    "3c3h": [
+      {
+        "action": "fold",
+        "frequency": 0.9939,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0011,
+        "ev": -8.443
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.005,
+        "ev": -8.201
+      }
+    ],
+    "3c3d": [
+      {
+        "action": "fold",
+        "frequency": 0.9938,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0011,
+        "ev": -8.445
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0051,
+        "ev": -8.19
+      }
+    ],
+    "4h4s": [
+      {
+        "action": "fold",
+        "frequency": 0.9917,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0013,
+        "ev": -6.861
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.007,
+        "ev": -9.242
+      }
+    ],
+    "4d4s": [
+      {
+        "action": "fold",
+        "frequency": 0.9917,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0013,
+        "ev": -6.858
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0071,
+        "ev": -9.2
+      }
+    ],
+    "4c4s": [
+      {
+        "action": "fold",
+        "frequency": 0.9917,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0013,
+        "ev": -6.858
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0071,
+        "ev": -9.2
+      }
+    ],
+    "4d4h": [
+      {
+        "action": "fold",
+        "frequency": 0.9917,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0013,
+        "ev": -6.861
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.007,
+        "ev": -9.242
+      }
+    ],
+    "4c4h": [
+      {
+        "action": "fold",
+        "frequency": 0.9917,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0013,
+        "ev": -6.861
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.007,
+        "ev": -9.242
+      }
+    ],
+    "4c4d": [
+      {
+        "action": "fold",
+        "frequency": 0.9917,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0013,
+        "ev": -6.858
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0071,
+        "ev": -9.2
+      }
+    ],
+    "5d5h": [
+      {
+        "action": "fold",
+        "frequency": 0.0059,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.4289,
+        "ev": 6.736
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.5652,
+        "ev": 6.547
+      }
+    ],
+    "5c5h": [
+      {
+        "action": "fold",
+        "frequency": 0.0059,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.4289,
+        "ev": 6.736
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.5652,
+        "ev": 6.547
+      }
+    ],
+    "5c5d": [
+      {
+        "action": "fold",
+        "frequency": 0.0055,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.1751,
+        "ev": 6.568
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.8194,
+        "ev": 6.583
+      }
+    ],
+    "6h6s": [
+      {
+        "action": "fold",
+        "frequency": 0.9862,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0039,
+        "ev": -4.625
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0099,
+        "ev": -9.922
+      }
+    ],
+    "6d6s": [
+      {
+        "action": "fold",
+        "frequency": 0.9863,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0038,
+        "ev": -4.612
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0099,
+        "ev": -9.647
+      }
+    ],
+    "6c6s": [
+      {
+        "action": "fold",
+        "frequency": 0.9863,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0038,
+        "ev": -4.613
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0099,
+        "ev": -9.65
+      }
+    ],
+    "6d6h": [
+      {
+        "action": "fold",
+        "frequency": 0.9862,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0039,
+        "ev": -4.625
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0099,
+        "ev": -9.922
+      }
+    ],
+    "6c6h": [
+      {
+        "action": "fold",
+        "frequency": 0.9862,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0039,
+        "ev": -4.625
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0099,
+        "ev": -9.925
+      }
+    ],
+    "6c6d": [
+      {
+        "action": "fold",
+        "frequency": 0.9863,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0038,
+        "ev": -4.613
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0099,
+        "ev": -9.65
+      }
+    ],
+    "7h7s": [
+      {
+        "action": "fold",
+        "frequency": 0.813,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.1756,
+        "ev": -2.994
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0113,
+        "ev": -7.526
+      }
+    ],
+    "7d7s": [
+      {
+        "action": "fold",
+        "frequency": 0.9037,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0849,
+        "ev": -3.044
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0114,
+        "ev": -7.495
+      }
+    ],
+    "7c7s": [
+      {
+        "action": "fold",
+        "frequency": 0.9037,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0849,
+        "ev": -3.044
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0114,
+        "ev": -7.495
+      }
+    ],
+    "7d7h": [
+      {
+        "action": "fold",
+        "frequency": 0.813,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.1756,
+        "ev": -2.994
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0113,
+        "ev": -7.526
+      }
+    ],
+    "7c7h": [
+      {
+        "action": "fold",
+        "frequency": 0.813,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.1757,
+        "ev": -2.994
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0113,
+        "ev": -7.526
+      }
+    ],
+    "7c7d": [
+      {
+        "action": "fold",
+        "frequency": 0.9037,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0849,
+        "ev": -3.044
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0114,
+        "ev": -7.495
+      }
+    ],
+    "8h8s": [
+      {
+        "action": "fold",
+        "frequency": 0.6856,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.3019,
+        "ev": -2.967
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0125,
+        "ev": -7.102
+      }
+    ],
+    "8d8s": [
+      {
+        "action": "fold",
+        "frequency": 0.7478,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.2395,
+        "ev": -2.996
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0127,
+        "ev": -7.058
+      }
+    ],
+    "8c8s": [
+      {
+        "action": "fold",
+        "frequency": 0.7478,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.2395,
+        "ev": -2.996
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0127,
+        "ev": -7.058
+      }
+    ],
+    "8d8h": [
+      {
+        "action": "fold",
+        "frequency": 0.6856,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.3019,
+        "ev": -2.967
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0125,
+        "ev": -7.102
+      }
+    ],
+    "8c8h": [
+      {
+        "action": "fold",
+        "frequency": 0.6856,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.3019,
+        "ev": -2.967
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0125,
+        "ev": -7.102
+      }
+    ],
+    "8c8d": [
+      {
+        "action": "fold",
+        "frequency": 0.7478,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.2395,
+        "ev": -2.996
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0127,
+        "ev": -7.058
+      }
+    ],
+    "9d9s": [
+      {
+        "action": "fold",
+        "frequency": 0.0015,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0031,
+        "ev": 9.854
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.9954,
+        "ev": 12.072
+      }
+    ],
+    "9c9s": [
+      {
+        "action": "fold",
+        "frequency": 0.0015,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0031,
+        "ev": 9.853
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.9954,
+        "ev": 12.072
+      }
+    ],
+    "9c9d": [
+      {
+        "action": "fold",
+        "frequency": 0.0015,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0031,
+        "ev": 9.853
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.9954,
+        "ev": 12.072
+      }
+    ],
+    "AsTs": [
+      {
+        "action": "fold",
+        "frequency": 0.1022,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.8747,
+        "ev": -2.748
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0231,
+        "ev": -4.936
+      }
+    ],
+    "AdTd": [
+      {
+        "action": "fold",
+        "frequency": 0.1022,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.8747,
+        "ev": -2.748
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0231,
+        "ev": -4.936
+      }
+    ],
+    "AcTc": [
+      {
+        "action": "fold",
+        "frequency": 0.4323,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.5527,
+        "ev": -2.892
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.015,
+        "ev": -6.46
+      }
+    ],
+    "9sAs": [
+      {
+        "action": "fold",
+        "frequency": 0.0255,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.7287,
+        "ev": -2.365
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.2458,
+        "ev": -2.614
+      }
+    ],
+    "9dAd": [
+      {
+        "action": "fold",
+        "frequency": 0.0255,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.7287,
+        "ev": -2.365
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.2458,
+        "ev": -2.614
+      }
+    ],
+    "9cAc": [
+      {
+        "action": "fold",
+        "frequency": 0.0253,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.7663,
+        "ev": -2.347
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.2084,
+        "ev": -2.637
+      }
+    ],
+    "8sAs": [
+      {
+        "action": "fold",
+        "frequency": 0.9903,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0012,
+        "ev": -7.519
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0085,
+        "ev": -6.381
+      }
+    ],
+    "8hAh": [
+      {
+        "action": "fold",
+        "frequency": 0.0203,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.3607,
+        "ev": -2.233
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.619,
+        "ev": -2.193
+      }
+    ],
+    "8dAd": [
+      {
+        "action": "fold",
+        "frequency": 0.9903,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0012,
+        "ev": -7.519
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0085,
+        "ev": -6.381
+      }
+    ],
+    "8cAc": [
+      {
+        "action": "fold",
+        "frequency": 0.9902,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0012,
+        "ev": -7.521
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0086,
+        "ev": -6.369
+      }
+    ],
+    "7sAs": [
+      {
+        "action": "fold",
+        "frequency": 0.9906,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0012,
+        "ev": -7.522
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0082,
+        "ev": -6.406
+      }
+    ],
+    "7hAh": [
+      {
+        "action": "fold",
+        "frequency": 0.0213,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.4363,
+        "ev": -2.231
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.5424,
+        "ev": -2.206
+      }
+    ],
+    "7dAd": [
+      {
+        "action": "fold",
+        "frequency": 0.9906,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0012,
+        "ev": -7.522
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0082,
+        "ev": -6.406
+      }
+    ],
+    "7cAc": [
+      {
+        "action": "fold",
+        "frequency": 0.9906,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0012,
+        "ev": -7.523
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0082,
+        "ev": -6.394
+      }
+    ],
+    "6sAs": [
+      {
+        "action": "fold",
+        "frequency": 0.9916,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0012,
+        "ev": -7.881
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0072,
+        "ev": -6.941
+      }
+    ],
+    "6hAh": [
+      {
+        "action": "fold",
+        "frequency": 0.038,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.5413,
+        "ev": -2.609
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.4207,
+        "ev": -2.627
+      }
+    ],
+    "6dAd": [
+      {
+        "action": "fold",
+        "frequency": 0.9916,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0012,
+        "ev": -7.881
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0072,
+        "ev": -6.941
+      }
+    ],
+    "6cAc": [
+      {
+        "action": "fold",
+        "frequency": 0.9916,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0012,
+        "ev": -7.886
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.0072,
+        "ev": -6.932
+      }
+    ],
+    "KsQs": [
+      {
+        "action": "fold",
+        "frequency": 0.5315,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0203,
+        "ev": -3.502
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.4482,
+        "ev": -2.961
+      }
+    ],
+    "KhQh": [
+      {
+        "action": "fold",
+        "frequency": 0.003,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0301,
+        "ev": -0.682
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.9668,
+        "ev": -0.234
+      }
+    ],
+    "KdQd": [
+      {
+        "action": "fold",
+        "frequency": 0.5315,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0203,
+        "ev": -3.502
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.4482,
+        "ev": -2.961
+      }
+    ],
+    "KcQc": [
+      {
+        "action": "fold",
+        "frequency": 0.448,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0212,
+        "ev": -3.49
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.5308,
+        "ev": -2.929
+      }
+    ],
+    "JsKs": [
+      {
+        "action": "fold",
+        "frequency": 0.6236,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.008,
+        "ev": -3.991
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.3684,
+        "ev": -3.005
+      }
+    ],
+    "JhKh": [
+      {
+        "action": "fold",
+        "frequency": 0.0036,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.0336,
+        "ev": -0.802
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.9628,
+        "ev": -0.402
+      }
+    ],
+    "JdKd": [
+      {
+        "action": "fold",
+        "frequency": 0.6236,
+        "ev": -2.75
+      },
+      {
+        "action": "call",
+        "sizeBB": 3.63,
+        "frequency": 0.008,
+        "ev": -3.991
+      },
+      {
+        "action": "raise",
+        "sizeBB": 10.01,
+        "frequency": 0.3684,
+        "ev": -3.005
+      }
+    ]
+  },
+  "meta": {
+    "sourceName": "self CFR (turn, chance-node 全48 runout)",
+    "license": "self-generated",
+    "version": "1"
+  }
+}

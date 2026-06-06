@@ -143,6 +143,19 @@ export function baseHeroIsOOP(baseSpotId: string): boolean | null {
   return potSpec(baseSpotId)?.heroIsOOP ?? null
 }
 
+// hero を固定せずスポット全体の OOP/IP レンジを導出 (代表ボード事前計算用)。
+// deriveRiverRanges と違い特定 hero を forceHero しない = レンジ全コンボを頻度どおり返す。
+export function spotRanges(
+  baseSpotId: string, board: Card[],
+): { oop: Combo[]; ip: Combo[]; heroIsOOP: boolean } | null {
+  const spec = potSpec(baseSpotId)
+  if (!spec) return null
+  const oop = expandRange(spec.oop.scenarioId, spec.oop.pick, board)
+  const ip = expandRange(spec.ip.scenarioId, spec.ip.pick, board)
+  if (oop.length === 0 || ip.length === 0) return null
+  return { oop, ip, heroIsOOP: spec.heroIsOOP }
+}
+
 // baseSpotId からポストフロップの OOP/IP レンジと hero の位置を導出。
 // hero 側は実手札を重み1で必ず含め、villain 側からは hero のカードを除外する。
 export function deriveRiverRanges(

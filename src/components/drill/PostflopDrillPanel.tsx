@@ -5,7 +5,8 @@ import { useDrillStore } from '../../stores/drillStore'
 import { evLossFrom } from '../../lib/drill/evLoss'
 import { CardDisplay } from '../game/CardDisplay'
 import {
-  ACTION_JP, explainPostflop, generatePostflopQuestion, judgePostflop, solvePostflopQuestion,
+  ACTION_JP, explainPostflop, generatePostflopQuestion, generateRepresentativePostflopQuestion,
+  judgePostflop, solvePostflopQuestion,
   type PostflopActionInfo, type PostflopJudgement, type PostflopQuestion, type PostflopStreet, type PotType,
 } from '../../lib/drill/postflopDrill'
 import type { SolutionSource } from '../../types/solver'
@@ -30,8 +31,15 @@ function sourceWord(source: SolutionSource | null): string {
 }
 
 type StreetMode = PostflopStreet | 'mix'
+type BoardMode = 'random' | 'representative'
 
 const STREET_JP: Record<PostflopStreet, string> = { flop: 'フロップ', turn: 'ターン', river: 'リバー' }
+
+// 代表ボードモードの出題 (事前計算が無ければランダムへフォールバック=理論上到達しない)。
+function genRepresentative(mode: StreetMode, pt: PotType): PostflopQuestion {
+  return generateRepresentativePostflopQuestion(Math.random)
+    ?? generatePostflopQuestion(Math.random, pickStreet(mode), pt)
+}
 
 const fmtEv = (ev: number) => (Number.isFinite(ev) ? `${ev > 0 ? '+' : ''}${ev.toFixed(2)}BB` : '—')
 
@@ -82,6 +90,7 @@ const POT_KEY_JP: Record<PotType, string> = { srp: 'SRP', '3bet': '3bet' }
 export function PostflopDrillPanel() {
   const addXP = useProgressStore(s => s.addXP)
   const recordDrill = useDrillStore(s => s.recordDrill)
+  const [boardMode, setBoardMode] = useState<BoardMode>('random')
   const [streetMode, setStreetMode] = useState<StreetMode>('flop')
   const [potType, setPotType] = useState<PotType>('srp')
   const [question, setQuestion] = useState<PostflopQuestion>(() =>
@@ -112,13 +121,15 @@ export function PostflopDrillPanel() {
     return () => { cancelled = true }
   }, [question])
 
-  const next = useCallback((mode = streetMode, pt = potType) => {
+  const next = useCallback((mode = streetMode, pt = potType, bMode = boardMode) => {
     setJudgement(null)
     setSolving(true)
     setError(false)
     setSolved(null)
-    setQuestion(generatePostflopQuestion(Math.random, pickStreet(mode), pt))
-  }, [streetMode, potType])
+    setQuestion(bMode === 'representative'
+      ? genRepresentative(mode, pt)
+      : generatePostflopQuestion(Math.random, pickStreet(mode), pt))
+  }, [streetMode, potType, boardMode])
 
   const onAnswer = (action: PlayerAction) => {
     if (judgement || !solved) return
@@ -136,6 +147,7 @@ export function PostflopDrillPanel() {
 
   const changeStreet = (mode: StreetMode) => { setStreetMode(mode); next(mode, potType) }
   const changePotType = (pt: PotType) => { setPotType(pt); next(streetMode, pt) }
+  const changeBoardMode = (bMode: BoardMode) => { setBoardMode(bMode); next(streetMode, potType, bMode) }
 
   const best = judgement?.best ?? []
   const recommend = best
@@ -147,17 +159,29 @@ export function PostflopDrillPanel() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-2 gap-x-2 sm:gap-x-4">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-zinc-500">ポット</span>
-          <Seg active={potType === 'srp'} onClick={() => changePotType('srp')}>シングルレイズド</Seg>
-          <Seg active={potType === '3bet'} onClick={() => changePotType('3bet')}>3betポット</Seg>
+          <span className="text-xs text-zinc-500">盤面</span>
+          <Seg active={boardMode === 'random'} onClick={() => changeBoardMode('random')}>ランダム</Seg>
+          <Seg active={boardMode === 'representative'} onClick={() => changeBoardMode('representative')}>代表ボード</Seg>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-zinc-500">ストリート</span>
-          <Seg active={streetMode === 'flop'} onClick={() => changeStreet('flop')}>フロップ</Seg>
-          <Seg active={streetMode === 'turn'} onClick={() => changeStreet('turn')}>ターン</Seg>
-          <Seg active={streetMode === 'river'} onClick={() => changeStreet('river')}>リバー</Seg>
-          <Seg active={streetMode === 'mix'} onClick={() => changeStreet('mix')}>ミックス</Seg>
-        </div>
+        {boardMode === 'random' ? (
+          <>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-zinc-500">ポット</span>
+              <Seg active={potType === 'srp'} onClick={() => changePotType('srp')}>シングルレイズド</Seg>
+              <Seg active={potType === '3bet'} onClick={() => changePotType('3bet')}>3betポット</Seg>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-zinc-500">ストリート</span>
+              <Seg active={streetMode === 'flop'} onClick={() => changeStreet('flop')}>フロップ</Seg>
+              <Seg active={streetMode === 'turn'} onClick={() => changeStreet('turn')}>ターン</Seg>
+              <Seg active={streetMode === 'river'} onClick={() => changeStreet('river')}>リバー</Seg>
+              <Seg active={streetMode === 'mix'} onClick={() => changeStreet('mix')}>ミックス</Seg>
+            </div>
+          </>
+        ) : (
+          // 代表ボード = 事前計算済 (SRP・ターン/リバー)。盤面が街を決めるので街/ポット選択は出さない。
+          <span className="text-[11px] text-emerald-300/80">事前計算済の代表テクスチャ(SRP・ターン/リバー)から出題 — 厳密解で即時採点。</span>
+        )}
       </div>
 
       <div className="flex items-center justify-between text-sm">
@@ -174,6 +198,14 @@ export function PostflopDrillPanel() {
           <p className="text-sm font-semibold text-zinc-100">
             {question.baseLabel} · {STREET_JP[question.street]}
           </p>
+          {question.representative && (
+            <div className="space-y-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border bg-emerald-950/40 border-emerald-500/40 text-emerald-200">
+                <span aria-hidden="true">📚</span> 代表ボード: {question.representative.label}
+              </span>
+              <p className="text-[11px] text-zinc-400">{question.representative.note}</p>
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-center gap-2">
             <PositionBadge oop={question.heroIsOOP} />
             <span className="text-sm text-zinc-200">{situationText(question)}</span>

@@ -56,6 +56,26 @@ export function evLoss(solutions: ActionSolution[], chosen: ActionSolution): num
   return +(best - chosen.ev).toFixed(3)
 }
 
+// 事前計算ポストフロップ「代表ボード」解のテーブル (src/data/solutions/postflop/*.json)。
+// 1 ファイル = (spot, board, phase) のノードで、hero レンジ全コンボの戦略を持つ。
+// getSolution が要求コンボの行を取り出して NodeSolution を組み立てる (どのコンボでもヒットする)。
+// 設計ルール1: turn/river のみ (flop は厳密と称せないため対象外)。license は self-generated。
+export interface PrecomputedPostflopTable {
+  spotId: string            // baseSpotId (例 'bb-vs-btn')
+  street: 'turn' | 'river'
+  board: Card[]
+  phase: 'lead' | 'facing'  // hero ノード種別
+  potBB: number
+  effStackBB: number
+  betFrac: number           // facing 節で hero が直面したベットのポット比 (lead は基準サイズ)
+  source: 'solver_precomputed'
+  exploitability: number
+  bettingAware: boolean     // turn=true (river ベッティング織り込み済)
+  runoutN?: number
+  strategy: Record<string, ActionSolution[]> // 具体コンボ "AsKs" → 戦略
+  meta: SolutionMeta
+}
+
 export interface SpotKey {
   baseSpotId: string // プリフロップシナリオID (例: 'bb-vs-btn')
   street: Street

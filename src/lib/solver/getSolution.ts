@@ -1,4 +1,4 @@
-import type { ActionSolution, NodeSolution, SpotKey } from '../../types/solver'
+import type { ActionSolution, NodeSolution, PrecomputedPostflopTable, SpotKey } from '../../types/solver'
 import type { Card } from '../../types/game'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 import { fromRangeScenario } from './fromRangeScenario'
@@ -7,6 +7,19 @@ import { solveRiverAsync } from './solverClient'
 import { getCachedSolution, putCachedSolution } from './solveCache'
 import type { Combo } from './riverSolver'
 import { capRange, narrowByRiverStrength } from './rangeNarrowing'
+import { findHeroNode, comboActionsAt, heroPhase } from './postflopNode'
+import { boardCode, precomputePostflopKey, type PrecomputePhase } from './representativeBoards'
+
+// 事前計算「代表ボード」テーブル (turn/river の厳密/完全チャンス解)。spotId__board__phase.json。
+// ⚠ eager だと全テーブルが gameStore チャンクに同梱され肥大化 → 要求キー一致ファイルのみ遅延 import。
+const precomputedPostflopLoaders = import.meta.glob<{ default: PrecomputedPostflopTable }>(
+  '../../data/solutions/postflop/*.json',
+)
+async function loadPrecomputedPostflopTable(key: string): Promise<PrecomputedPostflopTable | null> {
+  const load = precomputedPostflopLoaders[`../../data/solutions/postflop/${key}.json`]
+  if (!load) return null
+  return (await load()).default ?? null
+}
 
 // 取込済みの実ソルバー解 (solver_precomputed)。src/data/solutions/preflop/{spotId}.json
 // (scripts/solve-pushfold.ts / import-ranges.ts が出力) を優先採用 (無ければ近似)。
@@ -69,9 +82,45 @@ export async function getSolution(
     (spot.street === 'flop' || spot.street === 'turn' || spot.street === 'river') &&
     spot.board && spot.board.length >= 3 && spot.heroCards && spot.potBB != null
   ) {
+    // 代表ボードの事前計算解があれば最優先 (厳密/完全チャンス解・live solve 不要 → モバイル/オフライン可)。
+    const pre = await loadPrecomputedPostflop(spot)
+    if (pre) return pre
     return solveRiverSpot(spot, opts)
   }
   return null
+}
+
+// 代表ボード事前計算テーブルから要求コンボの NodeSolution を組み立てる (無ければ null)。
+async function loadPrecomputedPostflop(spot: SpotKey): Promise<NodeSolution | null> {
+  // 代表ボードは turn/river のみ (flop は厳密と称せない)。被レイズ(facingRaise)は v1 対象外。
+  if ((spot.street !== 'turn' && spot.street !== 'river') || spot.facingRaise) return null
+  if (!spot.board || !spot.heroCards || spot.potBB == null) return null
+
+  const facing = !!spot.riverBetBB && spot.riverBetBB > 0
+  const phase: PrecomputePhase = facing ? 'facing' : 'lead'
+  // facing は betFrac 0.66 のノードのみ事前計算済 → 他サイズの被ベットは live にフォールバック。
+  if (facing && Math.abs(spot.riverBetBB! / spot.potBB - 0.66) > 0.05) return null
+
+  const table = await loadPrecomputedPostflopTable(precomputePostflopKey(spot.baseSpotId, spot.board, phase))
+  if (!table) return null
+  // pot/stack 不一致 (別文脈で偶然同じ盤面) は使わない。
+  if (table.potBB !== spot.potBB || table.effStackBB !== (spot.effStackBB ?? 100)) return null
+
+  const heroK = comboKey(spot.heroCards)
+  const acts = table.strategy[heroK]
+  if (!acts || acts.length === 0) return null
+  return {
+    street: table.street,
+    spotId: `${table.spotId}-${table.street}-${boardCode(spot.board)}${phase === 'facing' ? '-vsbet' : ''}`,
+    board: spot.board,
+    strategy: { [heroK]: acts },
+    potBB: table.potBB,
+    source: 'solver_precomputed',
+    exploitability: table.exploitability,
+    bettingAware: table.bettingAware,
+    runoutN: table.runoutN,
+    meta: table.meta,
+  }
 }
 
 async function solveRiverSpot(spot: SpotKey, opts: GetSolutionOptions): Promise<NodeSolution | null> {
@@ -118,32 +167,14 @@ async function solveRiverSpot(spot: SpotKey, opts: GetSolutionOptions): Promise<
     iterations: chanceCFR ? 40 : 250,
     useChanceCFR: chanceCFR,
   })
-  // hero 判断ノードを OOP/IP × lead/被ベット/被レイズ で特定 (root actions = [check, bet])。
-  //  OOP lead      = root []              (player 0)
-  //  OOP 被ベット   = check→IP bet [0,1]    (player 0 が facing)
-  //  OOP 被レイズ   = bet→IP raise [1,2]    (player 0 が自ベットをレイズされた)
-  //  IP  チェック後  = OOP check [0]         (player 1)
-  //  IP  被ベット    = OOP bet  [1]          (player 1 が facing)
-  //  IP  被レイズ    = check→IP bet→OOP XR [0,1,2] (player 1 がチェックレイズに直面)
-  const targetPath = facingRaise
-    ? (heroIsOOP ? [1, 2] : [0, 1, 2])
-    : heroIsOOP ? (facing ? [0, 1] : []) : (facing ? [1] : [0])
-  const expectedPlayer = heroIsOOP ? 0 : 1
-  const target = nodes.find(n =>
-    n.path.length === targetPath.length && n.path.every((v, i) => v === targetPath[i]) && n.player === expectedPlayer,
-  )
+  // hero 判断ノードを OOP/IP × lead/被ベット/被レイズ で特定 (postflopNode に集約)。
+  const target = findHeroNode(nodes, heroIsOOP, heroPhase(facing, facingRaise))
   if (!target) return null
 
   const heroIdx = heroSide.findIndex(c => comboKey(c.cards) === heroK)
   if (heroIdx < 0) return null
 
-  // PlayerAction は 'bet' を持たない (エンジンはベットも 'raise')。'bet'→'raise' に正規化。
-  const heroActions: ActionSolution[] = target.actions.map((a, ai) => ({
-    action: a.action === 'bet' ? 'raise' : a.action,
-    sizeBB: a.sizeBB,
-    frequency: target.strategy[heroIdx]?.[ai] ?? 0,
-    ev: target.ev[heroIdx]?.[ai] ?? 0,
-  }))
+  const heroActions: ActionSolution[] = comboActionsAt(target, heroIdx)
 
   const node: NodeSolution = {
     street: spot.street,
