@@ -84,7 +84,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ## 4. フォント (SIL Open Font License 1.1)
 
-UI フォントは Google Fonts から配信される以下を使用しています。いずれも **SIL Open Font
+UI フォントは以下を **`@fontsource` でセルフホスト同梱**(配布物に woff2 をバンドル・CDN 読込なし)しています。フォント自体の出所は Google Fonts で、いずれも **SIL Open Font
 License 1.1 (OFL-1.1)** で商用利用可です。
 
 | フォント | ライセンス | 入手元 |
@@ -95,8 +95,8 @@ License 1.1 (OFL-1.1)** で商用利用可です。
 | JetBrains Mono | OFL-1.1 | Google Fonts |
 
 - OFL-1.1 全文: <https://openfontlicense.org/> (各フォントの配布元 LICENSE も参照)。
-- **セルフホストする場合**も各フォントの OFL ライセンスファイルを同梱し、Reserved Font Name
-  を尊重すること。現状は Google Fonts CDN から読込 (プライバシー上の影響は
+- **セルフホスト済**(`@fontsource` 同梱)。各フォントの OFL ライセンスファイルを同梱し、Reserved Font
+  Name を尊重する。Google Fonts CDN からの読込はなし=外部フォント送信なし (プライバシーは
   [docs/PRIVACY_POLICY.md](docs/PRIVACY_POLICY.md) を参照)。
 
 ---

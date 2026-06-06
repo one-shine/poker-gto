@@ -15,20 +15,30 @@
 
 ## 2. 起動方法
 
-### PC(Mac / Windows)
+### ① 公開 URL で使う(最も簡単・推奨)
+ブラウザで **<https://one-shine.github.io/poker-gto/>** を開くだけ。インストール・ビルド不要。
+
+- **PC(Mac / Windows)**: **Chrome / Edge** で開き、アドレスバーの「インストール」→ 独立ウィンドウ + Dock/スタートアイコンで起動。
+- **iPhone**: **Safari** で開き、共有メニュー →「ホーム画面に追加」。
+- 初回ロード後は**オフラインでも起動**できます(PWA)。
+- ※ このサイトは `noindex`(検索エンジンに出ない)です。**URL を知っている人だけ**がアクセスできます。
+
+### ② iPhone(自分のローカルビルドを配信する場合)
+公開 URL ではなく **自分の PC のビルド**を iPhone で使いたいときのフォールバックです。
+
+- HTTPS トンネル(例 `cloudflared tunnel --url http://localhost:4173/poker-gto/`)で出た https URL を iPhone Safari で開く →「ホーム画面に追加」。初回ロード後はオフラインで起動可能。
+- ※ iOS は Service Worker(オフライン)に HTTPS が必須です(公開 URL は HTTPS なのでこの条件を満たします)。
+
+### ③ 開発者向け / 自分の PC で動かす
 ```bash
 npm install        # 初回のみ
-npm run dev        # 開発用:    http://localhost:5173 (オフライン/PWA は無効)
+npm run dev        # 開発用:    http://localhost:5173/poker-gto/ (オフライン/PWA は無効)
 # または本番同等(PWA・オフライン有効):
 npm run build
-npm run preview    # http://localhost:4173
+npm run preview    # http://localhost:4173/poker-gto/
 ```
+- ※ ベースパスが `/poker-gto/` のため、ルート(`/`)は 404 になります。上記の `/poker-gto/` 付き URL を開いてください。
 - **アプリとして使う**: `npm run preview` を **Chrome / Edge** で開き、アドレスバーの「インストール」→ 独立ウィンドウ + Dock/スタートアイコンで起動。以後オフラインでも動作。
-
-### iPhone(同じ Wi-Fi の PC から)
-- 簡易: PC で `npm run preview -- --host` → iPhone Safari で `http://<PCのIP>:4173` を開く →「ホーム画面に追加」。
-- オフライン対応(推奨): HTTPS トンネル(例 `cloudflared tunnel --url http://localhost:4173`)で出た https URL を iPhone Safari で開く →「ホーム画面に追加」。初回ロード後はオフラインで起動可能。
-- ※ iOS は Service Worker(オフライン)に HTTPS が必須です。
 
 ## 3. 画面構成(6 ページ)
 
@@ -132,4 +142,4 @@ npm run preview    # http://localhost:4173
 ## 困ったとき
 - 用語が分からない → **理論**タブの用語集、または各所の用語チップ(ⓘ)。
 - 精度が「データ不足」 → コーチ評価対象のハンドが 20 未満のとき表示されます。プレイを続けると解消します。
-- オフラインで動かない(iPhone)→ HTTPS 経由で一度開く必要があります(§2)。
+- オフラインで動かない(iPhone)→ HTTPS 経由で一度開く必要があります。公開 URL(<https://one-shine.github.io/poker-gto/>)は HTTPS なので、Safari で一度開けば以後オフラインで起動できます(§2)。

@@ -4,14 +4,18 @@
 
 PokerSnowie / GTO Wizard ライクなローカル動作のポーカーGTO学習アプリ。React 19 + TypeScript + Vite SPA。UIは日本語。
 
+GitHub Pages に公開稼働中: https://one-shine.github.io/poker-gto/ (PWA一本化・Tauri native は見送り・repo public・noindex)。正典は `docs/BACKLOG.md` C節。
+
 ## コマンド
 
 ```bash
-npm run dev        # 開発サーバー起動 (http://localhost:5173)
+npm run dev        # 開発サーバー起動 (http://localhost:5173/poker-gto/)
 npm run build      # プロダクションビルド
 npm run test       # Vitestテスト実行 (全テスト)
 npm run type-check # 型チェックのみ (tsc --noEmit)
 ```
+
+vite base は GitHub Pages プロジェクトサイト用に `'/poker-gto/'`。dev/preview も `/poker-gto/` 配下で配信され、ベアルート `/` は 404 になる。Tauri を再ビルドする場合のみ base を `'/'` に戻すこと。
 
 `package.json` に `type-check` スクリプトがない場合は `npx tsc --noEmit` を使う。
 

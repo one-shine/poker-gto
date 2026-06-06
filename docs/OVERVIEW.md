@@ -26,7 +26,7 @@ React 19 + TypeScript の SPA、完全オフライン、アカウント不要、
 ## 3. アピールポイント(差別化)
 
 1. **解の信頼度を 4 段階で正直に表示** — `solver_precomputed`(厳密)/ `solver_live`(ローカル求解)/ `approximate_with_ev`(近似+概算EV)/ `approximate`(近似)。コードと UI の両方に明示。"GTO最適" の断定をしない。← **最大の差別化**
-2. **完全ローカル / オフライン / プライバシー** — 全データ端末内(localStorage / IndexedDB)、第三者送信ゼロ(フォントもセルフホスト)、広告・トラッキングなし、無料。
+2. **完全ローカル / オフライン / プライバシー** — 全データ端末内(localStorage / IndexedDB)、第三者送信ゼロ(フォントもセルフホスト)、広告・トラッキングなし、無料。アプリ自体はユーザーデータを送信しない(GitHub Pages 公開版でも、ホスト側に通常の Web アクセスログ(IP 等)が残るのみ・HTTPS 強制)。
 3. **外部依存ゼロの自前 CFR ソルバー** — Rust/WASM の既製ソルバー(AGPL)を使わず TypeScript で実装。商用配布安全・`SharedArrayBuffer` 非依存でどのブラウザでも動く。
 4. **EV 損失ベースのコーチング** — 「-1.8BB のミス」を数値で提示 + ミス分類 + 概念ラベル + 関連理論への deep-link。
 5. **学習ループ** — 実戦 → コーチ → 弱点分析 → 理論 → ドリル → 反復、が 1 アプリで完結。
@@ -151,7 +151,7 @@ React 19 + TypeScript の SPA、完全オフライン、アカウント不要、
 
 - **スコープ**: 6-max / 100BB 固定 / ノーレーク / ICM 非考慮 / GTO 精度は HU のみ(マルチウェイは参考値)。
 - **精度の本丸(R4)**: 100BB の真 Nash 解はサーバ/オフライン事前計算 + カードアブストラクションが前提(別軸の大規模作業)。現状は概算 EV で公開水準。
-- **配布**: ① PWA(Mac/Win/iPhone・最小コスト)② Tauri デスクトップ(.dmg/.msi)③ Capacitor で iOS ストア、の 3 経路を整理済み([`BACKLOG.md`](BACKLOG.md) D 節)。当面は個人のローカル/PWA 利用。
+- **配布**: **PWA 一本化**で GitHub Pages に**公開済み** → <https://one-shine.github.io/poker-gto/>(URL を知る人がアクセス可・`noindex` で検索除外)。Mac/Win は Chrome/Edge の「インストール」、iPhone は Safari「ホーム画面に追加」で、初回ロード後はオフライン動作。Tauri デスクトップ(.dmg/.msi)は見送り(コードは保持)([`BACKLOG.md`](BACKLOG.md) C 節)。
 
 ---
 

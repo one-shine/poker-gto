@@ -16,7 +16,7 @@
 
 ## デザイントークン
 
-### フォント(Google Fonts)
+### フォント(`@fontsource` セルフホスト・出所 Google Fonts / OFL-1.1)
 | 用途 | フォント |
 |------|---------|
 | 見出し/ディスプレイ | Bricolage Grotesque |

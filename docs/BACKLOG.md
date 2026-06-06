@@ -96,6 +96,8 @@
 
 ## D. 配布(Mac ローカル / iPhone / Windows)
 
+> **✅ 現行配信は C節のとおり PWA一本化で GitHub Pages 公開済(2026-06-06)** <https://one-shine.github.io/poker-gto/>。本節の Tauri デスクトップ/Capacitor は**歴史的経緯・将来オプション**として保持(現行の配布対象ではない)。Mac/Win ネイティブは見送り(`src-tauri/` はコードのみ温存)。
+>
 > 現状はクライアント完結の Vite SPA(PWA 足場・manifest・sw.js・アイコン・自前ソルバー・オフライン可)。
 > `dist/` を共通成果物として「包み方」を変えるだけ。
 > **方針(2026-05-31 決定)**: **iPhone は PWA で行く**(Safari「ホーム画面に追加」)。ネイティブ iOS(Capacitor / Tauri iOS = App Store)は当面**見送り**。公開は iPhone 個人確認後。
@@ -108,7 +110,7 @@
 - **GTO戦略パネルのアイコン是正** ✅ — `LiveStrategyPanel` の `📊` 絵文字を lucide 風インライン SVG(バーチャート・`navItems` と同書式)に置換。
 - 検証: **338テスト緑・型0・lint0・build緑**。
 
-> 残(👤): 静的ホスティング(HTTPS)へデプロイ or ローカル配信 → **iPhone Safari でホーム画面に追加して個人確認**(方針どおり公開はその後)。
+> ✅ **完了(2026-06-06)**: 静的ホスティング(HTTPS)= GitHub Pages 公開済。iPhone は公開 URL を Safari で開き「ホーム画面に追加」。
 
 ### 配布パス(土台の後・必要になったら選定)
 | パス | 対象 | アカウント/$ | 別OS機 | 主作業 |
@@ -138,7 +140,7 @@
 |------|------|------|------|
 | CI ハードニング | ⬜ | 🤖 | Node20 actions 非推奨警告の解消(`ci.yml` と `deploy-pages.yml` 両方の `actions/checkout`・`setup-node`・`upload-pages-artifact`・`deploy-pages` を @v4→@v5、2026-06-16 で Node24 強制)/ npm・cargo キャッシュで高速化 / 重い CFR テストの安定化(testTimeout 45s 済)。 |
 | CD: PWA 自動デプロイ | ✅ | 🤖 | **稼働中(2026-06-06)**。main push → `deploy-pages.yml` で build → Pages 自動公開(初回デプロイ成功確認)。下記 C節「Web アプリ化 = GitHub Pages 公開」が正典。 |
-| **CD: Mac+Windows 配布物の自動ビルド** ✅採用 | 🔄 | 🤖 | **方針決定(2026-05-31・ユーザー採用)**: `v*` タグ push をトリガに GitHub Actions の**マトリクス**で自動ビルド → GitHub Releases に自動添付。<br>・`macos-latest` → `.dmg`/`.app`(aarch64)<br>・`windows-latest` → `.msi`/`.exe`(NSIS)。Windows は WebView2 標準搭載で追加不要<br>・新規 `.github/workflows/release.yml`。`tauri-apps/tauri-action` で build+Release 添付を一括(各 runner で `npm run tauri:build`)<br>・署名は別途・未署名でも動作(Mac=Gatekeeper / Win=SmartScreen 警告のみ)。Intel Mac も配るなら x86_64/universal を追加<br>・既存 `ci.yml`(lint/build/test)はそのまま、本ワークフローは tag 時のみ起動 |
+| CD: Mac+Windows 配布物の自動ビルド(Tauri) | 🧊 見送り | 🤖 | **2026-06-06 降格**: 配布は PWA一本化(C節・GitHub Pages 公開済)に決定 → Tauri ネイティブ配布は見送り・本項目は保留(再開時は以下の旧計画)。<br>旧計画(2026-05-31): `v*` タグ push をトリガに GitHub Actions の**マトリクス**で自動ビルド → GitHub Releases に自動添付。<br>・`macos-latest` → `.dmg`/`.app`(aarch64)<br>・`windows-latest` → `.msi`/`.exe`(NSIS)。Windows は WebView2 標準搭載で追加不要<br>・新規 `.github/workflows/release.yml`。`tauri-apps/tauri-action` で build+Release 添付を一括(各 runner で `npm run tauri:build`)<br>・署名は別途・未署名でも動作(Mac=Gatekeeper / Win=SmartScreen 警告のみ)。Intel Mac も配るなら x86_64/universal を追加<br>・既存 `ci.yml`(lint/build/test)はそのまま、本ワークフローは tag 時のみ起動 |
 | リリースのバージョニング | ⬜ | 🤖 | `package.json` / `tauri.conf.json` の version 統一 + tag → Release のフロー化。 |
 
 > **方向決定済(2026-05-31)**: ③ **tag → Mac `.dmg` + Windows `.msi` を CI マトリクスで自動ビルド → GitHub Releases**(上記「✅採用」行)。これで Mac だけで Windows 版まで配れる。

@@ -11,6 +11,8 @@ PokerSnowie / GTO Wizard ライクな、**ローカル動作のポーカー GTO 
 6-max ノーリミットホールデムのプリフロップ/ポストフロップのレンジ・ドリル・push/fold を、
 解の信頼度を常に正直に表示しながら学べる。React 19 + TypeScript + Vite の SPA、UI は日本語、完全オフライン動作。
 
+**配信**: GitHub Pages に PWA として公開(<https://one-shine.github.io/poker-gto/>)。静的ホスティング・HTTPS・`noindex`・PWA 一本化。初回ロード後は完全オフラインで動作。
+
 ## スコープと前提
 
 | 項目 | 前提 | 備考 |
