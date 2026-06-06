@@ -1,8 +1,10 @@
+import { useRef, useState } from 'react'
 import { useSettingsStore, type AppMode, type OpponentMode, type AiSpeed } from '../stores/settingsStore'
 import { useProgressStore } from '../stores/progressStore'
 import { useGameStore } from '../stores/gameStore'
 import { useSessionStore } from '../stores/sessionStore'
 import { useNavStore } from '../stores/navStore'
+import { exportAll, importAll } from '../lib/storage/dataTransfer'
 
 // セグメント切替ボタン (色 + 選択リングで色覚配慮)
 function Segmented<T extends string>({ value, options, onChange }: {
@@ -90,6 +92,51 @@ export function SettingsPage() {
   // 対戦相手/スタックはエンジン再初期化が必要
   const setOpponent = (m: OpponentMode) => { s.setOpponentMode(m); resetGame() }
   const setStack = (n: number) => { s.setStackBB(n); resetGame() }
+
+  // U11: データ書き出し/読み込み (完全ローカル・外部送信なし)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [dataBusy, setDataBusy] = useState(false)
+  const [dataMsg, setDataMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
+
+  const handleExport = async () => {
+    setDataBusy(true)
+    try {
+      const json = await exportAll()
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const d = new Date()
+      const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+      a.href = url
+      a.download = `poker-gto-backup-${stamp}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      setDataMsg({ kind: 'ok', text: 'データを書き出しました。' })
+    } catch {
+      setDataMsg({ kind: 'err', text: '書き出しに失敗しました。' })
+    } finally {
+      setDataBusy(false)
+    }
+  }
+
+  const handleImportFile = async (file: File) => {
+    if (!confirm('現在の設定・進捗・学習統計を、選んだファイルの内容で上書きします。よろしいですか?')) return
+    setDataBusy(true)
+    try {
+      const res = await importAll(await file.text())
+      if (res.ok) {
+        // 反映を確実にするためリロード (各ストアの rehydrate を初期化経路で行う)。
+        setDataMsg({ kind: 'ok', text: '読み込みました。反映のため再読み込みします…' })
+        setTimeout(() => location.reload(), 700)
+      } else {
+        setDataMsg({ kind: 'err', text: res.errors.join(' ') || '読み込めませんでした。' })
+      }
+    } catch {
+      setDataMsg({ kind: 'err', text: '読み込みに失敗しました。' })
+    } finally {
+      setDataBusy(false)
+    }
+  }
 
   return (
     <div className="h-full overflow-auto p-6 md:p-8">
@@ -214,6 +261,46 @@ export function SettingsPage() {
               label="ハプティクス(振動)"
               desc="対応端末で配布・勝利時に短く振動する。モバイル向け(既定OFF)。"
             />
+          </div>
+        </Section>
+
+        <Section title="データの引き継ぎ・バックアップ">
+          <div className="flex flex-col gap-2">
+            <p className="text-[11px] text-zinc-500 leading-snug">
+              設定・進捗・学習統計を JSON ファイルに書き出し/読み込みできます。
+              <strong className="text-zinc-300">この端末内で完結し、外部送信は一切ありません。</strong>
+              別端末への引き継ぎや、データ削除前のバックアップに。※過去ハンドの損益履歴は含みません(設定・進捗・統計のみ)。
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={dataBusy}
+                onClick={handleExport}
+                className="flex-1 min-h-11 rounded-xl border border-brass-500/30 bg-brass-500/10 hover:bg-brass-500/20 text-sm font-medium text-brass-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span aria-hidden="true">⤓ </span>データを書き出す
+              </button>
+              <button
+                type="button"
+                disabled={dataBusy}
+                onClick={() => fileRef.current?.click()}
+                className="flex-1 min-h-11 rounded-xl border border-white/10 bg-base-800/60 hover:border-brass-500/40 text-sm font-medium text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span aria-hidden="true">⤒ </span>データを読み込む
+              </button>
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) void handleImportFile(f); e.target.value = '' }}
+            />
+            {dataMsg && (
+              <p className={`text-xs ${dataMsg.kind === 'ok' ? 'text-emerald-300' : 'text-rose-300'}`}>
+                <span aria-hidden="true">{dataMsg.kind === 'ok' ? '✓ ' : '⚠ '}</span>{dataMsg.text}
+              </p>
+            )}
           </div>
         </Section>
 
