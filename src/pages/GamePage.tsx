@@ -14,7 +14,6 @@ import { PostflopReviewPanel } from '../components/coach/PostflopReviewPanel'
 import { CoachToast } from '../components/coach/CoachToast'
 import { LiveStrategyPanel } from '../components/coach/LiveStrategyPanel'
 import { KeyboardHelp } from '../components/game/KeyboardHelp'
-import { useProgressStore } from '../stores/progressStore'
 import { useSoundEffects } from '../hooks/useSoundEffects'
 
 export function GamePage() {
@@ -26,7 +25,6 @@ export function GamePage() {
   const stackBB = useSettingsStore(s => s.stackBB)
   const autoAdvanceSeconds = useSettingsStore(s => s.autoAdvanceSeconds)
   const studyShowStrategy = useSettingsStore(s => s.studyShowStrategy)
-  const showPotOdds = useProgressStore(s => s.uiComplexity.showPotOdds)
   const sessionHandCount = useSessionStore(s => s.sessionHandCount)
   const openReflection = useNavStore(s => s.openReflection)
 
@@ -54,7 +52,6 @@ export function GamePage() {
     <LiveStrategyPanel
       pending={lastHeroDecision.payload}
       allowLiveSolve
-      showPotOdds={showPotOdds}
       revealActed={lastHeroDecision.action}
     />
   ) : null

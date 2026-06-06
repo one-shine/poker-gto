@@ -28,6 +28,10 @@ let handDecisions: HeroDecision[] = []
 // 「拠出 = 開始 − 終了」を求める。initGame の stackBB を覚える。
 let startStackBB = 100
 
+// U17: hero がフォールド済みのハンドでは、残りの相手同士の決着を遅延0で瞬時に進める
+// (自分は結果に影響しないので観戦不要)。submitHeroAction(fold) で立て、HAND_START でリセット。
+let heroFoldedThisHand = false
+
 // study モードの「一時停止」ゲート (R7)。ミス(major+)時に AI の送出を保留し、「次へ」で再開する。
 // engine は純粋同期のまま。保留は UI 層 (スケジューラ) で実現する。
 let paused = false
@@ -54,6 +58,8 @@ const gated = (sched: ActionScheduler): ActionScheduler => emit => sched(() => g
 const AI_SPEED_MULT: Record<AiSpeed, number> = { slow: 1.7, normal: 1, fast: 0.5 }
 function delayScheduler(baseMs: number, rangeMs: number): ActionScheduler {
   return emit => {
+    // U17: hero がフォールド済みなら残りは瞬時に決着させる(遅延0)。
+    if (heroFoldedThisHand) { setTimeout(emit, 0); return }
     const mult = AI_SPEED_MULT[useSettingsStore.getState().aiSpeed]
     setTimeout(emit, (baseMs + Math.random() * rangeMs) * mult)
   }
@@ -145,6 +151,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     bus.on('HAND_START', ({ state }) => {
       handDecisions = []
       pendingHeroState = null
+      heroFoldedThisHand = false
       set({ gameState: state, lastResults: null, pendingHeroAction: null, lastFeedback: null, lastHeroDecision: null, handReview: null })
     })
     bus.on('STREET_DEALT', ({ state }) => set({ gameState: state }))
@@ -234,6 +241,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       handDecisions.push({ state: pendingHeroState, action, amount })
     }
     pendingHeroState = null
+    // U17: フォールドしたら以降は瞬時決着 (delayScheduler が遅延0に切替)。
+    if (action === 'fold') heroFoldedThisHand = true
     // U8: アクション後に GTO 戦略を答え合わせ表示するため、打った決定 (payload) を保持する。
     set({ pendingHeroAction: null, lastHeroDecision: { payload: pending, action, amount } })
     bus.emit('PLAYER_ACTION', { playerId: HERO_ID, action, amount })
@@ -256,6 +265,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     heroDecisionCtx = null
     pendingHeroState = null
     handDecisions = []
+    heroFoldedThisHand = false
     setPaused(false)
     emitQueue.length = 0
     set({

@@ -66,44 +66,47 @@ describe('LiveStrategyPanel', () => {
   beforeEach(() => useSessionStore.getState().clearSession())
 
   it('renders the GTO strategy bars for the current hand', async () => {
-    render(<LiveStrategyPanel pending={pending()} allowLiveSolve showPotOdds={false} />)
+    render(<LiveStrategyPanel pending={pending()} allowLiveSolve />)
     expect(await screen.findByText(/AKs @ btn-open/)).toBeInTheDocument()
     // AKs は btn-open で 100% レイズ
     expect(screen.getByText('100%')).toBeInTheDocument()
   })
 
   it('excludes the shown hand from the accuracy sample (markHinted)', async () => {
-    render(<LiveStrategyPanel pending={pending()} allowLiveSolve showPotOdds={false} />)
+    render(<LiveStrategyPanel pending={pending()} allowLiveSolve />)
     await screen.findByText(/AKs @ btn-open/)
     expect(useSessionStore.getState().hintedHandIds.has('h1')).toBe(true)
   })
 
-  it('shows pot odds and required equity when enabled (A2)', async () => {
-    render(<LiveStrategyPanel pending={pending(1)} allowLiveSolve showPotOdds />)
+  it('always shows the odds guide (pot odds / required equity) alongside GTO for a call-facing spot (U18)', async () => {
+    render(<LiveStrategyPanel pending={pending(1)} allowLiveSolve />)
     await screen.findByText(/AKs @ btn-open/)
+    expect(screen.getByText(/オッズ目安/)).toBeInTheDocument()
     expect(screen.getByText(/ポットオッズ/)).toBeInTheDocument()
     expect(screen.getByText(/必要勝率/)).toBeInTheDocument()
   })
 
-  it('hides pot odds when showPotOdds is false', async () => {
-    render(<LiveStrategyPanel pending={pending(1)} allowLiveSolve showPotOdds={false} />)
+  it('shows an equity-strength hint (not pot odds) for a no-bet spot (U18)', async () => {
+    render(<LiveStrategyPanel pending={pending(0)} allowLiveSolve />)
     await screen.findByText(/AKs @ btn-open/)
-    expect(screen.queryByText(/ポットオッズ/)).toBeNull()
+    expect(screen.getByText(/オッズ目安/)).toBeInTheDocument()
+    expect(screen.getByText(/あなたの勝率/)).toBeInTheDocument()
+    expect(screen.queryByText(/ポットオッズ/)).toBeNull() // コール無しなのでポットオッズは出さない
   })
 
   it('shows the HU range as a multiway reference (rule 4) when 3+ players are in', async () => {
-    render(<LiveStrategyPanel pending={multiwayPending()} allowLiveSolve showPotOdds={false} revealActed="call" />)
+    render(<LiveStrategyPanel pending={multiwayPending()} allowLiveSolve revealActed="call" />)
     expect(await screen.findByText(/sb-vs-co/)).toBeInTheDocument() // 対象外でなく戦略が出る
     expect(screen.getByText(/マルチウェイ=参考値/)).toBeInTheDocument()
     expect(screen.queryByText(/対象外/)).toBeNull()
   })
 
   it('reveal mode (after acting) shows the answer-check header and keeps the hand in the sample (U8)', async () => {
-    render(<LiveStrategyPanel pending={pending()} allowLiveSolve showPotOdds={false} revealActed="raise" />)
+    render(<LiveStrategyPanel pending={pending()} allowLiveSolve revealActed="raise" />)
     await screen.findByText(/AKs @ btn-open/)
-    // 「答え合わせ」+ 自分が打ったアクションを併記
+    // 「答え合わせ」+ 自分が打ったアクションを併記 (チップは「あなた:」・OddsGuide の「あなたの勝率」と区別)
     expect(screen.getByText(/答え合わせ/)).toBeInTheDocument()
-    expect(screen.getByText(/あなた/)).toBeInTheDocument()
+    expect(screen.getByText(/あなた:/)).toBeInTheDocument()
     // 事前ではなく打った後の表示なので、精度サンプルからは除外しない (markHinted しない)
     expect(useSessionStore.getState().hintedHandIds.has('h1')).toBe(false)
   })

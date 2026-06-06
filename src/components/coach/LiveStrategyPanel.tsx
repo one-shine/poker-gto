@@ -13,10 +13,54 @@ const ACTION_JP: Record<PlayerAction, string> = {
   fold: 'フォールド', check: 'チェック', call: 'コール', raise: 'レイズ', allin: 'オールイン',
 }
 
+// U18: オッズ基準の目安。GTO 解の有無に関わらず常時併記する(GTO が本筋・これは単純化の目安)。
+//  - コール直面: ポットオッズ / 必要勝率 vs 実勝率 → コール有利 / フォールド寄り。
+//  - コール無し(チェック/ベット先頭): エクイティの強弱目安(GTOのベット/チェック判断とは別)。
+function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot }: {
+  callAmount: number; reqEquity: number; equity: number | null; eqLoading: boolean; effPot: number
+}) {
+  const eqText = eqLoading ? '計算中…' : equity != null ? `${Math.round(equity * 100)}%` : '—'
+  return (
+    <div className="rounded-lg border border-sky-500/30 bg-sky-950/20 p-2 text-xs">
+      <p className="font-bold text-sky-300 mb-0.5">
+        <span aria-hidden="true">📐 </span>オッズ目安(GTO頻度ではありません)
+      </p>
+      {callAmount > 0 ? (
+        // コール直面: ポットオッズ/必要勝率は算術なので常に、判定は勝率が出たら添える。
+        <p className="text-zinc-300 leading-snug">
+          ポットオッズ <span className="font-data text-zinc-100">{(effPot / callAmount).toFixed(1)} : 1</span>
+          {' / '}必要勝率 <span className="font-data font-bold text-emerald-300">{Math.round(reqEquity * 100)}%</span>
+          {' / '}あなたの勝率 <span className="font-data font-bold">{eqText}</span>
+          {equity != null && (
+            <>{' → '}
+              <span className={equity >= reqEquity ? 'text-emerald-300 font-bold' : 'text-rose-300 font-bold'}>
+                {equity >= reqEquity ? '✓ コール有利' : '✗ フォールド寄り'}
+              </span>
+            </>
+          )}
+          <span className="block text-[10px] text-zinc-500 mt-0.5">※ 単純なコール判断の目安(含意オッズ等は未考慮)</span>
+        </p>
+      ) : (
+        // チェック/ベット先頭: コール判断は無いのでエクイティの強弱目安。
+        <p className="text-zinc-300 leading-snug">
+          あなたの勝率 <span className="font-data font-bold">{eqText}</span>
+          {equity != null && (
+            <>{' → '}
+              <span className={equity >= 0.55 ? 'text-emerald-300 font-bold' : equity >= 0.45 ? 'text-sky-300 font-bold' : 'text-rose-300 font-bold'}>
+                {equity >= 0.55 ? '強い(バリュー寄り)' : equity >= 0.45 ? '中庸' : '弱い(慎重に)'}
+              </span>
+            </>
+          )}
+          <span className="block text-[10px] text-zinc-500 mt-0.5">※ 大まかなエクイティ目安(GTO判断とは別)</span>
+        </p>
+      )}
+    </div>
+  )
+}
+
 interface Props {
   pending: ActionRequiredPayload
   allowLiveSolve: boolean
-  showPotOdds: boolean // UIComplexity (intermediate+)
   // 設定時: 「アクション後の答え合わせ」モード (U8)。事前ではなく自分が打った後に表示するので
   // 精度サンプルからは除外しない。値 = 自分が選んだアクション (ヘッダに併記)。
   revealActed?: PlayerAction
@@ -25,14 +69,13 @@ interface Props {
 // study モードの GTO 戦略パネル (頻度バー)。
 // 既定 (revealActed なし): アクション直下に表示し、答えを見せるのでこのハンドを精度サンプルから除外 (markHinted)。
 // revealActed あり: 自分が打った「後」の答え合わせ。事前に見せていないので markHinted しない (U8)。
-// A2: showPotOdds のとき ポットオッズ / 必要勝率を表示。
-export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, revealActed }: Props) {
+// U18: GTO 戦略の下に「オッズ目安」(OddsGuide) を常時併記する。
+export function LiveStrategyPanel({ pending, allowLiveSolve, revealActed }: Props) {
   const markHinted = useSessionStore(s => s.markHinted)
   // 設計ルール4: 表示はマルチウェイでも HU レンジを「参考値」として出す (精度計算には入れない)。
   const { node, loading } = useSolution(pending.state, HERO_ID, allowLiveSolve, true)
-  // R8: 自分の vs相手レンジ・エクイティ (必要勝率と並べて「片手落ち」を解消)。
-  // 対象外スポットでもコールに直面していればオッズ目安を出すため、call があるときも有効化する。
-  const { equity, loading: eqLoading } = useEquity(pending.state, HERO_ID, showPotOdds || pending.callAmount > 0)
+  // R8/U18: エクイティ。オッズ目安を常時併記する(コール直面=必要勝率比較 / チェック局面=強弱目安)ため常時有効化。
+  const { equity, loading: eqLoading } = useEquity(pending.state, HERO_ID, true)
 
   const hero = pending.state.players.find(p => p.id === HERO_ID)
   const handKey = hero?.holeCards ? handCategory(hero.holeCards) : null
@@ -84,35 +127,6 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, reveal
         )}
       </div>
 
-      {/* A2: ポットオッズ / 必要勝率 / 自分のエクイティ (R8) */}
-      {showPotOdds && (callAmount > 0 || equity != null || eqLoading) && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-xs font-data">
-          {callAmount > 0 && (
-            <>
-              <span className="text-zinc-400">ポットオッズ <span className="text-zinc-100 font-bold">{(effPot / callAmount).toFixed(1)} : 1</span></span>
-              <span className="text-zinc-400">必要勝率 <span className="text-emerald-300 font-bold">{Math.round(reqEquity * 100)}%</span></span>
-            </>
-          )}
-          <span className="text-zinc-400">
-            あなたの勝率{' '}
-            {eqLoading ? (
-              <span className="text-zinc-500">計算中…</span>
-            ) : equity != null ? (
-              <span className={`font-bold ${callAmount > 0 && equity >= reqEquity ? 'text-emerald-300' : 'text-sky-300'}`}>
-                {Math.round(equity * 100)}%
-              </span>
-            ) : (
-              <span className="text-zinc-500">—</span>
-            )}
-          </span>
-          {callAmount > 0 && equity != null && (
-            <span className={equity >= reqEquity ? 'text-emerald-400/80' : 'text-rose-400/80'}>
-              {equity >= reqEquity ? '✓ オッズ足りる' : '✗ オッズ不足'}
-            </span>
-          )}
-        </div>
-      )}
-
       {loading ? (
         <span className="text-xs text-brass-300/80 flex items-center gap-1.5">
           <span className="inline-block w-3 h-3 rounded-full border-2 border-brass-400/40 border-t-brass-300 animate-spin" />
@@ -127,34 +141,11 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, reveal
               : ' 未収録のプリフロップ状況・盲対盲・複雑なレイズ応酬などが該当します。'}
             誤った GTO 評価を出さないため、ここではあえてスキップしています。
           </span>
-          {/* オッズ基準のガイド: GTO頻度ではないが、コール判断の数学的目安は出せる (必要勝率 vs 実勝率)。 */}
-          {callAmount > 0 && (
-            <div className="rounded-lg border border-sky-500/30 bg-sky-950/20 p-2 text-xs">
-              <p className="font-bold text-sky-300 mb-0.5">
-                <span aria-hidden="true">📐 </span>オッズ基準の目安(GTO頻度ではありません)
-              </p>
-              {eqLoading ? (
-                <span className="text-zinc-500">勝率を計算中…</span>
-              ) : equity != null ? (
-                <p className="text-zinc-300 leading-snug">
-                  必要勝率 <span className="font-data font-bold text-emerald-300">{Math.round(reqEquity * 100)}%</span>
-                  {' / '}あなたの勝率 <span className="font-data font-bold">{Math.round(equity * 100)}%</span>
-                  {' → '}
-                  <span className={equity >= reqEquity ? 'text-emerald-300 font-bold' : 'text-rose-300 font-bold'}>
-                    {equity >= reqEquity ? '✓ オッズ的にコール有利' : '✗ オッズ的にはフォールド寄り'}
-                  </span>
-                  <span className="block text-[10px] text-zinc-500 mt-0.5">
-                    ※ 純粋なコール判断のみの目安。含意オッズ(後のストリートの取り分)・レイズの選択肢・相手の傾向は含みません。
-                  </span>
-                </p>
-              ) : (
-                <span className="text-zinc-500">勝率を取得できませんでした。</span>
-              )}
-            </div>
-          )}
+          {/* 対象外でも、オッズ目安は主表示として出す (U18)。 */}
+          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} />
         </div>
       ) : (
-        <>
+        <div className="space-y-2">
           {/* マルチウェイは HU レンジの EV が当てはまらないため EV は出さない (参考値・ルール4)。 */}
           <StrategyBars
             strategy={strategy}
@@ -163,12 +154,14 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, reveal
             approxEv={!node.multiwayReference && node.source === 'approximate_with_ev'}
           />
           {node.multiwayReference && (
-            <p className="mt-2 text-[11px] text-amber-300/80 leading-snug">
+            <p className="text-[11px] text-amber-300/80 leading-snug">
               ※ 3人以上(マルチウェイ)のため、相手レイザーに対する<strong className="text-amber-200">ヘッズアップのレンジを参考</strong>として表示しています。
               実際の最適頻度はこれより気持ちタイトになります。厳密解ではないため精度測定には含めません。
             </p>
           )}
-        </>
+          {/* U18: GTO 解があるときも、オッズ目安をバーの下に副表示で常時併記 (GTO が本筋)。 */}
+          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} />
+        </div>
       )}
     </div>
   )

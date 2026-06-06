@@ -52,4 +52,23 @@ describe('gameStore', () => {
     store.getState().dismissFeedback()
     expect(store.getState().isPaused).toBe(false)
   })
+
+  it('U17: フォールド後は残りを遅延0で即決着する', () => {
+    vi.useFakeTimers()
+    useSettingsStore.getState().setAppMode('play') // play は答え合わせの一時停止が無い
+    const store = useGameStore
+    store.getState().resetGame()
+    store.getState().initGame()
+    store.getState().startNewHand()
+
+    let folded = false
+    for (let i = 0; i < 300 && !folded; i++) {
+      if (store.getState().pendingHeroAction) { store.getState().submitHeroAction('fold'); folded = true }
+      else vi.advanceTimersByTime(500)
+    }
+    expect(folded).toBe(true)
+    // フォールド後の残り AI は遅延0。合計わずかなタイマー進行で完了する(通常遅延550ms+なら完了しない)。
+    for (let i = 0; i < 30 && store.getState().handCount === 0; i++) vi.advanceTimersByTime(1)
+    expect(store.getState().handCount).toBe(1)
+  })
 })
