@@ -37,7 +37,7 @@ const STREET_JP: Record<PostflopStreet, string> = { flop: 'フロップ', turn: 
 
 // 代表ボードモードの出題 (事前計算が無ければランダムへフォールバック=理論上到達しない)。
 function genRepresentative(mode: StreetMode, pt: PotType): PostflopQuestion {
-  return generateRepresentativePostflopQuestion(Math.random)
+  return generateRepresentativePostflopQuestion(Math.random, pt)
     ?? generatePostflopQuestion(Math.random, pickStreet(mode), pt)
 }
 
@@ -163,24 +163,23 @@ export function PostflopDrillPanel() {
           <Seg active={boardMode === 'random'} onClick={() => changeBoardMode('random')}>ランダム</Seg>
           <Seg active={boardMode === 'representative'} onClick={() => changeBoardMode('representative')}>代表ボード</Seg>
         </div>
+        {/* ポット種別はどちらのモードでも選べる(代表ボードも SRP/3bet を事前計算済) */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-zinc-500">ポット</span>
+          <Seg active={potType === 'srp'} onClick={() => changePotType('srp')}>シングルレイズド</Seg>
+          <Seg active={potType === '3bet'} onClick={() => changePotType('3bet')}>3betポット</Seg>
+        </div>
         {boardMode === 'random' ? (
-          <>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-zinc-500">ポット</span>
-              <Seg active={potType === 'srp'} onClick={() => changePotType('srp')}>シングルレイズド</Seg>
-              <Seg active={potType === '3bet'} onClick={() => changePotType('3bet')}>3betポット</Seg>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-zinc-500">ストリート</span>
-              <Seg active={streetMode === 'flop'} onClick={() => changeStreet('flop')}>フロップ</Seg>
-              <Seg active={streetMode === 'turn'} onClick={() => changeStreet('turn')}>ターン</Seg>
-              <Seg active={streetMode === 'river'} onClick={() => changeStreet('river')}>リバー</Seg>
-              <Seg active={streetMode === 'mix'} onClick={() => changeStreet('mix')}>ミックス</Seg>
-            </div>
-          </>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-zinc-500">ストリート</span>
+            <Seg active={streetMode === 'flop'} onClick={() => changeStreet('flop')}>フロップ</Seg>
+            <Seg active={streetMode === 'turn'} onClick={() => changeStreet('turn')}>ターン</Seg>
+            <Seg active={streetMode === 'river'} onClick={() => changeStreet('river')}>リバー</Seg>
+            <Seg active={streetMode === 'mix'} onClick={() => changeStreet('mix')}>ミックス</Seg>
+          </div>
         ) : (
-          // 代表ボード = 事前計算済 (SRP・ターン/リバー)。盤面が街を決めるので街/ポット選択は出さない。
-          <span className="text-[11px] text-emerald-300/80">事前計算済の代表テクスチャ(SRP・ターン/リバー)から出題 — 厳密解で即時採点。</span>
+          // 代表ボード = 事前計算済 (ターン/リバー)。盤面が街を決めるので街選択は出さない。
+          <span className="text-[11px] text-emerald-300/80">事前計算済の代表テクスチャ(ターン/リバー)から出題 — 厳密解で即時採点。</span>
         )}
       </div>
 

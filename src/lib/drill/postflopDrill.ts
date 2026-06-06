@@ -5,7 +5,7 @@ import type { ActionSolution, SolutionSource, SpotKey } from '../../types/solver
 import { getSolution } from '../solver/getSolution'
 import { comboKey, expandRange, heroRangeSpec } from '../solver/riverRanges'
 import {
-  REPRESENTATIVE_BOARDS, REPRESENTATIVE_SPOTS, representativeHeroCombos,
+  REPRESENTATIVE_BOARDS, representativeSpotSet, representativeHeroCombos,
 } from '../solver/representativeBoards'
 import { boardTexture } from '../coach/coachConcepts'
 
@@ -205,15 +205,17 @@ export function generatePostflopQuestion(
   }
 }
 
-// 代表ボード出題: 事前計算済 (turn/river・SRP・lead/facing) の盤面から出題する。
+// 代表ボード出題: 事前計算済 (turn/river・SRP/3bet・lead/facing) の盤面から出題する。
 // 盤面をこちらが選ぶのでヒット率100% = getSolution が JSON テーブルから即時・厳密解を返す
 // (live solve 不要 → モバイル/オフライン)。hero ハンドは事前計算と同一のコンボ集合から抽選し必ずヒットさせる。
 export function generateRepresentativePostflopQuestion(
   rng: () => number = Math.random,
+  potType: PotType = 'srp',
 ): PostflopQuestion | null {
+  const set = representativeSpotSet(potType)
   for (let attempt = 0; attempt < 30; attempt++) {
     const rb = REPRESENTATIVE_BOARDS[(rng() * REPRESENTATIVE_BOARDS.length) | 0]
-    const spotId = REPRESENTATIVE_SPOTS[(rng() * REPRESENTATIVE_SPOTS.length) | 0]
+    const spotId = set.spots[(rng() * set.spots.length) | 0]
     const spot = SPOTS.find(s => s.id === spotId)
     if (!spot) continue
     const combos = representativeHeroCombos(spotId, rb.board, rb.street)
@@ -223,7 +225,7 @@ export function generateRepresentativePostflopQuestion(
     return {
       baseSpotId: spotId, baseLabel: spot.label, street: rb.street, board: rb.board,
       heroCards: hero.cards, heroHand: comboToCategory(hero.cards), heroIsOOP: spot.heroIsOOP,
-      facing, facingRaise: false, potType: 'srp', potBB: spot.potBB, effStackBB: spot.effStackBB,
+      facing, facingRaise: false, potType: spot.potType, potBB: spot.potBB, effStackBB: spot.effStackBB,
       facedBetBB: facing ? +(spot.potBB * BET_FRAC).toFixed(1) : undefined,
       prompt: promptFor({ baseLabel: spot.label, street: rb.street, heroIsOOP: spot.heroIsOOP, facing, facingRaise: false }),
       representative: { id: rb.id, label: rb.label, note: rb.note },

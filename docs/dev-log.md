@@ -5,6 +5,11 @@ date: 2026-05-30
 ---
 # poker-gto 開発ログ
 
+### 2026-06-06 リリースのバージョニング + 3betポット代表盤面
+- **バージョニング(E節)**: `package.json` を version の正に統一(0.0.0→0.1.0・tauri.conf.json 0.1.0 と一致)。`scripts/check-version.mjs`(package.json===tauri.conf.json を検証・tag 引数で tag とも照合)+ `npm run version:check` を CI に追加(push/PR ごとにドリフト検出)。`.github/workflows/release.yml`: `v*` タグ push で ①タグ形式 vX.Y.Z 検証 ②`tag==package.json==tauri.conf.json` 保証 ③build→dist を zip 添付 ④`gh release create --generate-notes`。配信は PWA(Pages 自動デプロイ)が本線で Release は履歴の節目+固定版アーカイブ。手順は RELEASE.md §8。**セキュリティ**: `GITHUB_REF_NAME` は引用済み env 参照(`${{}}` 補間なし)+ 先頭で vX.Y.Z 形式に限定(security-guidance hook 指摘の workflow injection 対策)。commit `a1b6d6e`。
+- **3betポット代表盤面(A節 追補)**: 代表ボード事前計算を pot 種別で一般化。`representativeBoards.ts` に `REPRESENTATIVE_SPOT_SETS`(srp: pot5.5/stack100/4スポット, 3bet: pot22.5/stack89/6スポット=BB/SB 3bet vs BTN/CO の 3better OOP×caller IP)。`precompute-postflop.ts` を pot 横断ループに(`--pot-type` フィルタ)。3bet は **96ファイル**(代表8×6スポット×phase2)を生成(turn iters160/cap64 で exploit 0.8〜1.1% / river <0.5%)。**計160ファイル**。ドリル代表モードに SRP/3bet トグルを表示(`generateRepresentativePostflopQuestion(rng, potType)`)。getSolution は spotId/pot/stack で別キーなので無改修でヒット。
+- **検証**: 型0・lint0・全403テスト緑(precomputed 統合を srp/3bet × turn/river に拡張・ドリル生成を両 pot 種別に)・build緑(main bundle 不変)。Playwright で 代表ボード+3betポット → A高ブリック盤・ポット22.5BB・厳密解(事前計算)即時採点を実測。
+
 ### 2026-06-06 マルチウェイの「あなたの勝率」を参考値として表示
 - **背景**: ゲーム(study答え合わせ)で勝率が「—」になる主因はマルチウェイ(`resolveOpponentRanges` が `villains.length!==1` で null)。8エージェントのワークフローで全原因を検証(別の表示面なし・ショーダウン後も holeCards はスナップショットに残る等を確認)。ユーザー要望で「参考として出す」対応。
 - **実装**: `resolveOpponentRangesEx(state, heroId): { ranges, reference } | null` を新設。アクティブ相手全員の想定レンジをラインから推定し、2人以上なら `reference:true`、一人でも推定不能(リンプ・未収録ライン)なら null(偽値を出さない)。`resolveOpponentRanges`(HU専用)は後方互換で委譲(既存テスト不変)。`computeEquity` は元々 N 相手対応(hero が全員に勝てば勝ち・タイ分割・カードリムーバル厳密)なので計算層は無改修。`useEquity` の `EquityState` に `reference` を追加し `LiveStrategyPanel`/`OddsGuide` が「あなたの勝率(参考)」+注記。

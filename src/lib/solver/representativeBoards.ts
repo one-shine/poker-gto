@@ -66,6 +66,28 @@ export function representativeBoard(id: string): RepresentativeBoard | undefined
 // 事前計算が対象とする SRP スポット (= scripts/precompute-postflop.ts と一致)。
 export const REPRESENTATIVE_SPOTS = ['bb-vs-btn', 'bb-vs-co', 'btn-open', 'co-open'] as const
 
+// 3bet ポットの代表スポット (3better OOP × caller IP を BB/SB 3bet vs BTN/CO で対)。
+export const REPRESENTATIVE_3BET_SPOTS = [
+  '3bp-bb-vs-btn', '3bp-btn-vs-bb', '3bp-bb-vs-co', '3bp-co-vs-bb', '3bp-sb-vs-btn', '3bp-btn-vs-sb',
+] as const
+
+// 事前計算する pot 種別ごとの設定 (script / drill / getSolution が共有する権威値)。
+// pot/stack は postflopDrill.ts の SRP_POT/SRP_STACK・TB_POT/TB_STACK と一致させる。
+export interface RepresentativeSpotSet {
+  potType: 'srp' | '3bet'
+  potBB: number
+  effStackBB: number
+  spots: readonly string[]
+}
+export const REPRESENTATIVE_SPOT_SETS: RepresentativeSpotSet[] = [
+  { potType: 'srp', potBB: 5.5, effStackBB: 100, spots: REPRESENTATIVE_SPOTS },
+  { potType: '3bet', potBB: 22.5, effStackBB: 89, spots: REPRESENTATIVE_3BET_SPOTS },
+]
+
+export function representativeSpotSet(potType: 'srp' | '3bet'): RepresentativeSpotSet {
+  return REPRESENTATIVE_SPOT_SETS.find(s => s.potType === potType)!
+}
+
 // 代表ボード事前計算で hero レンジに適用するコンボ上限 (script と drill で共有=ドリフト防止)。
 // この cap/narrow を通った hero コンボだけがテーブルに入る → ドリルは同じ集合から出題し必ずヒットさせる。
 export const REP_RIVER_CAP = 200
