@@ -61,3 +61,10 @@ date: 2026-05-30
 - **U5 ハンド履歴**: `HandSummary` 型 + `sessionStore.handSummaries`。gameStore で純損益算出(netBB=グロス受取−拠出、拠出=開始−終了stack)。History に勝敗/純損益/ミス印、HandReplay にミス→理論/ドリル導線。handId 突合・旧履歴は degrade。
 - **検証**: 型0・lint0・**全359テスト緑**(+20: dataTransfer6/preflop.helpers4/drillStore5/evLoss3/sessionStore+2)。Playwright で 5機能すべて実機表示確認(ヒートマップ・2段選択・ドリル成績カード・履歴の勝敗バッジ+⚠+理論/ドリル導線・設定ボタン)。
 - **設計判断**: ドリルは集計軸が MistakeCategory に乗らない(postflop=street/potType, pushfold=role/stack)ため progressStore 拡張でなく専用 `drillStore`。純損益は「配当を stack に戻さない」実装前提(将来 payout を stack 反映する変更が入ると二重計上 → gameStore に理由コメント)。
+
+### 2026-06-06 スマホ scroll(iOS 100vh)/レンジ data/対象外整理 + 残注記
+- **U13 scroll(a+d)**: スマホで「レンジ等が下まで見れない/ゲームで操作までスクロールが要る」原因は AppShell の `h-screen`。iOS の 100vh は URL バー込みで可視領域より高く、下端のナビ/ボタンが画面外に。→ `h-dvh`(+ `#root` 100dvh フォールバック / ErrorBoundary `min-h-dvh`)。全ページ + ゲームを一括解消。Chromium では dvh==vh のため Playwright では再現不可だが、定石の修正。
+- **U14 レンジ data(b)**: `utgOpen`/`mpOpen` の suited ace 中抜け(A8s/A7s/A6s 飛ばし)を補完。ドリフトガードの widthPct 更新(utg .134 / mp .176)。R4 一括置換方針は不変=アーティファクト是正のみ。
+- **U15 対象外(c)**: 仕様の明確化(コード変更なし)。`resolveSpotKey` の対応は収録27 HUスポット + RFI と一致。対象外=マルチウェイ(ルール4除外)/未収録ディフェンス(レンジ自体が無い)/盲対盲・深いレイズ応酬。偽解はルール1違反のため出さない。
+- **残注記の片付け**: U8(自分の手でハンド終了する局面でも答え合わせを New Hand 上に表示=共通化した `strategyReveal` を hand-complete branch にも描画)/ U7(モバイル非表示で解消・トグル不要と判断)/ U10(360幅の側席近接は最小幅制約上の許容)。
+- **検証**: 型0・lint0・全テスト緑・build緑。

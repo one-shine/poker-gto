@@ -48,6 +48,17 @@ export function GamePage() {
   const showCoachToast = appMode === 'play' && !!lastFeedback &&
     lastFeedback.kind === 'mistake' && lastFeedback.severity === 'critical'
 
+  // U8: アクション後の「答え合わせ」。打った決定が残っていれば、相手の番でもハンド終了後でも表示する
+  // (CoachPanel が答えを出すミス時は二重を避けて省略・U7)。事前に見せないので markHinted しない。
+  const strategyReveal = appMode === 'study' && studyShowStrategy && lastHeroDecision && !showCoachPanel ? (
+    <LiveStrategyPanel
+      pending={lastHeroDecision.payload}
+      allowLiveSolve
+      showPotOdds={showPotOdds}
+      revealActed={lastHeroDecision.action}
+    />
+  ) : null
+
   // 起動時に1度だけ初期化
   useEffect(() => {
     if (!initialized) initGame(stackBB)
@@ -156,32 +167,27 @@ export function GamePage() {
         {/* アクション領域 */}
         <div className="w-full max-w-2xl flex flex-col items-center gap-3">
           {showStartButton ? (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={startNewHand}
-                className="group relative min-h-12 px-8 rounded-xl brass font-display font-extrabold tracking-wide shadow-[0_6px_20px_rgba(212,175,55,0.3),inset_0_1px_0_rgba(255,255,255,0.5)] hover:brightness-110 active:translate-y-px transition-all"
-              >
-                New Hand <span className="font-data text-ink/60 text-xs font-bold">(Space)</span>
-              </button>
-              <KeyboardHelp />
-            </div>
+            <>
+              {/* U8 残: 自分の手でハンドが終わった局面でも、最後の決定の答え合わせを New Hand の上に出す。 */}
+              {strategyReveal}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={startNewHand}
+                  className="group relative min-h-12 px-8 rounded-xl brass font-display font-extrabold tracking-wide shadow-[0_6px_20px_rgba(212,175,55,0.3),inset_0_1px_0_rgba(255,255,255,0.5)] hover:brightness-110 active:translate-y-px transition-all"
+                >
+                  New Hand <span className="font-data text-ink/60 text-xs font-bold">(Space)</span>
+                </button>
+                <KeyboardHelp />
+              </div>
+            </>
           ) : pendingHeroAction ? (
             // U8: アクション前は戦略を見せない (事前に答えを見ないで自分で判断させる)。打ってから答え合わせ。
             <ActionPanel pending={pendingHeroAction} onAction={submitHeroAction} />
           ) : (
             <>
-              {/* U8: 自分が打った後に GTO 戦略を答え合わせ表示 (study + 表示ON のとき・+A2 ポットオッズ)。
-                  事前に見せないので精度サンプルにも入る (markHinted しない)。OFF=純粋にテスト。
-                  ミス/学習(CoachPanel 表示中)は答えが出るので reveal は出さない (モバイルの二重パネル回避・U7)。 */}
-              {appMode === 'study' && studyShowStrategy && lastHeroDecision && !showCoachPanel && (
-                <LiveStrategyPanel
-                  pending={lastHeroDecision.payload}
-                  allowLiveSolve
-                  showPotOdds={showPotOdds}
-                  revealActed={lastHeroDecision.action}
-                />
-              )}
+              {/* U8: 自分が打った後に GTO 戦略を答え合わせ表示。事前に見せないので精度サンプルにも入る。 */}
+              {strategyReveal}
               <p className="text-zinc-500 text-sm">相手の番です…</p>
             </>
           )}
