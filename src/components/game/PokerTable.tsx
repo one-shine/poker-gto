@@ -26,13 +26,15 @@ const SEAT_POS_DESKTOP: Record<number, Pos> = {
   4: { left: 91, top: 28 },
   5: { left: 88, top: 66 },
 }
+// 高さ制約で卓が小さくなるモバイルでは、固定サイズの席が密集しやすい。
+// Hero(下中央)は 84% でアクション領域との重なりを防ぎつつ、左右の SB/CO は 53% へ上げて Hero と分離する (U10)。
 const SEAT_POS_MOBILE: Record<number, Pos> = {
-  0: { left: 50, top: 90 }, // 下中央 = Hero (下端へ)
-  1: { left: 14, top: 60 }, // 左下 (カード xs で席幅が細いので外側へ)
-  2: { left: 14, top: 25 }, // 左上
-  3: { left: 50, top: 9 },  // 上中央
-  4: { left: 86, top: 25 }, // 右上
-  5: { left: 86, top: 60 }, // 右下
+  0: { left: 50, top: 86 }, // 下中央 = Hero (sm カードで席が小さくなった分やや下げ、左右席と分離)
+  1: { left: 10, top: 54 }, // 左下 (Hero と離す)
+  2: { left: 11, top: 26 }, // 左上
+  3: { left: 50, top: 13 }, // 上中央 (上端の見切れ防止に下げる)
+  4: { left: 89, top: 26 }, // 右上
+  5: { left: 90, top: 54 }, // 右下
 }
 
 // 各席のベットチップ位置 = 席から中央(50,42)へ寄せた点。who-bet-what を felt 上に明示する。
@@ -46,8 +48,9 @@ const formatBB = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
 
 export function PokerTable({ state, winnerIds }: PokerTableProps) {
   const isMobile = useIsMobile()
-  // デスクトップは利用可能な幅×高さにフィットさせる (16/9・両制約で歪まず縮む)。モバイルは縦長 CSS のまま。
-  const { ref: fitRef, size } = useContainSize(16 / 9, DESKTOP_MAX_W)
+  // 卓を利用可能な幅×高さの両制約でフィットさせる (歪まず縮む)。モバイルは縦長 (5/6)・デスクトップは横長 (16/9)。
+  // モバイルも高さ制約を効かせることで、卓+アクション+フッターが1画面に収まる (スクロール不要・U10)。
+  const { ref: fitRef, size } = useContainSize(isMobile ? 5 / 6 : 16 / 9, isMobile ? Infinity : DESKTOP_MAX_W)
   const SEAT_POS = isMobile ? SEAT_POS_MOBILE : SEAT_POS_DESKTOP
   const showdown = state.street === 'showdown' || state.isHandComplete
   const winners = new Set(winnerIds ?? [])
@@ -68,7 +71,7 @@ export function PokerTable({ state, winnerIds }: PokerTableProps) {
       className={isMobile
         ? 'relative w-full max-w-4xl aspect-[5/6]'
         : 'relative w-full max-w-[1100px] aspect-[16/9]'}
-      style={!isMobile && size ? { width: size.w, height: size.h } : undefined}
+      style={size ? { width: size.w, height: size.h } : undefined}
     >
       {/* レール (外周の縁) — 暗い木革調 + ブラスのパイピング */}
       <div className="absolute inset-[2%] rounded-[50%] bg-gradient-to-b from-[#23282a] to-[#0e1211] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] ring-1 ring-black/60" />

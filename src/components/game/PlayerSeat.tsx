@@ -41,7 +41,8 @@ function actionText(la: SeatLastAction): string {
 
 export function PlayerSeat({ player, isActing = false, revealCards = false, lastAction, isWinner = false, compact = false, dealKey }: PlayerSeatProps) {
   const reduceMotion = useReducedMotion()
-  const cardSize = player.isHero ? (compact ? 'md' : 'lg') : (compact ? 'xs' : 'sm')
+  // モバイル(compact)は卓が小さいので Hero も sm に抑え、左右席との重なり・はみ出しを防ぐ (U10)。
+  const cardSize = player.isHero ? (compact ? 'sm' : 'lg') : (compact ? 'xs' : 'sm')
   // ヒーローは常に自分の手札を見る。相手は revealCards のときだけ表向き。
   const faceDown = !player.isHero && !revealCards
   const las = lastAction ? ACTION_STYLE[lastAction.action] : null

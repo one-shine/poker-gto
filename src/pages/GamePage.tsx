@@ -4,7 +4,6 @@ import { useSessionStore } from '../stores/sessionStore'
 import { useNavStore } from '../stores/navStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useSolution } from '../hooks/useSolution'
-import { useIsMobile } from '../hooks/useIsMobile'
 import { PokerTable } from '../components/game/PokerTable'
 import { BetLine } from '../components/game/BetLine'
 import { HandResultOverlay } from '../components/game/HandResultOverlay'
@@ -71,7 +70,6 @@ export function GamePage() {
 
   // 卓と操作領域を1グループとして中央寄せするため、卓の高さ = 利用可能高 − 操作領域高 を実測する。
   // (CSS の flex-1 だと卓が全高を占め、操作ボタンが最下部に張り付いて見える R30 の副作用を解消)
-  const isMobile = useIsMobile()
   const contentRef = useRef<HTMLDivElement>(null)
   const actionRef = useRef<HTMLDivElement>(null)
   const [tableH, setTableH] = useState(() => (typeof window !== 'undefined' ? Math.round(window.innerHeight * 0.6) : 400))
@@ -103,7 +101,7 @@ export function GamePage() {
             操作領域と合わせて中央寄せされる。モバイルは縦長 CSS に任せ高さ自動。 */}
         <div
           className="w-full flex items-center justify-center shrink-0"
-          style={isMobile || !gameState ? undefined : { height: tableH }}
+          style={!gameState ? undefined : { height: tableH }}
         >
           {gameState ? (
             <PokerTable state={gameState} winnerIds={handComplete ? lastResults?.map(r => r.winnerId) : undefined} />

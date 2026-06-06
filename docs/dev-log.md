@@ -43,3 +43,11 @@ date: 2026-05-30
   - engine の `fishDelayScheduler`/`gtoDelayScheduler` は残置(未使用)。
 - **設定 UI**: 「相手アクションの速さ」3択を追加。study 戦略トグルの文言を「常時表示」→「アクション後の答え合わせ」に是正。
 - **検証**: 型 0・**全 338+1=新規テスト含め緑**(`LiveStrategyPanel` に reveal モードのテスト追加)。`npm run build` 緑。
+
+### 2026-06-06 ゲーム卓のモバイル収まり是正(U10・Playwright 実測)
+- **症状(スマホ)**: 「自分のカードとアクションボタンが重なる」「スクロールしないと全体が見えない」。
+- **原因**: デスクトップだけ `useContainSize` で幅×高さ両フィットさせ、モバイルは CSS `aspect-[5/6]`(幅基準)で**高さ無制約** → 卓が縦に溢れ、`top:90%` のヒーロー席(固定サイズ)が卓ボックス下にはみ出してアクション領域に重なっていた。
+- **対応**:
+  - モバイルも `useContainSize(isMobile?5/6:16/9)` で利用可能高さにフィット。`GamePage` の測定高さ `tableH` を**モバイル卓コンテナにも付与**(従来 `isMobile||!gameState?undefined` を `!gameState?undefined` に)。`GamePage` の `isMobile` は不要になり削除。
+  - `SEAT_POS_MOBILE`: ヒーロー 90→86、上席 8→13、左右席を上げて分離。`PlayerSeat` のヒーローカードを compact 時 md→sm に縮小(席が小さくなり重なり減)。
+- **検証**: Playwright を local dev(390/360/430 幅 × 640–844 高 + デスクトップ1280)で駆動し bounding box 実測。全モバイルサイズで **no-scroll**・**札↔ボタン gap 5–21px**・**上端見切れ解消**・ヒーロー↔側席の重なり解消(360幅のみ側席バッジが軽微近接)。デスクトップ回帰なし。型0/lint0/test339緑/build緑。
