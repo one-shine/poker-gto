@@ -4,8 +4,10 @@ import type { SkillLevel } from '../types/game'
 import type { PageId } from '../components/layout/navItems'
 import { XP_THRESHOLDS } from '../types/stats'
 import { CATEGORY_JP } from '../data/mistakeLabels'
+import type { DrillKind } from '../types/stats'
 import { useProgressStore } from '../stores/progressStore'
 import { useSessionStore } from '../stores/sessionStore'
+import { useDrillStore } from '../stores/drillStore'
 import { useNavStore } from '../stores/navStore'
 import { SampleSizeBadge } from '../components/stats/SampleSizeBadge'
 import { HandReplay } from '../components/history/HandReplay'
@@ -58,6 +60,82 @@ const LEVEL_JP: Record<SkillLevel, string> = {
 }
 const LEVEL_ORDER: SkillLevel[] = ['beginner', 'intermediate', 'advanced', 'pro']
 
+const DRILL_KIND_JP: Record<DrillKind, string> = {
+  preflop: 'プリフロップ', postflop: 'ポストフロップ', pushfold: 'プッシュ/フォールド',
+}
+const DRILL_KINDS: DrillKind[] = ['preflop', 'postflop', 'pushfold']
+
+// 正答率の色 (色だけに依存しない: 数値も併記)。
+const accuracyClass = (pct: number) => (pct >= 70 ? 'text-emerald-300' : pct >= 50 ? 'text-brass-300' : 'text-rose-300')
+
+// U4: ダッシュボードのドリル成績カード (種別ごとの通算)。
+function DrillStatsCard({ onGoToDrill }: { onGoToDrill: () => void }) {
+  const byKind = useDrillStore(s => s.byKind)
+  const total = DRILL_KINDS.reduce((n, k) => n + (byKind[k]?.attempts ?? 0), 0)
+  return (
+    <div className="rounded-2xl border border-white/10 bg-base-800/60 p-4">
+      <h3 className="text-xs font-bold text-brass-300 uppercase tracking-wider mb-2">ドリル成績(通算)</h3>
+      {total === 0 ? (
+        <p className="text-sm text-zinc-500">
+          まだドリルの記録がありません。
+          <button type="button" onClick={onGoToDrill} className="text-emerald-300 hover:underline">ドリルで練習</button>
+          すると、種別ごとの正答率が貯まります。
+        </p>
+      ) : (
+        <ul className="space-y-1.5">
+          {DRILL_KINDS.map(k => {
+            const st = byKind[k] ?? { attempts: 0, correct: 0 }
+            const pct = st.attempts > 0 ? Math.round((st.correct / st.attempts) * 100) : null
+            return (
+              <li key={k} className="flex items-center justify-between text-sm">
+                <span className="text-zinc-200">{DRILL_KIND_JP[k]}</span>
+                <span className="font-data text-zinc-300">
+                  {st.correct}/{st.attempts}
+                  {pct != null && <span className={`ml-1.5 font-bold ${accuracyClass(pct)}`}>{pct}%</span>}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// U4: ドリルタブの選択中種別の通算 + 直近結果ミニ履歴。
+function DrillKindSummary({ kind }: { kind: DrillKind }) {
+  const st = useDrillStore(s => s.byKind[kind])
+  const recent = useDrillStore(s => s.recent).filter(r => r.kind === kind).slice(0, 5)
+  const attempts = st?.attempts ?? 0
+  if (attempts === 0) return null
+  const pct = Math.round(((st?.correct ?? 0) / attempts) * 100)
+  return (
+    <div className="rounded-xl border border-white/10 bg-base-900/40 px-3 py-2 space-y-1.5">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-zinc-400">通算({DRILL_KIND_JP[kind]})</span>
+        <span className="font-data text-zinc-300">
+          {st?.correct ?? 0}/{attempts} 正解 <span className={`font-bold ${accuracyClass(pct)}`}>{pct}%</span>
+        </span>
+      </div>
+      {recent.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {recent.map((r, i) => (
+            <span
+              key={r.timestamp + '-' + i}
+              title={r.bucketLabel}
+              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                r.correct ? 'bg-emerald-900/40 text-emerald-200 border-emerald-500/30' : 'bg-rose-900/30 text-rose-200 border-rose-500/30'
+              }`}
+            >
+              <span aria-hidden="true">{r.correct ? '✓' : '✗'}</span>{r.bucketLabel}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -73,7 +151,7 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
   )
 }
 
-function Dashboard() {
+function Dashboard({ onGoToDrill }: { onGoToDrill: () => void }) {
   const progress = useProgressStore(s => s.progress)
   const accuracy = useSessionStore(s => s.gtoAccuracy())
   const evaluated = useSessionStore(s => s.evaluatedCount)
@@ -152,6 +230,9 @@ function Dashboard() {
           </ul>
         )}
       </div>
+
+      {/* U4: ドリル成績 (種別ごとの通算正答率) */}
+      <DrillStatsCard onGoToDrill={onGoToDrill} />
     </div>
   )
 }
@@ -252,6 +333,7 @@ function DrillTab({ deepLinked }: { deepLinked: boolean }) {
           <Tab active={mode === 'pushfold'} onClick={() => setMode('pushfold')}>プッシュ/フォールド</Tab>
         </div>
       )}
+      <DrillKindSummary kind={mode} />
       {mode === 'preflop' ? <DrillPanel /> : mode === 'postflop' ? <PostflopDrillPanel /> : <PushFoldDrillPanel />}
     </div>
   )
@@ -270,7 +352,7 @@ export function LearnPage() {
           <Tab active={tab === 'drill'} onClick={() => setTab('drill')}>ドリル</Tab>
           <Tab active={tab === 'history'} onClick={() => setTab('history')}>ハンド履歴</Tab>
         </div>
-        {tab === 'dashboard' ? <Dashboard /> : tab === 'drill' ? <DrillTab deepLinked={!!drillCategory} /> : <History onGoToDrill={() => setTab('drill')} />}
+        {tab === 'dashboard' ? <Dashboard onGoToDrill={() => setTab('drill')} /> : tab === 'drill' ? <DrillTab deepLinked={!!drillCategory} /> : <History onGoToDrill={() => setTab('drill')} />}
       </div>
     </div>
   )

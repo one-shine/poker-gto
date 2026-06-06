@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useProgressStore } from '../../stores/progressStore'
+import { useDrillStore } from '../../stores/drillStore'
 import { useNavStore } from '../../stores/navStore'
 import { CATEGORY_JP } from '../../data/mistakeLabels'
 import { generateQuestion, judge, type DrillAction, type DrillJudgement, type PreflopDrillQuestion } from '../../lib/drill/preflopDrill'
@@ -10,6 +11,7 @@ const XP_WRONG = 2
 
 export function DrillPanel() {
   const addXP = useProgressStore(s => s.addXP)
+  const recordDrill = useDrillStore(s => s.recordDrill)
   const drillCategory = useNavStore(s => s.drillCategory)
   const clearDrillCategory = useNavStore(s => s.clearDrillCategory)
 
@@ -30,6 +32,7 @@ export function DrillPanel() {
     setJudgement(j)
     setStats(s => ({ answered: s.answered + 1, correct: s.correct + (j.correct ? 1 : 0) }))
     addXP(j.correct ? XP_CORRECT : XP_WRONG)
+    recordDrill({ kind: 'preflop', bucketKey: question.scenarioId, bucketLabel: question.scenarioLabel, correct: j.correct, chosen: action, evLoss: null })
   }
 
   const onNext = () => {

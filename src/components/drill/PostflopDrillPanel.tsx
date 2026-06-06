@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PlayerAction } from '../../types/game'
 import { useProgressStore } from '../../stores/progressStore'
+import { useDrillStore } from '../../stores/drillStore'
+import { evLossFrom } from '../../lib/drill/evLoss'
 import { CardDisplay } from '../game/CardDisplay'
 import {
   ACTION_JP, explainPostflop, generatePostflopQuestion, judgePostflop, solvePostflopQuestion,
@@ -75,8 +77,11 @@ function SourceBadge({ source }: { source: SolutionSource | null }) {
   return <span className="text-zinc-500">参考値</span>
 }
 
+const POT_KEY_JP: Record<PotType, string> = { srp: 'SRP', '3bet': '3bet' }
+
 export function PostflopDrillPanel() {
   const addXP = useProgressStore(s => s.addXP)
+  const recordDrill = useDrillStore(s => s.recordDrill)
   const [streetMode, setStreetMode] = useState<StreetMode>('flop')
   const [potType, setPotType] = useState<PotType>('srp')
   const [question, setQuestion] = useState<PostflopQuestion>(() =>
@@ -121,6 +126,12 @@ export function PostflopDrillPanel() {
     setJudgement(j)
     setStats(s => ({ answered: s.answered + 1, correct: s.correct + (j.correct ? 1 : 0) }))
     addXP(j.correct ? XP_CORRECT : XP_WRONG)
+    recordDrill({
+      kind: 'postflop',
+      bucketKey: `${question.potType}:${question.street}`,
+      bucketLabel: `${POT_KEY_JP[question.potType]}·${STREET_JP[question.street]}`,
+      correct: j.correct, chosen: action, evLoss: evLossFrom(solved.all, action),
+    })
   }
 
   const changeStreet = (mode: StreetMode) => { setStreetMode(mode); next(mode, potType) }

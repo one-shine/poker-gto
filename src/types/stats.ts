@@ -78,6 +78,25 @@ export interface PlayerProgress {
   masteredConcepts: string[]
 }
 
+// ドリル成績 (U4)。集計軸は MistakeCategory に乗らない (postflop=street/potType, pushfold=role/stack)
+// ため専用の bucketKey で持つ。
+export type DrillKind = 'preflop' | 'postflop' | 'pushfold'
+
+export interface DrillStat {
+  attempts: number
+  correct: number
+}
+
+export interface DrillResult {
+  kind: DrillKind
+  bucketKey: string   // 集計キー (preflop=scenarioId / postflop=`potType:street` / pushfold=`role:stackbb`)
+  bucketLabel: string // 表示用の日本語ラベル
+  correct: boolean
+  chosen: string
+  evLoss: number | null // postflop/pushfold のみ算出。preflop(近似レンジ=EV非提示)は null
+  timestamp: number
+}
+
 export interface UIComplexity {
   showPotOdds: boolean
   showBoardAnalysis: boolean

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { Card, Rank, Suit } from '../../types/game'
 import { useProgressStore } from '../../stores/progressStore'
+import { useDrillStore } from '../../stores/drillStore'
+import { evLossFrom } from '../../lib/drill/evLoss'
 import { CardDisplay } from '../game/CardDisplay'
 import {
   explainPushFold, generatePushFoldQuestion, judgePushFold, PUSHFOLD_STACKS,
@@ -46,6 +48,7 @@ function Seg({ active, onClick, children }: { active: boolean; onClick: () => vo
 
 export function PushFoldDrillPanel() {
   const addXP = useProgressStore(s => s.addXP)
+  const recordDrill = useDrillStore(s => s.recordDrill)
   const [stack, setStack] = useState(PUSHFOLD_STACKS[0] ?? 10)
   const [roleMode, setRoleMode] = useState<RoleMode>('mix')
   const [question, setQuestion] = useState<PushFoldQuestion>(() =>
@@ -62,6 +65,12 @@ export function PushFoldDrillPanel() {
     setJudgement(j)
     setStats(s => ({ answered: s.answered + 1, correct: s.correct + (j.correct ? 1 : 0) }))
     addXP(j.correct ? XP_CORRECT : XP_WRONG)
+    recordDrill({
+      kind: 'pushfold',
+      bucketKey: `${question.role}:${question.stack}bb`,
+      bucketLabel: `${question.role === 'sb' ? 'SBプッシュ' : 'BB対オールイン'}·${question.stack}BB`,
+      correct: j.correct, chosen: action, evLoss: evLossFrom(j.all, action),
+    })
   }
   const onNext = () => { setQuestion(fresh()); setJudgement(null) }
   const changeStack = (st: number) => { setStack(st); setQuestion(fresh(st)); setJudgement(null) }
