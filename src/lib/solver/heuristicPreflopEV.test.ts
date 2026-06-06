@@ -1,3 +1,6 @@
+/// <reference types="node" />
+// node 型は app の tsconfig.types に含めない (本番 src へ process/Buffer を漏らさないため)。
+// この test だけ scripts/.cache を読むので、ファイル局所で node 型を参照する。
 import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
