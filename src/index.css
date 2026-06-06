@@ -46,7 +46,8 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-#root { min-height: 100vh; }
+/* 100dvh = 動的ビューポート (iOS の URL バー込み 100vh ではなく実可視領域)。100vh はフォールバック。 */
+#root { min-height: 100vh; min-height: 100dvh; }
 
 h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 

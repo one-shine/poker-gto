@@ -8,8 +8,10 @@ interface AppShellProps {
 }
 
 export function AppShell({ active, onNavigate, children }: AppShellProps) {
+  // h-dvh(動的ビューポート): iOS の 100vh は URL バー込みの大きい高さで、下端のナビ/操作が画面外に
+  // 出てスクロールしないと届かない。dvh で実際の可視領域に合わせる(内部の overflow-auto はそのまま)。
   return (
-    <div className="flex h-screen text-zinc-100">
+    <div className="flex h-dvh text-zinc-100">
       {/* desktop: 左サイドバー */}
       <nav
         className="hidden md:flex flex-col w-20 shrink-0 border-r border-white/8 bg-base-900/60 py-4 gap-1"
