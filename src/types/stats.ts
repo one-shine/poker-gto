@@ -31,6 +31,16 @@ export type MistakeCategory =
   | 'bluff_frequency'
   | 'value_bet_missed'
 
+// 各ハンドの結果サマリ (U5)。handHistory(アクション列)と handId で対応付ける。
+export interface HandSummary {
+  handId: string
+  heroPosition: Position
+  won: boolean
+  netBB: number   // hero 純損益 (+受取 / −拠出)
+  showdown: boolean
+  timestamp: number
+}
+
 export interface PositionStats {
   position: Position
   handsPlayed: number

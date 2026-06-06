@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import type { MistakeCategory } from '../types/stats'
+import { useMemo, useState } from 'react'
+import type { MistakeCategory, MistakeRecord, HandSummary } from '../types/stats'
 import type { SkillLevel } from '../types/game'
 import type { PageId } from '../components/layout/navItems'
 import { XP_THRESHOLDS } from '../types/stats'
@@ -237,10 +237,35 @@ function Dashboard({ onGoToDrill }: { onGoToDrill: () => void }) {
   )
 }
 
+// U5: 勝敗/純損益バッジ (色 + 形状で色覚配慮: ▲勝ち / ▼負け / ＝とんとん)。
+function ResultBadge({ sum }: { sum: HandSummary }) {
+  const net = sum.netBB
+  const up = net > 0.05, down = net < -0.05
+  const cls = up ? 'text-emerald-300' : down ? 'text-rose-300' : 'text-zinc-400'
+  const icon = up ? '▲' : down ? '▼' : '＝'
+  return (
+    <span className={`inline-flex items-center gap-0.5 font-data text-xs font-bold ${cls}`}>
+      <span aria-hidden="true">{icon}</span>{net > 0 ? '+' : ''}{net.toFixed(1)}BB
+    </span>
+  )
+}
+
 function History({ onGoToDrill }: { onGoToDrill: () => void }) {
   const handHistory = useSessionStore(s => s.handHistory)
+  const handSummaries = useSessionStore(s => s.handSummaries)
+  const mistakes = useSessionStore(s => s.mistakes)
   const [selected, setSelected] = useState<number | null>(null)
   const recent = handHistory.map((h, i) => ({ h, i })).reverse().slice(0, 20)
+
+  // index ではなく handId で結果/ミスを突合 (slice 切詰めでズレないように)。
+  const summaryByHand = useMemo(() => new Map<string, HandSummary>(handSummaries.map(s => [s.handId, s])), [handSummaries])
+  const mistakesByHand = useMemo(() => {
+    const m = new Map<string, MistakeRecord[]>()
+    for (const mk of mistakes) m.set(mk.handId, [...(m.get(mk.handId) ?? []), mk])
+    return m
+  }, [mistakes])
+
+  const selectedHandId = selected != null ? handHistory[selected]?.[0]?.handId : undefined
 
   if (handHistory.length === 0) {
     // D4: 静的な「Gameでプレイ」だけでなく、ドリルへの代替CTAも提示する。
@@ -262,20 +287,31 @@ function History({ onGoToDrill }: { onGoToDrill: () => void }) {
     <div className="grid md:grid-cols-2 gap-4">
       <ul className="space-y-1.5">
         {recent.map(({ h, i }) => {
+          const handId = h[0]?.handId
           const heroPos = h[0]?.heroPosition ?? '—'
+          const sum = handId ? summaryByHand.get(handId) : undefined
+          const ms = handId ? mistakesByHand.get(handId) : undefined
           return (
             <li key={i}>
               <button
                 type="button"
                 onClick={() => setSelected(i)}
                 aria-pressed={selected === i}
-                className={`w-full text-left px-3 min-h-11 rounded-xl border text-sm transition-colors ${
+                className={`w-full text-left px-3 min-h-11 py-1.5 rounded-xl border text-sm transition-colors ${
                   selected === i ? 'border-brass-400 bg-brass-400/10' : 'border-white/10 bg-base-800/60 hover:border-brass-500/40'
                 }`}
               >
-                <span className="font-data text-zinc-400">#{i + 1}</span>
-                <span className="text-zinc-200 ml-2">あなた: {heroPos}</span>
-                <span className="text-zinc-500 ml-2 text-xs">{h.length}アクション</span>
+                <span className="flex items-center gap-2">
+                  <span className="font-data text-zinc-400">#{i + 1}</span>
+                  <span className="text-zinc-200">あなた: {heroPos}</span>
+                  {sum && <ResultBadge sum={sum} />}
+                  {ms && ms.length > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-300" title={`${ms.length}件のミス`}>
+                      <span aria-hidden="true">⚠</span>{ms.length}
+                    </span>
+                  )}
+                  <span className="ml-auto text-zinc-500 text-xs">{h.length}手</span>
+                </span>
               </button>
             </li>
           )
@@ -283,7 +319,11 @@ function History({ onGoToDrill }: { onGoToDrill: () => void }) {
       </ul>
       <div>
         {selected != null && handHistory[selected]
-          ? <HandReplay actions={handHistory[selected]} />
+          ? <HandReplay
+              actions={handHistory[selected]}
+              summary={selectedHandId ? summaryByHand.get(selectedHandId) : undefined}
+              mistakes={selectedHandId ? mistakesByHand.get(selectedHandId) : undefined}
+            />
           : <p className="text-sm text-zinc-500 p-3">ハンドを選ぶとリプレイを表示します。</p>}
       </div>
     </div>

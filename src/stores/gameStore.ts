@@ -7,6 +7,7 @@ import { CoachAgent } from '../engine/agents/CoachAgent'
 import type { PlayerConfig } from '../engine/game/GameState'
 import type { GameState, PlayerAction, Position, ShowdownResult, Street } from '../types/game'
 import type { CoachFeedback } from '../types/coach'
+import type { HandSummary } from '../types/stats'
 import { useSettingsStore, type AiSpeed } from './settingsStore'
 import { useSessionStore } from './sessionStore'
 import { useProgressStore } from './progressStore'
@@ -23,6 +24,9 @@ let heroDecisionCtx: { handId: string; street: Street; position: Position } | nu
 // state) を捕捉し、ハンド後に on-demand で live solve して復習表示する (求解が重いので都度でなく後で)。
 let pendingHeroState: GameState | null = null
 let handDecisions: HeroDecision[] = []
+// U5: hero 純損益の算出用。配当は stack に戻されない(終了stackは拠出後)ため、開始stackを保持して
+// 「拠出 = 開始 − 終了」を求める。initGame の stackBB を覚える。
+let startStackBB = 100
 
 // study モードの「一時停止」ゲート (R7)。ミス(major+)時に AI の送出を保留し、「次へ」で再開する。
 // engine は純粋同期のまま。保留は UI 層 (スケジューラ) で実現する。
@@ -106,6 +110,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   initGame: (stackBB = 100) => {
     if (get().initialized) return // 二重初期化防止
+    startStackBB = stackBB
 
     bus = new AgentBus()
 
@@ -177,7 +182,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     bus.on('HAND_COMPLETE', ({ state, results }) => {
       const handActions = state.actionHistory
-      useSessionStore.getState().recordHand(handActions)
+      // U5: hero の勝敗/純損益を算出してハンド結果サマリを残す。
+      // netBB = グロス受取(自分が勝者の結果の amountWonBB 合計) − 拠出(開始stack − 終了stack)。
+      // 配当は stack に戻されない実装のため、stack 差分がそのまま拠出になる。
+      const hero = state.players.find(p => p.id === HERO_ID)
+      const invested = startStackBB - (hero?.stackBB ?? startStackBB)
+      const grossWon = results.filter(r => r.winnerIds.includes(HERO_ID)).reduce((acc, r) => acc + r.amountWonBB, 0)
+      const summary: HandSummary = {
+        handId: state.handId,
+        heroPosition: hero?.position ?? 'BTN',
+        won: results.some(r => r.winnerIds.includes(HERO_ID)),
+        netBB: grossWon - invested,
+        showdown: state.street === 'showdown',
+        timestamp: Date.now(),
+      }
+      useSessionStore.getState().recordHand(handActions, summary)
       useProgressStore.getState().recordHandPlayed()
       useProgressStore.getState().addXP(5) // 結果ではなく判断にXP (ハンド完了ボーナス)
       // 代替案: play モードは postflop をライブ求解しない (ハンドを止めない)。

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { ActionRecord, Position } from '../types/game'
 import type { CoachFeedback } from '../types/coach'
-import type { MistakeRecord } from '../types/stats'
+import type { HandSummary, MistakeRecord } from '../types/stats'
 import { idbStorage } from '../lib/storage/idbStorage'
 
 // R25: IDB へ移行し履歴上限を緩和 (旧 localStorage は idbStorage が自動マイグレーション)。
@@ -11,6 +11,7 @@ const MAX_HISTORY = 1000
 
 interface SessionStore {
   handHistory: ActionRecord[][]   // ハンドごとのアクション列
+  handSummaries: HandSummary[]    // 各ハンドの結果 (勝敗/純損益)。handHistory と handId で対応 (U5)
   mistakes: MistakeRecord[]
   evaluatedCount: number          // 評価されたヒーロー判断数 (精度の母数)
   correctCount: number            // 正解 (correct + mixed)
@@ -20,7 +21,7 @@ interface SessionStore {
   hintedHandIds: Set<string>      // ヒント参照ハンド (精度サンプルから除外)
 
   recordEvaluation: (fb: CoachFeedback, ctx: { handId: string; street: ActionRecord['street']; position: MistakeRecord['position']; action: MistakeRecord['action'] }) => void
-  recordHand: (actions: ActionRecord[]) => void
+  recordHand: (actions: ActionRecord[], summary?: HandSummary) => void
   markHinted: (handId: string) => void
   gtoAccuracy: () => number | null // null = サンプルなし
   clearSession: () => void
@@ -30,6 +31,7 @@ export const useSessionStore = create<SessionStore>()(
   persist(
     (set, get) => ({
   handHistory: [],
+  handSummaries: [],
   mistakes: [],
   evaluatedCount: 0,
   correctCount: 0,
@@ -65,9 +67,11 @@ export const useSessionStore = create<SessionStore>()(
       }
     }),
 
-  recordHand: actions =>
+  // handHistory と handSummaries は同時 push + 同一 slice で件数・順序を一致させ、handId で対応付ける。
+  recordHand: (actions, summary) =>
     set(s => ({
       handHistory: [...s.handHistory, actions].slice(-MAX_HISTORY),
+      handSummaries: summary ? [...s.handSummaries, summary].slice(-MAX_HISTORY) : s.handSummaries,
       sessionHandCount: s.sessionHandCount + 1,
     })),
 
@@ -81,7 +85,7 @@ export const useSessionStore = create<SessionStore>()(
 
   clearSession: () =>
     set({
-      handHistory: [], mistakes: [], evaluatedCount: 0, correctCount: 0,
+      handHistory: [], handSummaries: [], mistakes: [], evaluatedCount: 0, correctCount: 0,
       evalByPosition: {}, sessionHandCount: 0, hintedHandIds: new Set(),
     }),
     }),
@@ -90,14 +94,15 @@ export const useSessionStore = create<SessionStore>()(
       storage: createJSONStorage(() => idbStorage),
       // Set はそのまま JSON 化できないため配列に変換して保存/復元する。
       partialize: s => ({
-        handHistory: s.handHistory, mistakes: s.mistakes,
+        handHistory: s.handHistory, handSummaries: s.handSummaries, mistakes: s.mistakes,
         evaluatedCount: s.evaluatedCount, correctCount: s.correctCount,
         evalByPosition: s.evalByPosition,
         sessionHandCount: s.sessionHandCount, hintedHandIds: [...s.hintedHandIds],
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<SessionStore> & { hintedHandIds?: string[] }
-        return { ...current, ...p, hintedHandIds: new Set(p.hintedHandIds ?? []) }
+        // 旧データに handSummaries が無い場合は [] で補完 (後方互換)。
+        return { ...current, ...p, handSummaries: p.handSummaries ?? [], hintedHandIds: new Set(p.hintedHandIds ?? []) }
       },
     },
   ),

@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { ActionRecord, PlayerAction, Street } from '../../types/game'
+import type { HandSummary, MistakeRecord } from '../../types/stats'
 import { HERO_ID } from '../../stores/gameStore'
+import { useNavStore } from '../../stores/navStore'
+import { CATEGORY_JP } from '../../data/mistakeLabels'
+import { conceptsForMistake } from '../../data/theory/concepts'
 
 const STREET_JP: Record<Street, string> = {
   preflop: 'プリフロップ', flop: 'フロップ', turn: 'ターン', river: 'リバー', showdown: 'ショーダウン',
@@ -12,10 +16,13 @@ const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
 
 interface Props {
   actions: ActionRecord[]
+  summary?: HandSummary       // U5: 勝敗/純損益
+  mistakes?: MistakeRecord[]  // U5: このハンドのミス (理論/ドリルへ導線)
 }
 
 // ハンドのアクション列をストリート別に表示。ステップ実行で1手ずつ送る。
-export function HandReplay({ actions }: Props) {
+export function HandReplay({ actions, summary, mistakes }: Props) {
+  const goTo = useNavStore(s => s.goTo)
   const streets = useMemo(() => {
     const order: Street[] = ['preflop', 'flop', 'turn', 'river']
     return order.filter(st => actions.some(a => a.street === st))
@@ -30,13 +37,57 @@ export function HandReplay({ actions }: Props) {
 
   return (
     <div className="rounded-xl bg-base-900/60 border border-white/10 p-3 space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <span className="text-xs font-bold text-zinc-300">
           ハンド <span className="font-data">#{actions[0]?.handId ?? '—'}</span>
           {heroPos && <span className="text-zinc-500"> (あなた: {heroPos})</span>}
         </span>
-        <span className="font-data text-[11px] text-brass-200">ポット {fmt(potAtStreet)}BB</span>
+        <span className="flex items-center gap-2">
+          {summary && (
+            <span className={`inline-flex items-center gap-0.5 font-data text-xs font-bold ${
+              summary.netBB > 0.05 ? 'text-emerald-300' : summary.netBB < -0.05 ? 'text-rose-300' : 'text-zinc-400'
+            }`}>
+              <span aria-hidden="true">{summary.netBB > 0.05 ? '▲' : summary.netBB < -0.05 ? '▼' : '＝'}</span>
+              {summary.netBB > 0 ? '+' : ''}{summary.netBB.toFixed(1)}BB
+              {summary.showdown && <span className="text-zinc-500 font-normal">·SD</span>}
+            </span>
+          )}
+          <span className="font-data text-[11px] text-brass-200">ポット {fmt(potAtStreet)}BB</span>
+        </span>
       </div>
+
+      {/* U5: ミス → 該当理論 / ドリルへの導線 */}
+      {mistakes && mistakes.length > 0 && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-2 space-y-1.5">
+          <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+            <span aria-hidden="true">⚠</span> このハンドのミス ({mistakes.length})
+          </span>
+          {mistakes.map((m, i) => {
+            const concept = conceptsForMistake(m.category)[0]
+            return (
+              <div key={i} className="flex items-center gap-1.5 flex-wrap text-xs">
+                <span className="text-zinc-200">{STREET_JP[m.street]} · {CATEGORY_JP[m.category]}</span>
+                {concept && (
+                  <button
+                    type="button"
+                    onClick={() => goTo('theory', { theoryConceptId: concept.id })}
+                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-base-800 border border-white/10 text-zinc-200 hover:border-brass-400 hover:text-brass-200"
+                  >
+                    <span aria-hidden="true">📖</span>理論
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => goTo('learn', { drillCategory: m.category })}
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-base-800 border border-white/10 text-zinc-200 hover:border-brass-400 hover:text-brass-200"
+                >
+                  <span aria-hidden="true">🎯</span>ドリル
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* ストリートタブ */}
       <div className="flex gap-1">

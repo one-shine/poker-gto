@@ -30,4 +30,24 @@ describe('sessionStore', () => {
     s.recordEvaluation(fb({ kind: 'correct' }), ctx('h1'))
     expect(useSessionStore.getState().gtoAccuracy()).toBeNull() // 母数に入らない
   })
+
+  it('records hand summaries alongside history and clears them (U5)', () => {
+    const s = useSessionStore.getState()
+    s.recordHand([], { handId: 'h1', heroPosition: 'BTN', won: true, netBB: 3.5, showdown: true, timestamp: 0 })
+    s.recordHand([], { handId: 'h2', heroPosition: 'SB', won: false, netBB: -1.5, showdown: false, timestamp: 0 })
+    const st = useSessionStore.getState()
+    expect(st.handSummaries).toHaveLength(2)
+    expect(st.handHistory).toHaveLength(2) // 件数が一致
+    expect(st.handSummaries[0].handId).toBe('h1')
+    expect(st.handSummaries[1].netBB).toBe(-1.5)
+    useSessionStore.getState().clearSession()
+    expect(useSessionStore.getState().handSummaries).toEqual([])
+  })
+
+  it('recordHand without a summary still advances history (back-compat)', () => {
+    const s = useSessionStore.getState()
+    s.recordHand([])
+    expect(useSessionStore.getState().handHistory).toHaveLength(1)
+    expect(useSessionStore.getState().handSummaries).toHaveLength(0)
+  })
 })
