@@ -62,7 +62,7 @@
 | L4 アプリ名「GTO Lab」の商標調査 | 🔄 | 👤 | 各国商標 DB 検索は外部作業(本ツール不可)。"GTO Wizard"/"PokerSnowie" は他社商標=非提携を明示済み。 |
 | Web フォントのセルフホスト | ✅ | 🤖 | 完了(D 節)。`@fontsource` 化で Google Fonts CDN 排除 → 真のオフライン + 第三者送信ゼロ(Playwright 実測: 外部リクエスト0)。 |
 | `manifest.screenshots` 追加 | ✅ | 🤖 | 完了(D 節)。mobile 390×844 / desktop 1280×800 を登録。 |
-| 静的ホスティング(HTTPS)へデプロイ | 🔄 | 🤖 | **GitHub Pages 採用(2026-06-06)**。下記「Web アプリ化 = GitHub Pages 公開」参照。repo public 化が前提。 |
+| 静的ホスティング(HTTPS)へデプロイ | ✅ | 🤖 | **GitHub Pages 稼働中(2026-06-06)** <https://one-shine.github.io/poker-gto/>。下記「Web アプリ化 = GitHub Pages 公開」参照。 |
 | PRIVACY_POLICY の確定 + 公開 URL 化 | 🔄 | 👤 | 事業者名・連絡先・施行日を確定([`./PRIVACY_POLICY.md`](./PRIVACY_POLICY.md) はドラフト)。 |
 | 本番 Sentry DSN 配線 | ⬜ | 👤 任意 | エラー境界+クラッシュレポート基盤は実装済み(既定 OFF・`VITE_SENTRY_DSN` 設定時のみ)。 |
 | Capacitor で店舗配信 | ⬜ | 👤 任意・後日 | 同じ `dist/` を WebView でラップ(~3-5日)。Apple Developer($99/年)+ Google Play($25)。年齢区分申告(Apple 17+ / Google Teen)+ ストア素材。手順は [`./RELEASE.md`](./RELEASE.md) §1/§2/§5。 |
@@ -70,21 +70,25 @@
 
 > 収益化(広告)を入れる場合は同意管理(CMP/ATT)・子ども向け除外・ギャンブル隣接の配信制限が発生する。当面は無償・広告なしが店舗摩擦最小([`./RELEASE.md`](./RELEASE.md) D3 推奨)。
 
-### Web アプリ化 = GitHub Pages 公開(決定 2026-06-06)🔄
+### Web アプリ化 = GitHub Pages 公開 ✅ 稼働中(2026-06-06)
 
+> **公開URL(稼働中・HTTP 200 検証済)**: <https://one-shine.github.io/poker-gto/> — noindex で検索除外・PWA インストール可(Mac/Win=Chrome/Edge「インストール」, iPhone=Safari「ホーム画面に追加」)。
+>
 > **決定の経緯**: 「自分だけ非公開」は GitHub Pages(Free)では不可と確認(`422 your current plan does not support GitHub Pages for this repository` = private repo 非対応 → public 化必須)。代替の Cloudflare Pages(private 維持可)も提示したうえで、ユーザー判断で **GitHub Pages 公開 + 検索除外(noindex)** を採用。Mac/Win ネイティブ(Tauri)は不要化し **PWA 一本化**(`src-tauri/` はコードのみ温存・ビルド対象から外す)。
 >
 > - **公開URL**: `https://one-shine.github.io/poker-gto/`(プロジェクトサイト = サブパス配信)。ルーター不使用なので SPA フォールバック不要・バックエンド無し・`SharedArrayBuffer` 不使用で COOP/COEP 不要。
 > - **検索除外**: robots.txt は**ホスト単位**でしか効かず、配置できるのは `…/poker-gto/` 配下のみ=無効 → `index.html` に `<meta name="robots" content="noindex,nofollow">`。**URL を知る人はアクセス可・検索には出ない**(完全な非公開ではない)。
 > - **代償**: **ソースコードが public 化**(誰でも閲覧/clone 可)。データライセンスは L1=`self-generated`/`original` のみ・第三者ソルバー出力非同梱のため公開可([`./DATA_LICENSE.md`](./DATA_LICENSE.md))。
 >
-> **実装タスク(🤖)**:
-> - [ ] `vite.config.ts` `base='/poker-gto/'`(サブパス配信。custom domain にするなら `/` に戻すだけ)
-> - [ ] サブパス耐性: `index.html` 公開資産を `%BASE_URL%` 化 / `manifest.json` 相対URL化(start_url/scope/icons/screenshots)/ `sw.js` SHELL を相対パス化 / `inject-sw-precache.mjs` を `./assets/` / `main.tsx` SW 登録を `import.meta.env.BASE_URL` 基準
-> - [ ] `index.html` に noindex メタ追加
-> - [ ] `.github/workflows/deploy-pages.yml`(main push → build → Pages 自動デプロイ・upload-pages-artifact/deploy-pages)
-> - [ ] repo public 化 + Pages 有効化(Source: GitHub Actions)
-> - 検証: Pages base でローカル `npm run build` → `dist/index.html` の資産パスが `/poker-gto/...` を確認・338テスト緑維持。
+> **実装タスク(🤖)** — 全完了(commit `556bbf8`):
+> - [x] `vite.config.ts` `base='/poker-gto/'`(サブパス配信。custom domain にするなら `/` に戻すだけ)
+> - [x] サブパス耐性: `index.html` 公開資産を `%BASE_URL%` 化 / `manifest.json` 相対URL化(start_url/scope/icons/screenshots)/ `sw.js` SHELL を相対パス化 / `inject-sw-precache.mjs` を `./assets/` / `main.tsx` SW 登録を `import.meta.env.BASE_URL` 基準
+> - [x] `index.html` に noindex メタ追加
+> - [x] `.github/workflows/deploy-pages.yml`(main push → build → Pages 自動デプロイ・upload-pages-artifact@v3/deploy-pages@v4)
+> - [x] repo public 化 + Pages 有効化(Source: GitHub Actions・`build_type=workflow`)
+> - [x] 検証: 並列ワークフローで build+dist パス確認・338テスト緑・lint0、初回デプロイ成功・本番URL HTTP 200 + 資産/manifest/sw すべて 200 を実測。
+>
+> **残ノート**: deploy-pages.yml も既存 ci.yml と同様 actions が Node20(@v4)で deprecation 警告(2026-06-16 以降 Node24 強制)。E節「CI ハードニング(@v4→@v5)」で deploy-pages.yml も対象に含める。
 >
 > **将来オプション(今回スコープ外)**: (a) 再デプロイ時の SW stale 対策(`sw.js` no-cache 配信 + 新版検知→リロード促し)/ (b) URL ルーティング(現状 `App.tsx` の `page` 状態で戻る/共有リンク不可・必要なら hash 同期の小改修)/ (c) クラウド同期(認証+バックエンド DB=新規プロジェクト規模)。
 
@@ -132,8 +136,8 @@
 
 | 項目 | 状態 | 担当 | メモ |
 |------|------|------|------|
-| CI ハードニング | ⬜ | 🤖 | Node20 actions 非推奨警告の解消(`actions/checkout`・`setup-node` を @v4→@v5)/ npm・cargo キャッシュで高速化 / 重い CFR テストの安定化(testTimeout 45s 済)。 |
-| CD: PWA 自動デプロイ | 🔄 | 🤖 | **GitHub Pages 採用(2026-06-06)**。main push → `deploy-pages.yml` で build → Pages 自動公開。下記 C節「Web アプリ化 = GitHub Pages 公開」が正典。 |
+| CI ハードニング | ⬜ | 🤖 | Node20 actions 非推奨警告の解消(`ci.yml` と `deploy-pages.yml` 両方の `actions/checkout`・`setup-node`・`upload-pages-artifact`・`deploy-pages` を @v4→@v5、2026-06-16 で Node24 強制)/ npm・cargo キャッシュで高速化 / 重い CFR テストの安定化(testTimeout 45s 済)。 |
+| CD: PWA 自動デプロイ | ✅ | 🤖 | **稼働中(2026-06-06)**。main push → `deploy-pages.yml` で build → Pages 自動公開(初回デプロイ成功確認)。下記 C節「Web アプリ化 = GitHub Pages 公開」が正典。 |
 | **CD: Mac+Windows 配布物の自動ビルド** ✅採用 | 🔄 | 🤖 | **方針決定(2026-05-31・ユーザー採用)**: `v*` タグ push をトリガに GitHub Actions の**マトリクス**で自動ビルド → GitHub Releases に自動添付。<br>・`macos-latest` → `.dmg`/`.app`(aarch64)<br>・`windows-latest` → `.msi`/`.exe`(NSIS)。Windows は WebView2 標準搭載で追加不要<br>・新規 `.github/workflows/release.yml`。`tauri-apps/tauri-action` で build+Release 添付を一括(各 runner で `npm run tauri:build`)<br>・署名は別途・未署名でも動作(Mac=Gatekeeper / Win=SmartScreen 警告のみ)。Intel Mac も配るなら x86_64/universal を追加<br>・既存 `ci.yml`(lint/build/test)はそのまま、本ワークフローは tag 時のみ起動 |
 | リリースのバージョニング | ⬜ | 🤖 | `package.json` / `tauri.conf.json` の version 統一 + tag → Release のフロー化。 |
 
