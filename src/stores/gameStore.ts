@@ -1,13 +1,13 @@
 import { create } from 'zustand'
 import { AgentBus, type ActionRequiredPayload } from '../engine/agents/AgentBus'
 import { DealerAgent } from '../engine/agents/DealerAgent'
-import { AIPlayerAgent, fishDelayScheduler, type ActionScheduler } from '../engine/agents/AIPlayerAgent'
-import { GTOPlayerAgent, gtoDelayScheduler } from '../engine/agents/GTOPlayerAgent'
+import { AIPlayerAgent, type ActionScheduler } from '../engine/agents/AIPlayerAgent'
+import { GTOPlayerAgent } from '../engine/agents/GTOPlayerAgent'
 import { CoachAgent } from '../engine/agents/CoachAgent'
 import type { PlayerConfig } from '../engine/game/GameState'
 import type { GameState, PlayerAction, Position, ShowdownResult, Street } from '../types/game'
 import type { CoachFeedback } from '../types/coach'
-import { useSettingsStore } from './settingsStore'
+import { useSettingsStore, type AiSpeed } from './settingsStore'
 import { useSessionStore } from './sessionStore'
 import { useProgressStore } from './progressStore'
 
@@ -42,6 +42,20 @@ function setPaused(p: boolean): void {
 // 既存スケジューラの送出をゲート経由にラップする。
 const gated = (sched: ActionScheduler): ActionScheduler => emit => sched(() => gate(emit))
 
+// 相手 AI の「間」(アクション送出の遅延)。読みやすさ優先で base を長めにし、aiSpeed で倍率調整。
+// 遅延算出は UI 層に置く (engine を設定ストア非依存に保つ)。emit 時に設定を読むので、速度変更は
+// 再初期化なしで次アクションから反映される。
+const AI_SPEED_MULT: Record<AiSpeed, number> = { slow: 1.7, normal: 1, fast: 0.5 }
+function delayScheduler(baseMs: number, rangeMs: number): ActionScheduler {
+  return emit => {
+    const mult = AI_SPEED_MULT[useSettingsStore.getState().aiSpeed]
+    setTimeout(emit, (baseMs + Math.random() * rangeMs) * mult)
+  }
+}
+// gto はやや思考的に、fish は衝動的にやや速く (相対差は保つ)。
+const villainGtoScheduler = delayScheduler(650, 650)  // normal 650–1300ms
+const villainFishScheduler = delayScheduler(550, 550) // normal 550–1100ms
+
 // R12: study モードを離れたら一時停止を確実に解除する (resetGame を経由しない appMode 切替の安全網)。
 // paused は study のミス時のみ立つので、非 study になったら必ず flush して残留を防ぐ。
 useSettingsStore.subscribe(s => {
@@ -59,11 +73,16 @@ function xpForFeedback(fb: CoachFeedback): number {
 // hero の postflop 決定 (実ボード込みの state)。ハンド後の復習で live solve する。
 export interface HeroDecision { state: GameState; action: PlayerAction; amount: number }
 
+// 直近に hero が打った決定。アクション「後」に GTO 戦略を答え合わせ表示するために保持する (U8)。
+// 事前にはレンジを見せないので、この経路は精度サンプルから除外しない (markHinted しない)。
+export interface LastHeroDecision { payload: ActionRequiredPayload; action: PlayerAction; amount: number }
+
 interface GameStore {
   gameState: GameState | null
   pendingHeroAction: ActionRequiredPayload | null // != null のとき ActionPanel 表示
   lastResults: ShowdownResult[] | null
   lastFeedback: CoachFeedback | null              // 直近のコーチ評価 (CoachPanel/トースト)
+  lastHeroDecision: LastHeroDecision | null       // 直近の hero 決定 (アクション後の答え合わせ表示用・U8)
   handReview: HeroDecision[] | null               // play モードの直近ハンドの postflop 決定 (復習用)
   handCount: number
   initialized: boolean
@@ -80,6 +99,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   pendingHeroAction: null,
   lastResults: null,
   lastFeedback: null,
+  lastHeroDecision: null,
   handReview: null,
   handCount: 0,
   initialized: false,
@@ -105,8 +125,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Hero 以外に AI を割り当て。スケジューラはゲート経由 (study一時停止に対応)。
     for (const cfg of configs) {
       if (cfg.isHero) continue
-      if (opponentMode === 'trainer') new GTOPlayerAgent(bus, cfg.id, gated(gtoDelayScheduler))
-      else new AIPlayerAgent(bus, cfg.id, gated(fishDelayScheduler))
+      if (opponentMode === 'trainer') new GTOPlayerAgent(bus, cfg.id, gated(villainGtoScheduler))
+      else new AIPlayerAgent(bus, cfg.id, gated(villainFishScheduler))
     }
 
     // コーチ: study モードのみ live solve 許可 (precomputed/approximate は常時)。
@@ -116,7 +136,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     bus.on('HAND_START', ({ state }) => {
       handDecisions = []
       pendingHeroState = null
-      set({ gameState: state, lastResults: null, pendingHeroAction: null, lastFeedback: null, handReview: null })
+      set({ gameState: state, lastResults: null, pendingHeroAction: null, lastFeedback: null, lastHeroDecision: null, handReview: null })
     })
     bus.on('STREET_DEALT', ({ state }) => set({ gameState: state }))
     bus.on('ACTION_REQUIRED', payload => {
@@ -191,7 +211,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       handDecisions.push({ state: pendingHeroState, action, amount })
     }
     pendingHeroState = null
-    set({ pendingHeroAction: null })
+    // U8: アクション後に GTO 戦略を答え合わせ表示するため、打った決定 (payload) を保持する。
+    set({ pendingHeroAction: null, lastHeroDecision: { payload: pending, action, amount } })
     bus.emit('PLAYER_ACTION', { playerId: HERO_ID, action, amount })
   },
 
@@ -211,7 +232,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     emitQueue.length = 0
     set({
       gameState: null, pendingHeroAction: null, lastResults: null,
-      lastFeedback: null, handReview: null, handCount: 0, initialized: false,
+      lastFeedback: null, lastHeroDecision: null, handReview: null, handCount: 0, initialized: false,
     })
   },
 }))

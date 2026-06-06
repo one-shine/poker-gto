@@ -1,4 +1,4 @@
-import { useSettingsStore, type AppMode, type OpponentMode } from '../stores/settingsStore'
+import { useSettingsStore, type AppMode, type OpponentMode, type AiSpeed } from '../stores/settingsStore'
 import { useProgressStore } from '../stores/progressStore'
 import { useGameStore } from '../stores/gameStore'
 import { useSessionStore } from '../stores/sessionStore'
@@ -101,7 +101,7 @@ export function SettingsPage() {
             value={s.appMode}
             onChange={setAppMode}
             options={[
-              { value: 'study', label: 'スタディ', desc: 'GTO戦略を常時表示・ミスで一時停止して解説。学習向け(精度は測定しない)。' },
+              { value: 'study', label: 'スタディ', desc: '自分が打った後にGTO戦略で答え合わせ・ミスで一時停止して解説。学習向け。' },
               { value: 'play', label: 'プレイ', desc: '戦略は非表示。ハンドは止まらず、重大なミスのみ通知。実力測定向け。' },
             ]}
           />
@@ -139,7 +139,7 @@ export function SettingsPage() {
           <p className="text-[11px] text-zinc-500">※ 解は 100BB 前提。他の深さは近似精度が下がります。</p>
         </Section>
 
-        <Section title="スタディ: GTO戦略の表示">
+        <Section title="スタディ: アクション後の答え合わせ">
           <button
             type="button"
             onClick={() => s.setStudyShowStrategy(!s.studyShowStrategy)}
@@ -152,15 +152,15 @@ export function SettingsPage() {
           >
             <div className="flex items-center justify-between">
               <span className="font-display font-bold text-sm">
-                {s.studyShowStrategy ? '常時表示 ON' : '常時表示 OFF(テスト)'}
+                {s.studyShowStrategy ? '答え合わせ ON' : '答え合わせ OFF'}
               </span>
               <span className={`text-xs font-bold ${s.studyShowStrategy ? 'text-brass-300' : 'text-emerald-300'}`}>
-                {s.studyShowStrategy ? '学習' : '精度測定'}
+                {s.studyShowStrategy ? '解説あり' : '解説なし'}
               </span>
             </div>
             <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
-              ON: 解答(GTO戦略)を常に表示して学ぶ(精度は測定しない)。
-              OFF: 戦略を隠し、自分の判断の GTO精度を測定する。
+              ON: 自分がアクションした後に GTO戦略を表示して答え合わせする(事前には見せないので精度も測定)。
+              OFF: 答え合わせも非表示。純粋に自分の判断だけで進める。
             </p>
           </button>
         </Section>
@@ -177,6 +177,27 @@ export function SettingsPage() {
             </span>
           </div>
           <p className="text-[11px] text-zinc-500">学習機会(ミックス)カード後に自動で次へ進む秒数。0=手動。</p>
+        </Section>
+
+        <Section title="相手アクションの速さ">
+          <div className="flex gap-2">
+            {([['slow', 'ゆっくり'], ['normal', 'ふつう'], ['fast', '速い']] as [AiSpeed, string][]).map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => s.setAiSpeed(val)}
+                aria-pressed={s.aiSpeed === val}
+                className={`flex-1 min-h-11 rounded-xl border font-display font-bold text-sm transition-all ${
+                  s.aiSpeed === val
+                    ? 'border-brass-400 bg-brass-400/10 text-brass-200'
+                    : 'border-white/10 bg-base-800/60 text-zinc-300 hover:border-brass-500/40'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-zinc-500">相手が打つまでの「間」。速すぎて追えないときは「ゆっくり」に。</p>
         </Section>
 
         <Section title="サウンド・ハプティクス">

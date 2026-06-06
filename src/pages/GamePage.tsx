@@ -21,7 +21,7 @@ import { useSoundEffects } from '../hooks/useSoundEffects'
 export function GamePage() {
   useSoundEffects()
 
-  const { gameState, pendingHeroAction, lastResults, lastFeedback, handReview, initialized, initGame, startNewHand, submitHeroAction, dismissFeedback } =
+  const { gameState, pendingHeroAction, lastResults, lastFeedback, lastHeroDecision, handReview, initialized, initGame, startNewHand, submitHeroAction, dismissFeedback } =
     useGameStore()
   const appMode = useSettingsStore(s => s.appMode)
   const stackBB = useSettingsStore(s => s.stackBB)
@@ -126,9 +126,10 @@ export function GamePage() {
 
         {/* 結果 / コーチ / アクション領域: 縮まずに常に表示される (卓が先に縮む) */}
         <div ref={actionRef} className="w-full flex flex-col items-center gap-3 shrink-0">
-        {/* B2: ハンド内アクション履歴 (ストリート別ベットライン)。履歴が空なら null=非表示。 */}
+        {/* B2: ハンド内アクション履歴 (ストリート別ベットライン)。履歴が空なら null=非表示。
+            U7: モバイルは卓の各シートが直近アクションを出すため冗長 + 場所を取るので非表示 (sm 以上のみ)。 */}
         {gameState && (
-          <div className="w-full max-w-2xl">
+          <div className="hidden sm:block w-full max-w-2xl">
             <BetLine state={gameState} />
           </div>
         )}
@@ -168,20 +169,23 @@ export function GamePage() {
               <KeyboardHelp />
             </div>
           ) : pendingHeroAction ? (
+            // U8: アクション前は戦略を見せない (事前に答えを見ないで自分で判断させる)。打ってから答え合わせ。
+            <ActionPanel pending={pendingHeroAction} onAction={submitHeroAction} />
+          ) : (
             <>
-              {/* A1: study モードは GTO 戦略を常時表示 (+A2 ポットオッズ)。
-                  studyShowStrategy=false のときは戦略を隠し精度を測定する (R6)。 */}
-              {appMode === 'study' && studyShowStrategy && (
+              {/* U8: 自分が打った後に GTO 戦略を答え合わせ表示 (study + 表示ON のとき・+A2 ポットオッズ)。
+                  事前に見せないので精度サンプルにも入る (markHinted しない)。OFF=純粋にテスト。
+                  ミス/学習(CoachPanel 表示中)は答えが出るので reveal は出さない (モバイルの二重パネル回避・U7)。 */}
+              {appMode === 'study' && studyShowStrategy && lastHeroDecision && !showCoachPanel && (
                 <LiveStrategyPanel
-                  pending={pendingHeroAction}
+                  pending={lastHeroDecision.payload}
                   allowLiveSolve
                   showPotOdds={showPotOdds}
+                  revealActed={lastHeroDecision.action}
                 />
               )}
-              <ActionPanel pending={pendingHeroAction} onAction={submitHeroAction} />
+              <p className="text-zinc-500 text-sm">相手の番です…</p>
             </>
-          ) : (
-            <p className="text-zinc-500 text-sm">相手の番です…</p>
           )}
           {/* ハンド進行中はいつでも中断して次のハンドへ移れる導線 (途中で終われない問題の解消) */}
           {!showStartButton && (

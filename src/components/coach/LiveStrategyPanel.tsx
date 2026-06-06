@@ -7,17 +7,26 @@ import { useSessionStore } from '../../stores/sessionStore'
 import { useSolution } from '../../hooks/useSolution'
 import { useEquity } from '../../hooks/useEquity'
 import { StrategyBars } from './StrategyBars'
+import type { PlayerAction } from '../../types/game'
+
+const ACTION_JP: Record<PlayerAction, string> = {
+  fold: 'フォールド', check: 'チェック', call: 'コール', raise: 'レイズ', allin: 'オールイン',
+}
 
 interface Props {
   pending: ActionRequiredPayload
   allowLiveSolve: boolean
   showPotOdds: boolean // UIComplexity (intermediate+)
+  // 設定時: 「アクション後の答え合わせ」モード (U8)。事前ではなく自分が打った後に表示するので
+  // 精度サンプルからは除外しない。値 = 自分が選んだアクション (ヘッダに併記)。
+  revealActed?: PlayerAction
 }
 
-// A1: study モードでアクション直下に GTO 戦略を常時表示 (頻度バー)。
+// study モードの GTO 戦略パネル (頻度バー)。
+// 既定 (revealActed なし): アクション直下に表示し、答えを見せるのでこのハンドを精度サンプルから除外 (markHinted)。
+// revealActed あり: 自分が打った「後」の答え合わせ。事前に見せていないので markHinted しない (U8)。
 // A2: showPotOdds のとき ポットオッズ / 必要勝率を表示。
-// 戦略を見せる = 答えを見せるため、このハンドは精度サンプルから除外 (markHinted)。
-export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds }: Props) {
+export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, revealActed }: Props) {
   const markHinted = useSessionStore(s => s.markHinted)
   const { node, loading } = useSolution(pending.state, HERO_ID, allowLiveSolve)
   // R8: 自分の vs相手レンジ・エクイティ (必要勝率と並べて「片手落ち」を解消)
@@ -26,15 +35,17 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds }: Prop
   const hero = pending.state.players.find(p => p.id === HERO_ID)
   const handKey = hero?.holeCards ? handCategory(hero.holeCards) : null
 
-  // 常時表示=答えを見せるので、表示できたハンドは精度サンプルから除外
+  // 事前表示=答えを見せるので、表示できたハンドは精度サンプルから除外。
+  // ただし答え合わせ (revealActed) は打った後なので除外しない (実力測定を保つ・U8)。
   const hintedRef = useRef<string | null>(null)
   useEffect(() => {
+    if (revealActed) return
     const id = pending.state.handId
     if (node && handKey && node.strategy[handKey] && hintedRef.current !== id) {
       hintedRef.current = id
       markHinted(id)
     }
-  }, [node, handKey, pending.state.handId, markHinted])
+  }, [node, handKey, pending.state.handId, markHinted, revealActed])
 
   // A2: ポットオッズ / 必要勝率 (純算術。コールが必要なときのみ)
   const callAmount = pending.callAmount
@@ -48,8 +59,14 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds }: Prop
   return (
     <div className="w-full max-w-2xl rounded-2xl border border-brass-500/25 bg-base-800/85 backdrop-blur-md p-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] font-bold text-brass-300 flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3v18h18" /><rect x="7" y="11" width="3" height="6" rx="0.5" /><rect x="12" y="7" width="3" height="10" rx="0.5" /><rect x="17" y="13" width="3" height="4" rx="0.5" /></svg> GTO 戦略
+        <span className="text-[11px] font-bold text-brass-300 flex items-center gap-1.5 flex-wrap">
+          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3v18h18" /><rect x="7" y="11" width="3" height="6" rx="0.5" /><rect x="12" y="7" width="3" height="10" rx="0.5" /><rect x="17" y="13" width="3" height="4" rx="0.5" /></svg>
+          {revealActed ? '答え合わせ — GTO 戦略' : 'GTO 戦略'}
+          {revealActed && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-base-700 text-zinc-200 border border-white/10 font-normal">
+              あなた: <span className="font-bold text-zinc-100">{ACTION_JP[revealActed]}</span>
+            </span>
+          )}
           {handKey && node && <span className="text-zinc-400 font-normal">{handKey} @ {node.spotId}</span>}
         </span>
         {node && node.source === 'approximate' && (

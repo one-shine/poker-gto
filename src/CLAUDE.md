@@ -35,7 +35,7 @@ GTO評価の基準は `src/lib/solver/getSolution()` が返す `NodeSolution` (`
   actions: `initGame(stackBB?)`, `startNewHand()`, `submitHeroAction(action, amount?)`。
   bus/dealer はモジュールスコープ保持(再レンダーで再生成しない)。`pendingHeroAction != null` で ActionPanel 表示。
 - `settingsStore.ts` ✅ — `useSettingsStore` (persist key `poker-gto-settings`)。
-  `appMode`('play'|'study'), `opponentMode`('trainer'|'exploit', 既定exploit), `stackBB`, `autoAdvanceSeconds`(既定5), `onboardingComplete` + 各セッター。型 `AppMode`/`OpponentMode` をexport。
+  `appMode`('play'|'study'), `opponentMode`('trainer'|'exploit', 既定exploit), `stackBB`, `autoAdvanceSeconds`(既定5), `studyShowStrategy`(アクション後の答え合わせ表示・U8), `aiSpeed`('slow'|'normal'|'fast', 既定normal・相手の間・U9), `onboardingComplete` + 各セッター。型 `AppMode`/`OpponentMode`/`AiSpeed` をexport。
 - `sessionStore.ts` / `progressStore.ts` ⬜ — Phase 4
 
 ### components/game/
@@ -43,14 +43,14 @@ GTO評価の基準は `src/lib/solver/getSolution()` が返す `NodeSolution` (`
 - `PlayerSeat.tsx` ✅ — `<PlayerSeat player isActing revealCards lastAction>`。type `SeatLastAction` export。hero表/相手裏(reveal対応)、手番リング、オールイン、フォールド減光。
 - `PokerTable.tsx` ✅ — `<PokerTable state>`。楕円テーブル + seatIndex絶対配置(SEAT_POS) + 中央ポット/ボード + ディーラーボタン + ショーダウンでカード公開。
 - `ActionPanel.tsx` ✅ — `<ActionPanel pending onAction>`。Fold/Check·Call/Bet·Raise動的切替、プリセット(preflop=BB / postflop=%·Pot·Overbet·All-in)、スライダー、キーボード f/c/r/Enter。ベット計算は engine `getTotalPot` 使用。
-- `coach/LiveStrategyPanel.tsx` ✅ (Phase 4, HintPanel を置換) — study専用・常時表示(A1)。getSolution→StrategyBars頻度バー、A2ポットオッズ/必要勝率(showPotOdds時)、表示ハンドは markHinted で精度サンプル除外。
+- `coach/LiveStrategyPanel.tsx` ✅ (Phase 4, HintPanel を置換) — study専用。**GamePage では `revealActed` で「アクション後の答え合わせ」表示(U8・事前に答えを見せない)**。事前表示しないので markHinted せず精度サンプルに入る。getSolution→StrategyBars頻度バー、A2ポットオッズ/必要勝率(showPotOdds時)。`revealActed` 無しの既定モード(常時表示+markHinted除外)はコンポーネントとして残置(現状未使用)。
 - `coach/CoachPanel.tsx` / `coach/CoachToast.tsx` / `coach/StrategyBars.tsx` ✅ — 評価フィードバック(study=パネル/play=criticalトースト)+ 頻度バー(色+ラベル併記)。
 - `GameFooter.tsx` ✅ — `<GameFooter source?>`。「6-max キャッシュ · {stackBB}BB · ノーレーク · ICM非考慮」常時バー + source信頼度(✓本物/△近似、色非依存)。クリックで前提条件モーダル(Escで閉)。
 
 ### components/layout/ · onboarding/ · pages/
 - `AppShell.tsx` ✅ — `<AppShell active onNavigate>{children}`。`PageId`型 / `NAV_ITEMS` export。desktopサイドバー+mobileボトムタブ、6タブ、aria-current+アイコン+ラベル(色非依存)。
 - `OnboardingFlow.tsx` ✅ — `<OnboardingFlow onComplete?>`。5画面(ようこそ/ポジション/グリッド凡例R·C·M/モード/開始)、戻る·次へ·スキップ、完了で `completeOnboarding()`。
-- `pages/GamePage.tsx` ✅ — PokerTable + ActionPanel(+study時LiveStrategyPanel) + GameFooter統合。起動時initGame、source解決→Footer、ショーダウン結果、Space=New Hand。CoachPanel(study)/CoachToast(play critical)。
+- `pages/GamePage.tsx` ✅ — PokerTable + ActionPanel(study はアクション後に LiveStrategyPanel で答え合わせ・U8) + GameFooter統合。起動時initGame、source解決→Footer、ショーダウン結果、Space=New Hand。CoachPanel(study)/CoachToast(play critical)。BetLine(アクション履歴)は sm 以上のみ表示(U7)。
 - `App.tsx` ✅ — PageId状態でページ切替。onboardingComplete=false時 OnboardingFlow最前面。未実装ページはComingSoonプレースホルダー。
 
 ### ビルド/テスト設定 (Step 13で整備)
@@ -109,8 +109,10 @@ interface UIComplexity {
 ### AIアクションタイミング・フィードバック
 
 ```
-GTO AI:  300–800ms (ランダム)
-Fish AI: 100–400ms (衝動的に見せる)
+相手の「間」(normal基準・aiSpeedで倍率 slow1.7 / normal1 / fast0.5):
+GTO AI:  650–1300ms (ランダム)
+Fish AI: 550–1100ms (やや速め)
+※ 遅延は gameStore (UI層) で算出し emit 時に aiSpeed を読む (engine は設定非依存)。U9。
 
 フィードバック上限: study=最大3件/ハンド、play=最大1件/ハンド
 優先度: MistakeCard (EV損失大) > MomentLesson > TermOfSession

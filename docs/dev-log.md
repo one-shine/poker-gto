@@ -29,3 +29,17 @@ date: 2026-05-30
 - **収益化の注意**: 本格収益化するなら Cloudflare Pages へ移行（base を `'/'` に戻す1行のみ）。
 - **フォローアップ**: deploy-pages.yml / ci.yml の actions が Node20 で deprecation 警告 → @v4→@v5 へ更新する。
   - ✅ **対応済(2026-06-06)**: 実体の最新メジャーを裏取りし、`checkout`/`setup-node` は @v6、Pages 系ペア(`upload-pages-artifact`/`deploy-pages`)は @v5 へ更新(checkout/setup-node は既に v6 が最新で、当初メモの @v5 想定より進んでいた)。これで Node24 ランタイムへ移行し、2026-06-16 の Node20 強制廃止に先んじて解消。設定は最小構成(`node-version:'22'`/`cache:npm`/`path:dist`)のため破壊的変更の影響なし。残: 実 CI で緑を確認。
+  - ⚠ **CI 赤の別要因を発見**: actions 更新後の CI で `checkout/setup-node/lint/build/test` は全 success だが **Audit ステップが failure**。原因は actions 無関係で、`vitest`/`@vitest/ui`(3.2.4)の critical 2件(GHSA-5xrq-8626-4rwp)を `npm audit --audit-level=high` が検知。dev 依存で本番非同梱。修正は `vitest@4.1.8` への破壊的更新が必要 → BACKLOG E「CI: npm audit 失敗(vitest 脆弱性)」に記録、別タスクで対応。
+
+### 2026-06-06 ゲーム UX 是正(U7/U8/U9 ・スマホ中心)
+- **U7 アクション履歴がスマホで邪魔**: `BetLine` を `GamePage` で `hidden sm:block`(モバイル非表示)。卓の各シートが直近アクションを出すので冗長。
+- **U8 GTO戦略の事前表示で答えが先に見える**: study の戦略パネルを「アクション**前**の常時表示」→「アクション**後**の答え合わせ」へ。
+  - `gameStore` に `lastHeroDecision`(打った payload+action を保持)を追加。`submitHeroAction` で記録、`HAND_START`/`resetGame` でクリア。
+  - `LiveStrategyPanel` に `revealActed?` を追加(ヘッダ「答え合わせ — あなた: ◯◯」)。reveal 時は `markHinted` しない=**事前に見せないので精度サンプルに入る**(測定が正直に)。
+  - `GamePage`: `pendingHeroAction` 中は `ActionPanel` のみ(戦略非表示)、打った後の「相手の番」中に reveal。
+  - 既知の穴: 自分の決定がそのままハンド終了(HU リバーのコール等)する局面は reveal が出ず結果/復習に委ねる。
+- **U9 相手アクションが速すぎる**: 「間」を読める速さへ(fish 550–1100 / gto 650–1300ms・従来比約2倍)。
+  - 遅延算出を engine から **UI 層(`gameStore`)へ移設**(engine の設定非依存を維持)。`settingsStore.aiSpeed`(slow1.7 / normal1 / fast0.5)を emit 時に読むので再初期化なしで即反映。
+  - engine の `fishDelayScheduler`/`gtoDelayScheduler` は残置(未使用)。
+- **設定 UI**: 「相手アクションの速さ」3択を追加。study 戦略トグルの文言を「常時表示」→「アクション後の答え合わせ」に是正。
+- **検証**: 型 0・**全 338+1=新規テスト含め緑**(`LiveStrategyPanel` に reveal モードのテスト追加)。`npm run build` 緑。

@@ -62,4 +62,14 @@ describe('LiveStrategyPanel', () => {
     await screen.findByText(/AKs @ btn-open/)
     expect(screen.queryByText(/ポットオッズ/)).toBeNull()
   })
+
+  it('reveal mode (after acting) shows the answer-check header and keeps the hand in the sample (U8)', async () => {
+    render(<LiveStrategyPanel pending={pending()} allowLiveSolve showPotOdds={false} revealActed="raise" />)
+    await screen.findByText(/AKs @ btn-open/)
+    // 「答え合わせ」+ 自分が打ったアクションを併記
+    expect(screen.getByText(/答え合わせ/)).toBeInTheDocument()
+    expect(screen.getByText(/あなた/)).toBeInTheDocument()
+    // 事前ではなく打った後の表示なので、精度サンプルからは除外しない (markHinted しない)
+    expect(useSessionStore.getState().hintedHandIds.has('h1')).toBe(false)
+  })
 })

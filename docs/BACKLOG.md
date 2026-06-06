@@ -21,6 +21,9 @@
 | U4 | 学習ドリルの履歴が残らない | 🟠 | ⬜ | ドリルは `addXP` で XP を加算するだけで、試行回数・正誤・カテゴリ別成績を永続化していない(`progressStore` は XP/level のみ・drill 専用記録なし)。→ カテゴリ別の試行/正解数・直近結果を `progressStore` か新規 `drillStore` に永続化し、ドリルタブ/ダッシュボードに表示。 |
 | U5 | ハンド履歴が並ぶだけで使い道がない | 🟠 | ⬜ | 現状 `handHistory`(ActionRecord 列)を一覧 + `HandReplay`(アクション再生)のみ。勝敗・自分のミス・GTO ライン比較が無く学びに繋がらない。→ 案: 各ハンドに勝敗/ミス印、ミス→該当ドリル・理論へ導線、「コーチ付きで再求解」。要設計判断(価値が薄ければ縮小/統合も検討)。 |
 | U6 | レンジ表をもっと一目で分かる色分けに | 🟡 | ⬜ | 現状 `RangeGrid` は既にアクション頻度のスプリット塗り(R=緑/C=青/F=暗灰)+ R/C/M トークン。さらに「一目で」分かる工夫の余地: アクション色のコントラスト強化 / raise頻度・EV・ハンド強度のヒートマップ表示オプション / 凡例の明確化 / ポジション横断の比較ビュー。**着手時に「ネットで見た例」(URL/サービス名)を共有してもらえると最短で寄せられる。** |
+| U7 | ゲームのアクション履歴がスマホで場所を取り見にくい | 🟡 | ✅ | 2026-06-06: アクション履歴(`BetLine`)をモバイル(<sm)で非表示(`GamePage` を `hidden sm:block`)。卓の各シートが直近アクションを出すため情報は冗長。デスクトップ(sm+)は維持。完全除去/折りたたみトグルは要望次第で追加可。 |
+| U8 | GTO戦略が事前表示で「答え」を先に見てしまう | 🟠 | ✅ | 2026-06-06: study の戦略表示を「アクション**前**の常時表示」→「アクション**後**の答え合わせ」に変更(`LiveStrategyPanel` に `revealActed`、`gameStore.lastHeroDecision` で打った決定を保持)。事前に見せないので `markHinted` せず**精度サンプルにも入る**(測定が正直に)。設定「答え合わせ表示」OFF で非表示=純粋テスト。残: 自分の決定がそのままハンド終了(HU リバーのコール等)する局面は reveal が出ず結果/復習側に委ねる(必要なら hand-end でも reveal 表示を追加)。 |
+| U9 | 他プレイヤーのアクションの移り変わりが速すぎる | 🟡 | ✅ | 2026-06-06: 相手の「間」を読める速さに(fish 550–1100ms / gto 650–1300ms・従来比約2倍)。設定「相手アクションの速さ」(slow/normal/fast・既定normal)を追加し倍率調整可。遅延算出は UI 層(`gameStore`)で `aiSpeed` を emit 時に読む=再初期化なしで即反映・engine は設定非依存を維持。 |
 
 ---
 
@@ -140,6 +143,7 @@
 |------|------|------|------|
 | CI ハードニング | 🔄 | 🤖 | ✅ **Node20 actions 非推奨警告の解消(2026-06-06)**: `ci.yml`・`deploy-pages.yml` の `actions/checkout`@v6・`setup-node`@v6・`upload-pages-artifact`@v5・`deploy-pages`@v5 へ更新(当初メモの @v5 は古く、最新メジャーへ。2026-06-16 の Node24 強制に先んじて解消)。npm キャッシュは `setup-node` の `cache: npm` で有効済・cargo は Tauri 見送りで対象外。重い CFR テスト安定化(testTimeout 45s)済。残: 実 CI/デプロイで緑を確認。 |
 | CD: PWA 自動デプロイ | ✅ | 🤖 | **稼働中(2026-06-06)**。main push → `deploy-pages.yml` で build → Pages 自動公開(初回デプロイ成功確認)。下記 C節「Web アプリ化 = GitHub Pages 公開」が正典。 |
+| CI: npm audit 失敗(vitest 脆弱性) | ⬜ | 🤖 | **2026-06-06 発見**: `npm audit --audit-level=high` が `vitest`/`@vitest/ui`(現行 3.2.4)の critical 2件(GHSA-5xrq-8626-4rwp: Vitest UI サーバ起動時に任意ファイル読取・実行)を検知し CI の Audit ステップが赤(他の lint/build/test は緑)。dev 依存=テスト専用で**本番配布物に非同梱・実行時露出なし**。修正は `vitest@4.1.8` への **semver-major 更新(破壊的)**→ 別タスクで 338 テストの互換確認の上で実施する。 |
 | CD: Mac+Windows 配布物の自動ビルド(Tauri) | 🧊 見送り | 🤖 | **2026-06-06 降格**: 配布は PWA一本化(C節・GitHub Pages 公開済)に決定 → Tauri ネイティブ配布は見送り・本項目は保留(再開時は以下の旧計画)。<br>旧計画(2026-05-31): `v*` タグ push をトリガに GitHub Actions の**マトリクス**で自動ビルド → GitHub Releases に自動添付。<br>・`macos-latest` → `.dmg`/`.app`(aarch64)<br>・`windows-latest` → `.msi`/`.exe`(NSIS)。Windows は WebView2 標準搭載で追加不要<br>・新規 `.github/workflows/release.yml`。`tauri-apps/tauri-action` で build+Release 添付を一括(各 runner で `npm run tauri:build`)<br>・署名は別途・未署名でも動作(Mac=Gatekeeper / Win=SmartScreen 警告のみ)。Intel Mac も配るなら x86_64/universal を追加<br>・既存 `ci.yml`(lint/build/test)はそのまま、本ワークフローは tag 時のみ起動 |
 | リリースのバージョニング | ⬜ | 🤖 | `package.json` / `tauri.conf.json` の version 統一 + tag → Release のフロー化。 |
 
