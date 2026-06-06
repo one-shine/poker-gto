@@ -65,6 +65,10 @@ date: 2026-05-30
 ### 2026-06-06 スマホ scroll(iOS 100vh)/レンジ data/対象外整理 + 残注記
 - **U13 scroll(a+d)**: スマホで「レンジ等が下まで見れない/ゲームで操作までスクロールが要る」原因は AppShell の `h-screen`。iOS の 100vh は URL バー込みで可視領域より高く、下端のナビ/ボタンが画面外に。→ `h-dvh`(+ `#root` 100dvh フォールバック / ErrorBoundary `min-h-dvh`)。全ページ + ゲームを一括解消。Chromium では dvh==vh のため Playwright では再現不可だが、定石の修正。
 - **U14 レンジ data(b)**: `utgOpen`/`mpOpen` の suited ace 中抜け(A8s/A7s/A6s 飛ばし)を補完。ドリフトガードの widthPct 更新(utg .134 / mp .176)。R4 一括置換方針は不変=アーティファクト是正のみ。
-- **U15 対象外(c)**: 仕様の明確化(コード変更なし)。`resolveSpotKey` の対応は収録27 HUスポット + RFI と一致。対象外=マルチウェイ(ルール4除外)/未収録ディフェンス(レンジ自体が無い)/盲対盲・深いレイズ応酬。偽解はルール1違反のため出さない。
+- **U15 対象外(c)→B 実装**: 設計ルール4どおり、マルチウェイで HU レンジを「参考値」表示するよう実装。
+  - 設計: **表示経路と精度経路を分離**。`resolveSpotKey(state, hero, { multiwayReference })` を追加し、表示(`useSolution`→`LiveStrategyPanel`)だけが cold-call ありの defense を `multiway:true` で解決。`CoachAgent`/`GTOPlayerAgent` はオプション無し=従来どおり null で除外(ルール4の精度除外 4a を不変に保つ)。
+  - `getSolution` は `spot.multiway` のとき共有インスタンスを mutate せずコピーに `multiwayReference:true` を付与。`LiveStrategyPanel` は「マルチウェイ=参考値」バッジ+注記、EV 非表示。
+  - multiway 判定は activeCount でなく「defense で cold-call が居るか」。RFI の背後ブラインドを誤って multiway 扱いしない(初版のバグを修正)。
+  - 残: 未収録ディフェンス(MP vs UTG 等)・盲対盲・squeeze は依然レンジ自体が無く対象外(R4で拡充)。テスト+3。
 - **残注記の片付け**: U8(自分の手でハンド終了する局面でも答え合わせを New Hand 上に表示=共通化した `strategyReveal` を hand-complete branch にも描画)/ U7(モバイル非表示で解消・トグル不要と判断)/ U10(360幅の側席近接は最小幅制約上の許容)。
 - **検証**: 型0・lint0・全テスト緑・build緑。

@@ -56,10 +56,13 @@ export async function getSolution(
 ): Promise<NodeSolution | null> {
   if (spot.street === 'preflop') {
     // 優先順位: 実解 (solver_precomputed) > ヒューリスティック EV 付き (approximate_with_ev) > 手作り近似 (approximate)。
-    return (await loadPrecomputed(spot.baseSpotId))
+    const base = (await loadPrecomputed(spot.baseSpotId))
       ?? (await loadHeuristicEV(spot.baseSpotId))
       ?? approximatePreflop.get(spot.baseSpotId)
       ?? null
+    if (!base) return null
+    // 設計ルール4: マルチウェイは同じ HU レンジを「参考値」として返す (共有インスタンスは mutate せずコピー)。
+    return spot.multiway ? { ...base, multiwayReference: true } : base
   }
   // ポストフロップ: flop/turn/river を自前 CFR で都度求解 (turn/flop は showdown をエクイティ近似)。
   if (

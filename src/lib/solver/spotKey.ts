@@ -30,11 +30,20 @@ const OPENER_VS_3BET_SPOT: Partial<Record<Position, Partial<Record<Position, str
   SB: { BB: 'sb-vs-bb-3bet' },
 }
 
+export interface ResolveOptions {
+  // 設計ルール4: マルチウェイ(3人以上)でも収録 HU レンジを「参考値」として解決する(表示経路のみ)。
+  // 既定 false=従来どおりマルチウェイは null(精度計算・AI 経路はこちらを使い除外を維持)。
+  multiwayReference?: boolean
+}
+
 // GameState からヒーロー視点の解スポットキーを決める。null = 評価対象外 (スキップ)。
-export function resolveSpotKey(state: GameState, heroId: string): SpotKey | null {
+export function resolveSpotKey(state: GameState, heroId: string, opts: ResolveOptions = {}): SpotKey | null {
   if (state.street === 'preflop') {
-    const base = preflopSpotId(state, heroId)
-    return base ? { baseSpotId: base, street: 'preflop' } : null
+    // 参考値モードのときだけ、収録スポットのマルチウェイ版(cold-call ありの defense)を許可する。
+    const res = preflopSpotId(state, heroId, !!opts.multiwayReference)
+    if (!res) return null
+    // multiway は参考値スポット(=cold-call ありの defense)のときだけ付ける(HU は従来形のまま=既存テスト互換)。
+    return { baseSpotId: res.id, street: 'preflop', ...(res.multiway ? { multiway: true } : {}) }
   }
   if (state.street === 'showdown') return null
 
@@ -134,9 +143,13 @@ function postflopBase(state: GameState, hero: Player, villain: Player, heroId: s
 }
 
 // プリフロップの対面タイプ (= ポストフロップでも基底スポットとして流用)。
-function preflopSpotId(state: GameState, heroId: string): string | null {
+// allowMultiway=true (参考値モード) のとき、単一レイズへの応答は cold-call 参加者(=マルチウェイ)も許容する。
+// 戻り値の multiway=true は「cold-call ありの defense(=参考値)」のときだけ(RFI/clean HU/3bet は false)。
+interface PreflopSpot { id: string; multiway: boolean }
+function preflopSpotId(state: GameState, heroId: string, allowMultiway = false): PreflopSpot | null {
   const hero = state.players.find(p => p.id === heroId)
   if (!hero) return null
+  const hu = (id: string | undefined): PreflopSpot | null => (id ? { id, multiway: false } : null)
 
   const prev = state.actionHistory.filter(a => a.street === 'preflop')
   const hasRaiseBefore = prev.some(a => a.action === 'raise' && a.playerId !== heroId)
@@ -146,26 +159,33 @@ function preflopSpotId(state: GameState, heroId: string): string | null {
 
   if (!hasRaiseBefore) {
     if (hasLimpBefore) return null
-    return OPEN_SPOT[hero.position] ?? null
+    return hu(OPEN_SPOT[hero.position]) // RFI は背後の未行動ブラインドが居ても multiway 扱いしない
   }
 
-  // コールドコール(レイズへの参加)があれば実質マルチウェイ/スクイーズ → スキップ。
-  if (prev.some(a => a.action === 'call' && a.playerId !== heroId)) return null
+  // コールドコール(レイズへの参加)= 実質マルチウェイ/スクイーズ。
+  const coldCall = prev.some(a => a.action === 'call' && a.playerId !== heroId)
   const raises = prev.filter(a => a.action === 'raise')
 
-  // 対オープン (単一レイズ) への clean な応答 (defender 視点)。
+  // 対オープン (単一レイズ) への応答 (defender 視点)。
   if (raises.length === 1) {
+    // 通常は clean な HU 応答のみ。参考値モードでは cold-call 参加者(マルチウェイ)を許容する。
+    if (coldCall && !allowMultiway) return null
     // hero より前に行動する相手は全員フォールド済み (レイザーを除く)。背後の未行動ブラインドは許容。
+    // 参考値モードでは前方のコール参加者(マルチウェイ)も許容する。
     const order = getPreflopActionOrder(state.players, state.buttonSeatIndex)
     const heroOrderIdx = order.findIndex(p => p.id === heroId)
     const raiserId = raises[0].playerId
     const cleanFoldAround = order.slice(0, heroOrderIdx).every(p => p.isFolded || p.id === raiserId)
-    if (!cleanFoldAround) return null
+    if (!cleanFoldAround && !allowMultiway) return null
     const raiserPos = state.players.find(p => p.id === raiserId)?.position
     if (!raiserPos) return null
-    if (hero.position === 'BB') return BB_VS_SPOT[raiserPos] ?? null
-    return POS_VS_SPOT[hero.position]?.[raiserPos] ?? null
+    const id = hero.position === 'BB' ? BB_VS_SPOT[raiserPos] : POS_VS_SPOT[hero.position]?.[raiserPos]
+    // cold-call 参加者が居れば multiway 参考値、居なければ clean HU。
+    return id ? { id, multiway: coldCall } : null
   }
+
+  // 対3bet 以上。cold-call(スクイーズ等)は参考値も含め非対応。
+  if (coldCall) return null
 
   // 対3bet (open + 3bet)。hero=opener が 4bet/call/fold を選ぶ HU ノードのみ対応。
   if (raises.length === 2) {
@@ -178,7 +198,7 @@ function preflopSpotId(state: GameState, heroId: string): string | null {
     if (activeOpps.length !== 1 || activeOpps[0].id !== threeBetR.playerId) return null
     const threeBetterPos = state.players.find(p => p.id === threeBetR.playerId)?.position
     if (!threeBetterPos) return null
-    return OPENER_VS_3BET_SPOT[hero.position]?.[threeBetterPos] ?? null
+    return hu(OPENER_VS_3BET_SPOT[hero.position]?.[threeBetterPos])
   }
 
   return null // 4bet 以上の応酬は未対応

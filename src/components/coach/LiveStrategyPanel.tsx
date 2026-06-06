@@ -28,7 +28,8 @@ interface Props {
 // A2: showPotOdds のとき ポットオッズ / 必要勝率を表示。
 export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, revealActed }: Props) {
   const markHinted = useSessionStore(s => s.markHinted)
-  const { node, loading } = useSolution(pending.state, HERO_ID, allowLiveSolve)
+  // 設計ルール4: 表示はマルチウェイでも HU レンジを「参考値」として出す (精度計算には入れない)。
+  const { node, loading } = useSolution(pending.state, HERO_ID, allowLiveSolve, true)
   // R8: 自分の vs相手レンジ・エクイティ (必要勝率と並べて「片手落ち」を解消)
   const { equity, loading: eqLoading } = useEquity(pending.state, HERO_ID, showPotOdds)
 
@@ -68,6 +69,11 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, reveal
             </span>
           )}
           {handKey && node && <span className="text-zinc-400 font-normal">{handKey} @ {node.spotId}</span>}
+          {node?.multiwayReference && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300 font-normal" title="3人以上(マルチウェイ)。ヘッズアップのレンジを参考表示しています(厳密解ではない・精度測定対象外)。">
+              マルチウェイ=参考値
+            </span>
+          )}
         </span>
         {node && node.source === 'approximate' && (
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300">参考: GTO近似</span>
@@ -120,7 +126,21 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, reveal
           誤った評価を出さないため、ここではあえてスキップしています。
         </span>
       ) : (
-        <StrategyBars strategy={strategy} source={node.source} showEv={node.source !== 'approximate'} approxEv={node.source === 'approximate_with_ev'} />
+        <>
+          {/* マルチウェイは HU レンジの EV が当てはまらないため EV は出さない (参考値・ルール4)。 */}
+          <StrategyBars
+            strategy={strategy}
+            source={node.source}
+            showEv={!node.multiwayReference && node.source !== 'approximate'}
+            approxEv={!node.multiwayReference && node.source === 'approximate_with_ev'}
+          />
+          {node.multiwayReference && (
+            <p className="mt-2 text-[11px] text-amber-300/80 leading-snug">
+              ※ 3人以上(マルチウェイ)のため、相手レイザーに対する<strong className="text-amber-200">ヘッズアップのレンジを参考</strong>として表示しています。
+              実際の最適頻度はこれより気持ちタイトになります。厳密解ではないため精度測定には含めません。
+            </p>
+          )}
+        </>
       )}
     </div>
   )

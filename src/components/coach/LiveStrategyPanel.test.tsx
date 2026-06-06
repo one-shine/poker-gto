@@ -34,6 +34,34 @@ function pending(callAmount = 1): ActionRequiredPayload {
   return { state, playerId: 'hero', validActions: ['call', 'fold', 'raise'], callAmount, minRaiseToAmount: 2 }
 }
 
+function rec(id: string, action: ActionRecord['action']): ActionRecord {
+  return {
+    handId: 'h1', street: 'preflop', playerId: id, heroPosition: 'SB', villainPositions: [],
+    action, amountBB: action === 'raise' ? 2.5 : 0, potBB: 1.5, isIP: false, timestamp: 0,
+  }
+}
+
+// CO raise + BTN cold-call → hero=SB が応答 = 実質マルチウェイ (sb-vs-co の参考値スポット)。
+function multiwayPending(): ActionRequiredPayload {
+  const p = (id: string, position: Player['position'], seatIndex: number, folded: boolean, isHero = false): Player => ({
+    id, position, seatIndex, stackBB: 100,
+    holeCards: isHero ? [{ rank: 'A', suit: 'spades' }, { rank: 'K', suit: 'spades' }] : null,
+    isHero, agentType: isHero ? 'human' : 'fish_ai', isFolded: folded, isAllIn: false,
+    currentBetBB: id === 'co' || id === 'btn' ? 2.5 : 0,
+  })
+  const state: GameState = {
+    handId: 'h1', street: 'preflop',
+    players: [
+      p('btn', 'BTN', 0, false), p('hero', 'SB', 1, false, true), p('bb', 'BB', 2, false),
+      p('utg', 'UTG', 3, true), p('mp', 'MP', 4, true), p('co', 'CO', 5, false),
+    ],
+    board: [], pot: { mainPotBB: 4.5, sidePots: [] },
+    actionHistory: [rec('utg', 'fold'), rec('mp', 'fold'), rec('co', 'raise'), rec('btn', 'call')],
+    currentActorId: 'hero', buttonSeatIndex: 0, bigBlindBB: 1, smallBlindBB: 0.5, handNumber: 1, isHandComplete: false,
+  }
+  return { state, playerId: 'hero', validActions: ['call', 'fold', 'raise'], callAmount: 2, minRaiseToAmount: 5 }
+}
+
 describe('LiveStrategyPanel', () => {
   beforeEach(() => useSessionStore.getState().clearSession())
 
@@ -61,6 +89,13 @@ describe('LiveStrategyPanel', () => {
     render(<LiveStrategyPanel pending={pending(1)} allowLiveSolve showPotOdds={false} />)
     await screen.findByText(/AKs @ btn-open/)
     expect(screen.queryByText(/ポットオッズ/)).toBeNull()
+  })
+
+  it('shows the HU range as a multiway reference (rule 4) when 3+ players are in', async () => {
+    render(<LiveStrategyPanel pending={multiwayPending()} allowLiveSolve showPotOdds={false} revealActed="call" />)
+    expect(await screen.findByText(/sb-vs-co/)).toBeInTheDocument() // 対象外でなく戦略が出る
+    expect(screen.getByText(/マルチウェイ=参考値/)).toBeInTheDocument()
+    expect(screen.queryByText(/対象外/)).toBeNull()
   })
 
   it('reveal mode (after acting) shows the answer-check header and keeps the hand in the sample (U8)', async () => {

@@ -130,6 +130,35 @@ describe('resolveSpotKey', () => {
     expect(resolveSpotKey(s, 'hero')).toBeNull()
   })
 
+  it('multiwayReference opt: cold-call(マルチウェイ)でも収録 HU レンジを参考値として解決 (ルール4)', () => {
+    // CO raises, BTN cold-calls, hero=SB → 実質マルチウェイ
+    const s = baseState({
+      players: [
+        player('hero', 'SB', 1), player('btn', 'BTN', 0), player('bb', 'BB', 2),
+        folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)), player('co', 'CO', 5),
+      ],
+      actionHistory: [rec('utg', 'fold'), rec('mp', 'fold'), rec('co', 'raise'), rec('btn', 'call')],
+    })
+    // 既定 (精度・AI 経路): 従来どおり null = 除外を維持 (4a)。
+    expect(resolveSpotKey(s, 'hero')).toBeNull()
+    // 参考値モード (表示経路): sb-vs-co を multiway 付きで返す (4b)。
+    expect(resolveSpotKey(s, 'hero', { multiwayReference: true })).toEqual({
+      baseSpotId: 'sb-vs-co', street: 'preflop', multiway: true,
+    })
+  })
+
+  it('multiwayReference opt: HU スポットは multiway を付けない (既存形のまま)', () => {
+    const s = baseState({ actionHistory: ['p3', 'p4', 'p5'].map(id => rec(id, 'fold')) })
+    expect(resolveSpotKey(s, 'hero', { multiwayReference: true })).toEqual({ baseSpotId: 'btn-open', street: 'preflop' })
+  })
+
+  it('getSolution tags a multiway spot as multiwayReference', async () => {
+    const node = await getSolution({ baseSpotId: 'sb-vs-co', street: 'preflop', multiway: true })
+    expect(node?.multiwayReference).toBe(true)
+    const hu = await getSolution({ baseSpotId: 'sb-vs-co', street: 'preflop' })
+    expect(hu?.multiwayReference).toBeUndefined()
+  })
+
   it('unsupported defender pairing (e.g. MP vs UTG) → null', () => {
     const s = baseState({
       players: [

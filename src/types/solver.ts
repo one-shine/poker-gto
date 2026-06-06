@@ -44,6 +44,9 @@ export interface NodeSolution {
   // turn の solver_live でも「簡易: 賭け未考慮」ではなく「賭け考慮済」と表示するためのフラグ。
   bettingAware?: boolean
   runoutN?: number // chance-CFR の river ランナウトサンプル数 (UI 表示用)
+  // 設計ルール4: マルチウェイ(3人以上)では HU レンジを「参考値」として表示する(厳密解ではない)。
+  // true のとき UI は「マルチウェイ=参考値」を明示。精度計算には入れない(評価経路では別途 null で除外)。
+  multiwayReference?: boolean
   meta: SolutionMeta
 }
 
@@ -66,4 +69,6 @@ export interface SpotKey {
   // true のとき riverBetBB は hero 自身のリードベット額 (betFrac 算出用)。fold/call のみ。
   facingRaise?: boolean
   heroIsOOP?: boolean  // hero が OOP (defender) か IP (opener) か
+  // 設計ルール4: マルチウェイ(3人以上)の参考値スポット。表示経路のみ解決し、精度計算では使わない。
+  multiway?: boolean
 }

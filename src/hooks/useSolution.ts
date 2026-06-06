@@ -15,11 +15,13 @@ export function useSolution(
   state: GameState | null,
   heroId: string,
   allowLiveSolve: boolean,
+  // 設計ルール4: 表示用途でマルチウェイの HU レンジを「参考値」として解決する (精度経路では使わない)。
+  multiwayReference = false,
 ): SolutionState {
   const [st, setSt] = useState<SolutionState>({ node: null, loading: false })
   useEffect(() => {
     let cancelled = false
-    const spot = state ? resolveSpotKey(state, heroId) : null
+    const spot = state ? resolveSpotKey(state, heroId, { multiwayReference }) : null
     // 求解は非同期。対応スポットなら loading=true を即時反映する(fetch効果)。
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 求解の loading 表示に必要
     setSt({ node: null, loading: !!spot })
@@ -29,6 +31,6 @@ export function useSolution(
       })
     }
     return () => { cancelled = true }
-  }, [state, heroId, allowLiveSolve])
+  }, [state, heroId, allowLiveSolve, multiwayReference])
   return st
 }
