@@ -20,7 +20,7 @@ import { useSoundEffects } from '../hooks/useSoundEffects'
 export function GamePage() {
   useSoundEffects()
 
-  const { gameState, pendingHeroAction, lastResults, lastFeedback, lastHeroDecision, handReview, initialized, initGame, startNewHand, submitHeroAction, dismissFeedback } =
+  const { gameState, pendingHeroAction, lastResults, lastFeedback, lastHeroDecision, isPaused, handReview, initialized, initGame, startNewHand, submitHeroAction, dismissFeedback } =
     useGameStore()
   const appMode = useSettingsStore(s => s.appMode)
   const stackBB = useSettingsStore(s => s.stackBB)
@@ -188,7 +188,21 @@ export function GamePage() {
             <>
               {/* U8: 自分が打った後に GTO 戦略を答え合わせ表示。事前に見せないので精度サンプルにも入る。 */}
               {strategyReveal}
-              <p className="text-zinc-500 text-sm">相手の番です…</p>
+              {/* U16: study+答え合わせ では打った後に一時停止 (解の求解中も保持)。「次へ」で AI を再開する。
+                  ミス時は CoachPanel(上)が「次へ」を持つので、ここは戦略 reveal があるときだけ出す。 */}
+              {isPaused ? (
+                strategyReveal && (
+                  <button
+                    type="button"
+                    onClick={dismissFeedback}
+                    className="min-h-11 px-6 rounded-xl brass font-display font-extrabold tracking-wide shadow-[0_4px_16px_rgba(212,175,55,0.3)] hover:brightness-110 active:translate-y-px transition-all"
+                  >
+                    次へ → <span className="font-data text-ink/60 text-xs font-bold">(確認したら)</span>
+                  </button>
+                )
+              ) : (
+                <p className="text-zinc-500 text-sm">相手の番です…</p>
+              )}
             </>
           )}
           {/* ハンド進行中はいつでも中断して次のハンドへ移れる導線 (途中で終われない問題の解消) */}

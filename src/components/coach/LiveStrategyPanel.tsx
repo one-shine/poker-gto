@@ -30,8 +30,9 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, reveal
   const markHinted = useSessionStore(s => s.markHinted)
   // 設計ルール4: 表示はマルチウェイでも HU レンジを「参考値」として出す (精度計算には入れない)。
   const { node, loading } = useSolution(pending.state, HERO_ID, allowLiveSolve, true)
-  // R8: 自分の vs相手レンジ・エクイティ (必要勝率と並べて「片手落ち」を解消)
-  const { equity, loading: eqLoading } = useEquity(pending.state, HERO_ID, showPotOdds)
+  // R8: 自分の vs相手レンジ・エクイティ (必要勝率と並べて「片手落ち」を解消)。
+  // 対象外スポットでもコールに直面していればオッズ目安を出すため、call があるときも有効化する。
+  const { equity, loading: eqLoading } = useEquity(pending.state, HERO_ID, showPotOdds || pending.callAmount > 0)
 
   const hero = pending.state.players.find(p => p.id === HERO_ID)
   const handKey = hero?.holeCards ? handCategory(hero.holeCards) : null
@@ -118,13 +119,40 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, showPotOdds, reveal
           GTO解を求めています…
         </span>
       ) : !node || !strategy ? (
-        <span className="block text-xs text-zinc-500 leading-relaxed">
-          この局面は GTO 解の<strong className="text-zinc-400">対象外</strong>です(プレイは続行できます)。
-          {activeCount >= 3
-            ? ' 3人以上が参加するマルチウェイのため(本アプリの厳密評価はヘッズアップ限定)。'
-            : ' 未収録のプリフロップ状況・盲対盲・複雑なレイズ応酬などが該当します。'}
-          誤った評価を出さないため、ここではあえてスキップしています。
-        </span>
+        <div className="space-y-2">
+          <span className="block text-xs text-zinc-500 leading-relaxed">
+            この局面は GTO 解の<strong className="text-zinc-400">対象外</strong>です(プレイは続行できます)。
+            {activeCount >= 3
+              ? ' 3人以上が参加するマルチウェイのため(本アプリの厳密評価はヘッズアップ限定)。'
+              : ' 未収録のプリフロップ状況・盲対盲・複雑なレイズ応酬などが該当します。'}
+            誤った GTO 評価を出さないため、ここではあえてスキップしています。
+          </span>
+          {/* オッズ基準のガイド: GTO頻度ではないが、コール判断の数学的目安は出せる (必要勝率 vs 実勝率)。 */}
+          {callAmount > 0 && (
+            <div className="rounded-lg border border-sky-500/30 bg-sky-950/20 p-2 text-xs">
+              <p className="font-bold text-sky-300 mb-0.5">
+                <span aria-hidden="true">📐 </span>オッズ基準の目安(GTO頻度ではありません)
+              </p>
+              {eqLoading ? (
+                <span className="text-zinc-500">勝率を計算中…</span>
+              ) : equity != null ? (
+                <p className="text-zinc-300 leading-snug">
+                  必要勝率 <span className="font-data font-bold text-emerald-300">{Math.round(reqEquity * 100)}%</span>
+                  {' / '}あなたの勝率 <span className="font-data font-bold">{Math.round(equity * 100)}%</span>
+                  {' → '}
+                  <span className={equity >= reqEquity ? 'text-emerald-300 font-bold' : 'text-rose-300 font-bold'}>
+                    {equity >= reqEquity ? '✓ オッズ的にコール有利' : '✗ オッズ的にはフォールド寄り'}
+                  </span>
+                  <span className="block text-[10px] text-zinc-500 mt-0.5">
+                    ※ 純粋なコール判断のみの目安。含意オッズ(後のストリートの取り分)・レイズの選択肢・相手の傾向は含みません。
+                  </span>
+                </p>
+              ) : (
+                <span className="text-zinc-500">勝率を取得できませんでした。</span>
+              )}
+            </div>
+          )}
+        </div>
       ) : (
         <>
           {/* マルチウェイは HU レンジの EV が当てはまらないため EV は出さない (参考値・ルール4)。 */}

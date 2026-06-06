@@ -38,6 +38,8 @@ function gate(emit: () => void): void {
 }
 function setPaused(p: boolean): void {
   paused = p
+  // UI が「一時停止中(=次へ待ち)」を判定できるよう store にミラーする。
+  useGameStore.setState({ isPaused: p })
   if (!p) {
     const q = emitQueue.splice(0, emitQueue.length)
     q.forEach(e => e())
@@ -87,6 +89,7 @@ interface GameStore {
   lastResults: ShowdownResult[] | null
   lastFeedback: CoachFeedback | null              // 直近のコーチ評価 (CoachPanel/トースト)
   lastHeroDecision: LastHeroDecision | null       // 直近の hero 決定 (アクション後の答え合わせ表示用・U8)
+  isPaused: boolean                               // 答え合わせ表示で AI 送出を保留中 (=「次へ」待ち)
   handReview: HeroDecision[] | null               // play モードの直近ハンドの postflop 決定 (復習用)
   handCount: number
   initialized: boolean
@@ -104,6 +107,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lastResults: null,
   lastFeedback: null,
   lastHeroDecision: null,
+  isPaused: false,
   handReview: null,
   handCount: 0,
   initialized: false,
@@ -233,6 +237,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // U8: アクション後に GTO 戦略を答え合わせ表示するため、打った決定 (payload) を保持する。
     set({ pendingHeroAction: null, lastHeroDecision: { payload: pending, action, amount } })
     bus.emit('PLAYER_ACTION', { playerId: HERO_ID, action, amount })
+    // U16: study + 答え合わせ では、打った後に AI 送出を保留する。解の求解(非同期)中にゲームが進んで
+    // 答え合わせが消えるのを防ぎ、「次へ」を押すまで確実に読めるようにする。bus.emit が先に AI を
+    // setTimeout 予約するが、実送出は gate を通るので、ここで paused を立てれば保留される。
+    const s = useSettingsStore.getState()
+    if (s.appMode === 'study' && s.studyShowStrategy) setPaused(true)
   },
 
   // 「次へ」: フィードバックを閉じ、一時停止していた AI 送出を再開する (R7)。
