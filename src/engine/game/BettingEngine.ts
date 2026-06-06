@@ -16,9 +16,18 @@ export function getMinRaiseToAmount(state: GameState): number {
   const streetRaises = state.actionHistory.filter(
     a => a.street === state.street && (a.action === 'raise' || a.action === 'allin'),
   )
-  const lastRaiseSize = streetRaises.length > 0
-    ? streetRaises[streetRaises.length - 1].amountBB
-    : state.bigBlindBB
+  // ⚠ amountBB は to-amount (到達ベット水準) であって増分ではない。
+  // 直前レイズの「幅」= 今回の to − その前の到達水準。前がレイズならその to、
+  // 初回レイズなら直前水準 = プリフロップ:BB / ポストフロップ:0(0 からのベット)。
+  // (旧実装は to-amount をそのまま幅扱いし、3bet 以降の最小レイズを過大にしていた)
+  let lastRaiseSize = state.bigBlindBB
+  if (streetRaises.length > 0) {
+    const lastTo = streetRaises[streetRaises.length - 1].amountBB
+    const prevTo = streetRaises.length > 1
+      ? streetRaises[streetRaises.length - 2].amountBB
+      : (state.street === 'preflop' ? state.bigBlindBB : 0)
+    lastRaiseSize = lastTo - prevTo
+  }
   return maxBet + Math.max(lastRaiseSize, state.bigBlindBB)
 }
 
