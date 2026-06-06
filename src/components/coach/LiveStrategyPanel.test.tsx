@@ -107,6 +107,12 @@ describe('LiveStrategyPanel', () => {
     expect(await screen.findByText(/sb-vs-co/)).toBeInTheDocument() // 対象外でなく戦略が出る
     expect(screen.getByText(/マルチウェイ=参考値/)).toBeInTheDocument()
     expect(screen.queryByText(/対象外/)).toBeNull()
+    // マルチウェイでも勝率を「参考」として出す (— ではない・全相手レンジ vs hero)
+    expect(await screen.findByText(/コール判定は出さず参考数値のみ/)).toBeInTheDocument()
+    expect(screen.getByText(/あなたの勝率\(参考\)/)).toBeInTheDocument()
+    // ルール1: マルチウェイでは断定的な「✓ コール有利 / ✗ フォールド寄り」を出さない
+    expect(screen.queryByText(/コール有利/)).toBeNull()
+    expect(screen.queryByText(/フォールド寄り/)).toBeNull()
   })
 
   it('reveal mode (after acting) shows the answer-check header and keeps the hand in the sample (U8)', async () => {

@@ -108,13 +108,35 @@ function villainCategories(state: GameState, villain: Player): string[] | null {
   return null // 4bet 以上の応酬は未対応
 }
 
-// エクイティ計算用に、アクティブな相手(降りていない非hero)の想定レンジ配列を返す。
-// HU(相手1人)のみ対応。マルチウェイ/レンジ不明は null(表示しない)。
-export function resolveOpponentRanges(state: GameState, heroId: string): string[][] | null {
+export interface ResolvedRanges {
+  ranges: string[][]
+  // true = マルチウェイ(相手2人以上)の参考値。HU(相手1人)は false で厳密な相手レンジ。
+  // 設計ルール4: マルチウェイは HU 厳密解の対象外だが、エクイティは「参考」として出す。
+  reference: boolean
+}
+
+// アクティブな相手(降りていない非hero)全員の想定レンジを返す。
+//  - 相手0人 → null
+//  - 相手1人(HU) → reference:false(厳密)
+//  - 相手2人以上(マルチウェイ) → 全員のレンジをラインから推定できた場合のみ reference:true。
+//    一人でも推定不能(リンプ・未収録ライン等)なら null(参考値も出さない=偽値を避ける)。
+export function resolveOpponentRangesEx(state: GameState, heroId: string): ResolvedRanges | null {
   const hero = state.players.find(p => p.id === heroId)
   if (!hero) return null
   const villains = state.players.filter(p => p.id !== heroId && !p.isFolded)
-  if (villains.length !== 1) return null
-  const cats = villainCategories(state, villains[0])
-  return cats ? [cats] : null
+  if (villains.length === 0) return null
+  const ranges: string[][] = []
+  for (const v of villains) {
+    const cats = villainCategories(state, v)
+    if (!cats) return null // 一人でもレンジ不明ならエクイティは出せない
+    ranges.push(cats)
+  }
+  return { ranges, reference: villains.length > 1 }
+}
+
+// エクイティ計算用に、アクティブな相手の想定レンジ配列を返す(HU=相手1人のみ・厳密)。
+// マルチウェイ/レンジ不明は null。後方互換のため resolveOpponentRangesEx に委譲する。
+export function resolveOpponentRanges(state: GameState, heroId: string): string[][] | null {
+  const r = resolveOpponentRangesEx(state, heroId)
+  return r && !r.reference ? r.ranges : null
 }

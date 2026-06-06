@@ -5,6 +5,12 @@ date: 2026-05-30
 ---
 # poker-gto 開発ログ
 
+### 2026-06-06 マルチウェイの「あなたの勝率」を参考値として表示
+- **背景**: ゲーム(study答え合わせ)で勝率が「—」になる主因はマルチウェイ(`resolveOpponentRanges` が `villains.length!==1` で null)。8エージェントのワークフローで全原因を検証(別の表示面なし・ショーダウン後も holeCards はスナップショットに残る等を確認)。ユーザー要望で「参考として出す」対応。
+- **実装**: `resolveOpponentRangesEx(state, heroId): { ranges, reference } | null` を新設。アクティブ相手全員の想定レンジをラインから推定し、2人以上なら `reference:true`、一人でも推定不能(リンプ・未収録ライン)なら null(偽値を出さない)。`resolveOpponentRanges`(HU専用)は後方互換で委譲(既存テスト不変)。`computeEquity` は元々 N 相手対応(hero が全員に勝てば勝ち・タイ分割・カードリムーバル厳密)なので計算層は無改修。`useEquity` の `EquityState` に `reference` を追加し `LiveStrategyPanel`/`OddsGuide` が「あなたの勝率(参考)」+注記。
+- **敵対的レビュー(2観点)で1件採用**: マルチウェイで「✓ コール有利 / ✗ フォールド寄り」を生の勝率 vs ポットオッズで断定するのは、背後の未行動プレイヤー・含意オッズ・実現割引を無視し**ルール1違反**。→ `reference` 時は判定バッジを出さず参考数値のみ(ポットオッズ/必要勝率/参考勝率)に。レビューの「samples不足/async stale」blockerは却下(前者はHU既存・参考値として許容範囲、後者は `cancelled` ガードで既に防御済=誤指摘)。
+- **検証**: 型0・lint0・全398テスト緑(opponentRangesEx +5・LiveStrategyPanel multiway 参考表示+✓/✗非表示を追加)・build緑(main bundle 不変)。
+
 開発中の試行錯誤・未確定の判断はここに書く。
 固まった再利用知見は /harvest で brain/30_Tech_Notes/ に蒸留する。
 

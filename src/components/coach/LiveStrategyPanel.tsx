@@ -17,10 +17,13 @@ const ACTION_JP: Record<PlayerAction, string> = {
 // U18: オッズ基準の目安。GTO 解の有無に関わらず常時併記する(GTO が本筋・これは単純化の目安)。
 //  - コール直面: ポットオッズ / 必要勝率 vs 実勝率 → コール有利 / フォールド寄り。
 //  - コール無し(チェック/ベット先頭): エクイティの強弱目安(GTOのベット/チェック判断とは別)。
-function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot }: {
+function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot, reference }: {
   callAmount: number; reqEquity: number; equity: number | null; eqLoading: boolean; effPot: number
+  reference?: boolean // true = マルチウェイの参考勝率 (厳密でない・設計ルール4)
 }) {
   const eqText = eqLoading ? '計算中…' : equity != null ? `${Math.round(equity * 100)}%` : '—'
+  // マルチウェイ(相手2人以上)の勝率は全相手レンジ vs hero の参考値。実現は割り引かれる。
+  const eqLabel = reference ? 'あなたの勝率(参考)' : 'あなたの勝率'
   return (
     <div className="rounded-lg border border-sky-500/30 bg-sky-950/20 p-2 text-xs">
       <p className="font-bold text-sky-300 mb-0.5">
@@ -31,20 +34,26 @@ function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot }: {
         <p className="text-zinc-300 leading-snug">
           ポットオッズ <span className="font-data text-zinc-100">{(effPot / callAmount).toFixed(1)} : 1</span>
           {' / '}必要勝率 <span className="font-data font-bold text-emerald-300">{Math.round(reqEquity * 100)}%</span>
-          {' / '}あなたの勝率 <span className="font-data font-bold">{eqText}</span>
-          {equity != null && (
+          {' / '}{eqLabel} <span className="font-data font-bold">{eqText}</span>
+          {/* マルチウェイ(参考値)では断定的なコール判定を出さない。生の勝率 vs ポットオッズは
+              背後の未行動プレイヤー・含意オッズ・実現割引を無視するため誤誘導になる(ルール1)。 */}
+          {equity != null && !reference && (
             <>{' → '}
               <span className={equity >= reqEquity ? 'text-emerald-300 font-bold' : 'text-rose-300 font-bold'}>
                 {equity >= reqEquity ? '✓ コール有利' : '✗ フォールド寄り'}
               </span>
             </>
           )}
-          <span className="block text-[10px] text-zinc-500 mt-0.5">※ 単純なコール判断の目安(含意オッズ等は未考慮)</span>
+          <span className="block text-[10px] text-zinc-500 mt-0.5">
+            {reference
+              ? '※ マルチウェイの参考勝率(相手レンジ近似)。背後のプレイヤー・含意オッズ・実現割引のため、必要勝率より高い勝率が要る → コール判定は出さず参考数値のみ'
+              : '※ 単純なコール判断の目安(含意オッズ等は未考慮)'}
+          </span>
         </p>
       ) : (
         // チェック/ベット先頭: コール判断は無いのでエクイティの強弱目安。
         <p className="text-zinc-300 leading-snug">
-          あなたの勝率 <span className="font-data font-bold">{eqText}</span>
+          {eqLabel} <span className="font-data font-bold">{eqText}</span>
           {equity != null && (
             <>{' → '}
               <span className={equity >= 0.55 ? 'text-emerald-300 font-bold' : equity >= 0.45 ? 'text-sky-300 font-bold' : 'text-rose-300 font-bold'}>
@@ -52,7 +61,9 @@ function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot }: {
               </span>
             </>
           )}
-          <span className="block text-[10px] text-zinc-500 mt-0.5">※ 大まかなエクイティ目安(GTO判断とは別)</span>
+          <span className="block text-[10px] text-zinc-500 mt-0.5">
+            {reference ? '※ マルチウェイのため相手レンジ近似の参考勝率(厳密でない)' : '※ 大まかなエクイティ目安(GTO判断とは別)'}
+          </span>
         </p>
       )}
       {/* オッズ学習への導線: pot-odds 理論 + 用語チップ */}
@@ -81,7 +92,8 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, revealActed }: Prop
   // 設計ルール4: 表示はマルチウェイでも HU レンジを「参考値」として出す (精度計算には入れない)。
   const { node, loading } = useSolution(pending.state, HERO_ID, allowLiveSolve, true)
   // R8/U18: エクイティ。オッズ目安を常時併記する(コール直面=必要勝率比較 / チェック局面=強弱目安)ため常時有効化。
-  const { equity, loading: eqLoading } = useEquity(pending.state, HERO_ID, true)
+  // マルチウェイ(相手2人以上)は reference=true の参考勝率として出す(設計ルール4)。
+  const { equity, loading: eqLoading, reference: eqReference } = useEquity(pending.state, HERO_ID, true)
 
   const hero = pending.state.players.find(p => p.id === HERO_ID)
   const handKey = hero?.holeCards ? handCategory(hero.holeCards) : null
@@ -144,8 +156,8 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, revealActed }: Prop
             GTO 解の<strong className="text-zinc-400">対象外</strong>
             <span className="text-zinc-600">{activeCount >= 3 ? '(マルチウェイ)' : '(未収録スポット)'}</span>
           </span>
-          {/* 対象外でも、オッズ目安は主表示として出す (U18)。 */}
-          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} />
+          {/* 対象外でも、オッズ目安は主表示として出す (U18)。マルチウェイは参考勝率。 */}
+          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} reference={eqReference} />
         </div>
       ) : (
         <div className="space-y-2">
@@ -163,7 +175,7 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, revealActed }: Prop
             </p>
           )}
           {/* U18: GTO 解があるときも、オッズ目安をバーの下に副表示で常時併記 (GTO が本筋)。 */}
-          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} />
+          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} reference={eqReference} />
         </div>
       )}
     </div>

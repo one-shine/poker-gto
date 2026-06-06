@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { GameState, Player, ActionRecord, Position } from '../../types/game'
-import { resolveOpponentRanges } from './opponentRange'
+import { resolveOpponentRanges, resolveOpponentRangesEx } from './opponentRange'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 
 function player(id: string, position: Position, seatIndex: number, over: Partial<Player> = {}): Player {
@@ -187,5 +187,74 @@ describe('resolveOpponentRanges (action-sequence-aware)', () => {
   it('no hero in state → null', () => {
     const s = state({ players: [player('btn', 'BTN', 0)], actionHistory: [rec('btn', 'raise')] })
     expect(resolveOpponentRanges(s, 'hero')).toBeNull()
+  })
+})
+
+describe('resolveOpponentRangesEx (multiway 参考値)', () => {
+  it('HU → reference:false, exact single range', () => {
+    const s = state({
+      players: [
+        player('hero', 'BB', 2), player('btn', 'BTN', 0),
+        folded(player('sb', 'SB', 1)), folded(player('utg', 'UTG', 3)),
+        folded(player('mp', 'MP', 4)), folded(player('co', 'CO', 5)),
+      ],
+      actionHistory: [rec('btn', 'raise')],
+    })
+    const r = resolveOpponentRangesEx(s, 'hero')
+    expect(r).not.toBeNull()
+    expect(r!.reference).toBe(false)
+    expect(r!.ranges.length).toBe(1)
+  })
+
+  it('multiway (opener + BB defender, both resolvable) → reference:true with one range per villain', () => {
+    const s = state({
+      players: [
+        player('hero', 'BTN', 0), player('co', 'CO', 5), player('bb', 'BB', 2),
+        folded(player('sb', 'SB', 1)), folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [rec('co', 'raise'), rec('hero', 'call')],
+    })
+    const r = resolveOpponentRangesEx(s, 'hero')
+    expect(r).not.toBeNull()
+    expect(r!.reference).toBe(true)
+    expect(r!.ranges.length).toBe(2) // villains = co (opener) + bb (defender)
+    expect(r!.ranges[0].sort()).toEqual(hands('co-open', rz => rz > 0).sort())
+    expect(r!.ranges[1].sort()).toEqual(hands('bb-vs-co', (rz, c) => rz > 0 || c > 0).sort())
+    // 後方互換: HU 専用の resolveOpponentRanges はマルチウェイで null のまま
+    expect(resolveOpponentRanges(s, 'hero')).toBeNull()
+  })
+
+  it('multiway with an unresolvable villain (uncovered cold-call) → null (参考値も出さない)', () => {
+    const s = state({
+      players: [
+        player('hero', 'BB', 2), player('co', 'CO', 5), player('mp', 'MP', 4),
+        folded(player('sb', 'SB', 1)), folded(player('utg', 'UTG', 3)), folded(player('btn', 'BTN', 0)),
+      ],
+      actionHistory: [rec('co', 'raise')], // co=opener / mp=未収録の防御位置 → null
+    })
+    expect(resolveOpponentRangesEx(s, 'hero')).toBeNull()
+  })
+
+  it('limped pot (0 raises) → null', () => {
+    const s = state({
+      players: [
+        player('hero', 'BB', 2), player('btn', 'BTN', 0), player('co', 'CO', 5),
+        folded(player('sb', 'SB', 1)), folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [rec('co', 'call'), rec('btn', 'call')],
+    })
+    expect(resolveOpponentRangesEx(s, 'hero')).toBeNull()
+  })
+
+  it('all villains folded (0 active) → null', () => {
+    const s = state({
+      players: [
+        player('hero', 'BTN', 0), folded(player('co', 'CO', 5)),
+        folded(player('sb', 'SB', 1)), folded(player('bb', 'BB', 2)),
+        folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [rec('co', 'raise')],
+    })
+    expect(resolveOpponentRangesEx(s, 'hero')).toBeNull()
   })
 })
