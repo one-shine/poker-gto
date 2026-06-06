@@ -138,7 +138,7 @@
 
 | 項目 | 状態 | 担当 | メモ |
 |------|------|------|------|
-| CI ハードニング | ⬜ | 🤖 | Node20 actions 非推奨警告の解消(`ci.yml` と `deploy-pages.yml` 両方の `actions/checkout`・`setup-node`・`upload-pages-artifact`・`deploy-pages` を @v4→@v5、2026-06-16 で Node24 強制)/ npm・cargo キャッシュで高速化 / 重い CFR テストの安定化(testTimeout 45s 済)。 |
+| CI ハードニング | 🔄 | 🤖 | ✅ **Node20 actions 非推奨警告の解消(2026-06-06)**: `ci.yml`・`deploy-pages.yml` の `actions/checkout`@v6・`setup-node`@v6・`upload-pages-artifact`@v5・`deploy-pages`@v5 へ更新(当初メモの @v5 は古く、最新メジャーへ。2026-06-16 の Node24 強制に先んじて解消)。npm キャッシュは `setup-node` の `cache: npm` で有効済・cargo は Tauri 見送りで対象外。重い CFR テスト安定化(testTimeout 45s)済。残: 実 CI/デプロイで緑を確認。 |
 | CD: PWA 自動デプロイ | ✅ | 🤖 | **稼働中(2026-06-06)**。main push → `deploy-pages.yml` で build → Pages 自動公開(初回デプロイ成功確認)。下記 C節「Web アプリ化 = GitHub Pages 公開」が正典。 |
 | CD: Mac+Windows 配布物の自動ビルド(Tauri) | 🧊 見送り | 🤖 | **2026-06-06 降格**: 配布は PWA一本化(C節・GitHub Pages 公開済)に決定 → Tauri ネイティブ配布は見送り・本項目は保留(再開時は以下の旧計画)。<br>旧計画(2026-05-31): `v*` タグ push をトリガに GitHub Actions の**マトリクス**で自動ビルド → GitHub Releases に自動添付。<br>・`macos-latest` → `.dmg`/`.app`(aarch64)<br>・`windows-latest` → `.msi`/`.exe`(NSIS)。Windows は WebView2 標準搭載で追加不要<br>・新規 `.github/workflows/release.yml`。`tauri-apps/tauri-action` で build+Release 添付を一括(各 runner で `npm run tauri:build`)<br>・署名は別途・未署名でも動作(Mac=Gatekeeper / Win=SmartScreen 警告のみ)。Intel Mac も配るなら x86_64/universal を追加<br>・既存 `ci.yml`(lint/build/test)はそのまま、本ワークフローは tag 時のみ起動 |
 | リリースのバージョニング | ⬜ | 🤖 | `package.json` / `tauri.conf.json` の version 統一 + tag → Release のフロー化。 |

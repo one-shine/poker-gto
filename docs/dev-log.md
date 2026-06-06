@@ -28,3 +28,4 @@ date: 2026-05-30
 - **結果**: https://one-shine.github.io/poker-gto/ で稼働（HTTP 200 確認）。338 テスト green。
 - **収益化の注意**: 本格収益化するなら Cloudflare Pages へ移行（base を `'/'` に戻す1行のみ）。
 - **フォローアップ**: deploy-pages.yml / ci.yml の actions が Node20 で deprecation 警告 → @v4→@v5 へ更新する。
+  - ✅ **対応済(2026-06-06)**: 実体の最新メジャーを裏取りし、`checkout`/`setup-node` は @v6、Pages 系ペア(`upload-pages-artifact`/`deploy-pages`)は @v5 へ更新(checkout/setup-node は既に v6 が最新で、当初メモの @v5 想定より進んでいた)。これで Node24 ランタイムへ移行し、2026-06-16 の Node20 強制廃止に先んじて解消。設定は最小構成(`node-version:'22'`/`cache:npm`/`path:dist`)のため破壊的変更の影響なし。残: 実 CI で緑を確認。
