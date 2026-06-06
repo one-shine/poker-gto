@@ -14,7 +14,7 @@ if (!existsSync(swPath)) {
 
 const assetsDir = join(dist, 'assets')
 const fonts = existsSync(assetsDir)
-  ? readdirSync(assetsDir).filter(f => f.endsWith('.woff2')).map(f => `/assets/${f}`)
+  ? readdirSync(assetsDir).filter(f => f.endsWith('.woff2')).map(f => `./assets/${f}`)
   : []
 
 let sw = readFileSync(swPath, 'utf8')

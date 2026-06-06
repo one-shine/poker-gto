@@ -1,7 +1,9 @@
 // GTO Lab Service Worker — オフライン対応 (アプリシェル + フォント資産プリキャッシュ + 同一オリジン資産の runtime cache)。
 // CACHE 名と PRECACHE_FONTS はビルド後に scripts/inject-sw-precache.mjs がプレースホルダを実値へ置換する。
 const CACHE = '__CACHE_VERSION__'
-const SHELL = ['/', '/index.html', '/manifest.json', '/favicon.svg']
+// 相対パス: SW は base 配下(例 /poker-gto/sw.js)に配信され、相対URLは自身の URL 基準で解決される。
+// これによりルート配信(custom domain)でもサブパス配信(Pages)でも同じコードが動く。
+const SHELL = ['./', './index.html', './manifest.json', './favicon.svg']
 const PRECACHE_FONTS = __PRECACHE_FONTS__ // ビルドで dist/assets/*.woff2 を注入 (完全オフライン保証)
 
 self.addEventListener('install', event => {
@@ -29,7 +31,7 @@ self.addEventListener('fetch', event => {
   // ナビゲーションは network-first(更新を優先)、オフライン時はキャッシュにフォールバック
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request).then(r => r || caches.match('/'))),
+      fetch(request).catch(() => caches.match(request).then(r => r || caches.match('./'))),
     )
     return
   }

@@ -30,6 +30,8 @@ createRoot(document.getElementById('root')!).render(
 const isTauri = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || 'isTauri' in window)
 if (import.meta.env.PROD && !isTauri && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => { /* 登録失敗は致命的でない */ })
+    // base 配下に配信される sw.js を登録(Pages のサブパス配信に対応)。scope も base に合わせる。
+    const base = import.meta.env.BASE_URL
+    navigator.serviceWorker.register(`${base}sw.js`, { scope: base }).catch(() => { /* 登録失敗は致命的でない */ })
   })
 }
