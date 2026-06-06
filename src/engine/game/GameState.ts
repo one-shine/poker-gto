@@ -36,7 +36,10 @@ export function createInitialGameState(
     }
   })
 
-  // Post blinds
+  // Post blinds: スタックから出して「場の前のベット」(currentBetBB)に置く。
+  // ⚠ ここで pot へは入れない。pot は街遷移/ハンド終了の collectBetsIntoPot で
+  // currentBetBB を集約する単一経路に統一する(両方に入れるとブラインドを二重計上し
+  // チップ保存則が壊れ、表示ポットも 2 倍になる)。
   const sb = players.find(p => p.position === 'SB')!
   const bb = players.find(p => p.position === 'BB')!
   sb.stackBB -= 0.5
@@ -52,7 +55,7 @@ export function createInitialGameState(
       street: 'preflop',
       players,
       board: [],
-      pot: { mainPotBB: 1.5, sidePots: [] },
+      pot: { mainPotBB: 0, sidePots: [] }, // ブラインドは currentBetBB にあり、collectBetsIntoPot で集約
       actionHistory: [],
       currentActorId: null,
       buttonSeatIndex,

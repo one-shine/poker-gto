@@ -30,7 +30,10 @@ export function applyAction(
 ): GameState {
   const players = state.players.map(p => ({ ...p }))
   const actor = players.find(p => p.id === playerId)!
-  const potBefore = getTotalPot(state)
+  // record.potBB = アクション直前の「実ポット」= 確定ポット + 場の未回収ベット(ブラインド/前ベット込み)。
+  // mainPotBB は街遷移まで未回収ベットを含まないため、ここで現ベットを足して実ポットにする
+  // (プリフロップ先頭でも 1.5BB=ブラインド を正しく記録できる)。
+  const potBefore = getTotalPot(state) + state.players.reduce((s, p) => s + p.currentBetBB, 0)
   let amountBB = 0
 
   if (action === 'fold') {
