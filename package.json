@@ -1,7 +1,7 @@
 {
   "name": "poker-gto",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,7 @@
     "test": "vitest run",
     "type-check": "tsc -b",
     "lint": "eslint .",
+    "version:check": "node scripts/check-version.mjs",
     "preview": "vite preview",
     "build:icons": "tsx scripts/build-icons.ts",
     "tauri": "tauri",

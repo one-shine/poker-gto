@@ -19,6 +19,10 @@ jobs:
       - name: Install (clean)
         run: npm ci
 
+      # package.json と tauri.conf.json の version 一致を保証(リリースのバージョニング整合)
+      - name: Version check
+        run: npm run version:check
+
       - name: Lint
         run: npm run lint
 

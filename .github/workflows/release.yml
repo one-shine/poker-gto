@@ -1,0 +1,52 @@
+name: Release
+
+# v* タグ push でリリースを切る。配信は PWA(GitHub Pages・main push で自動デプロイ)が本線なので、
+# ここでは「バージョンの確定 + 変更履歴 + dist アーカイブ添付」を行う(ネイティブ配布物は作らない=PWA一本化)。
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # gh release create に必要
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # 防御: tag を後続の shell/ファイル名に渡す前に厳格な vX.Y.Z 形式に限定する
+      # (GITHUB_REF_NAME は引用済みで注入はできないが、不正な tag を早期に弾く)。
+      - name: Validate tag format
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::tag '${GITHUB_REF_NAME}' は vX.Y.Z 形式のリリースタグではありません"; exit 1
+          fi
+
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install (clean)
+        run: npm ci
+
+      # tag と package.json / tauri.conf.json の version 一致を保証(不一致ならリリース中止)
+      - name: Verify version matches tag
+        run: node scripts/check-version.mjs "${GITHUB_REF_NAME}"
+
+      - name: Build
+        run: npm run build
+
+      # PWA の dist を zip 添付(自己ホスト/オフライン保存用の固定版アーカイブ)
+      - name: Package dist
+        run: cd dist && zip -r "../poker-gto-${GITHUB_REF_NAME}.zip" . && cd ..
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            "poker-gto-${GITHUB_REF_NAME}.zip"
