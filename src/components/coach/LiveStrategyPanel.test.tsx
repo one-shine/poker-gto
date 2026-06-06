@@ -81,17 +81,25 @@ describe('LiveStrategyPanel', () => {
   it('always shows the odds guide (pot odds / required equity) alongside GTO for a call-facing spot (U18)', async () => {
     render(<LiveStrategyPanel pending={pending(1)} allowLiveSolve />)
     await screen.findByText(/AKs @ btn-open/)
+    // 用語チップ(TermChips)も「ポットオッズ/必要勝率」を出すので getAllByText で存在を確認
     expect(screen.getByText(/オッズ目安/)).toBeInTheDocument()
-    expect(screen.getByText(/ポットオッズ/)).toBeInTheDocument()
-    expect(screen.getByText(/必要勝率/)).toBeInTheDocument()
+    expect(screen.getAllByText(/ポットオッズ/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/必要勝率/).length).toBeGreaterThan(0)
+    expect(screen.getByText(/: 1/)).toBeInTheDocument() // ポットオッズの比 (x : 1)
   })
 
-  it('shows an equity-strength hint (not pot odds) for a no-bet spot (U18)', async () => {
+  it('shows an equity-strength hint (not the pot-odds ratio) for a no-bet spot (U18)', async () => {
     render(<LiveStrategyPanel pending={pending(0)} allowLiveSolve />)
     await screen.findByText(/AKs @ btn-open/)
     expect(screen.getByText(/オッズ目安/)).toBeInTheDocument()
     expect(screen.getByText(/あなたの勝率/)).toBeInTheDocument()
-    expect(screen.queryByText(/ポットオッズ/)).toBeNull() // コール無しなのでポットオッズは出さない
+    expect(screen.queryByText(/: 1/)).toBeNull() // コール無しなのでポットオッズの比は出さない
+  })
+
+  it('links the odds guide to the pot-odds theory (オッズ学習の導線)', async () => {
+    render(<LiveStrategyPanel pending={pending(1)} allowLiveSolve />)
+    await screen.findByText(/AKs @ btn-open/)
+    expect(screen.getByText(/オッズの理論/)).toBeInTheDocument()
   })
 
   it('shows the HU range as a multiway reference (rule 4) when 3+ players are in', async () => {

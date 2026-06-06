@@ -8,7 +8,7 @@ const RECENT_MAX = 50
 
 const emptyStat = (): DrillStat => ({ attempts: 0, correct: 0 })
 const emptyByKind = (): Record<DrillKind, DrillStat> => ({
-  preflop: emptyStat(), postflop: emptyStat(), pushfold: emptyStat(),
+  preflop: emptyStat(), postflop: emptyStat(), pushfold: emptyStat(), odds: emptyStat(),
 })
 
 interface DrillStore {

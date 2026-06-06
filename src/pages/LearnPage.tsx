@@ -14,6 +14,7 @@ import { HandReplay } from '../components/history/HandReplay'
 import { DrillPanel } from '../components/drill/DrillPanel'
 import { PushFoldDrillPanel } from '../components/drill/PushFoldDrillPanel'
 import { PostflopDrillPanel } from '../components/drill/PostflopDrillPanel'
+import { OddsDrillPanel } from '../components/drill/OddsDrillPanel'
 
 // D3/D4: 初回ユーザーに理論↔ドリル↔分析のループを可視化する学習パス。
 // 各ステップは該当ページへディープリンクし、孤立しがちな学習資産を結ぶ。
@@ -61,9 +62,9 @@ const LEVEL_JP: Record<SkillLevel, string> = {
 const LEVEL_ORDER: SkillLevel[] = ['beginner', 'intermediate', 'advanced', 'pro']
 
 const DRILL_KIND_JP: Record<DrillKind, string> = {
-  preflop: 'プリフロップ', postflop: 'ポストフロップ', pushfold: 'プッシュ/フォールド',
+  preflop: 'プリフロップ', postflop: 'ポストフロップ', pushfold: 'プッシュ/フォールド', odds: 'オッズ',
 }
-const DRILL_KINDS: DrillKind[] = ['preflop', 'postflop', 'pushfold']
+const DRILL_KINDS: DrillKind[] = ['preflop', 'postflop', 'pushfold', 'odds']
 
 // 正答率の色 (色だけに依存しない: 数値も併記)。
 const accuracyClass = (pct: number) => (pct >= 70 ? 'text-emerald-300' : pct >= 50 ? 'text-brass-300' : 'text-rose-300')
@@ -362,7 +363,7 @@ function DrillIntro() {
 // ドリルタブ: プリフロップ(近似) / ポストフロップ(自前CFR) / プッシュフォールド(厳密解) の切替。
 function DrillTab({ deepLinked }: { deepLinked: boolean }) {
   // 弱点ディープリンク(プリフロップのMistakeCategory)で来たら必ずプリフロップを表示。
-  const [mode, setMode] = useState<'preflop' | 'postflop' | 'pushfold'>('preflop')
+  const [mode, setMode] = useState<DrillKind>('preflop')
   return (
     <div className="space-y-4">
       <DrillIntro />
@@ -371,10 +372,11 @@ function DrillTab({ deepLinked }: { deepLinked: boolean }) {
           <Tab active={mode === 'preflop'} onClick={() => setMode('preflop')}>プリフロップ</Tab>
           <Tab active={mode === 'postflop'} onClick={() => setMode('postflop')}>ポストフロップ</Tab>
           <Tab active={mode === 'pushfold'} onClick={() => setMode('pushfold')}>プッシュ/フォールド</Tab>
+          <Tab active={mode === 'odds'} onClick={() => setMode('odds')}>オッズ</Tab>
         </div>
       )}
       <DrillKindSummary kind={mode} />
-      {mode === 'preflop' ? <DrillPanel /> : mode === 'postflop' ? <PostflopDrillPanel /> : <PushFoldDrillPanel />}
+      {mode === 'preflop' ? <DrillPanel /> : mode === 'postflop' ? <PostflopDrillPanel /> : mode === 'pushfold' ? <PushFoldDrillPanel /> : <OddsDrillPanel />}
     </div>
   )
 }

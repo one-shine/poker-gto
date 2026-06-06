@@ -77,3 +77,9 @@ date: 2026-05-30
 - **U17**: フォールド後は残りの AI を遅延0で即決着。`gameStore` にモジュールフラグ `heroFoldedThisHand`(`submitHeroAction(fold)` で立て・`HAND_START`/`resetGame` でリセット)、`delayScheduler` が遅延0へ分岐。結果表示→手動 New Hand。U16 ポーズ→「次へ」→瞬時決着の順。store の `gameState` は AI ハンドラ登録順で1手 stale になるためフラグ方式で同期。
 - **U18**: `LiveStrategyPanel` に共通 `OddsGuide` を導入し GTO に常時併記(バー下=副 / 対象外=主)。コール直面=ポットオッズ/必要勝率/勝率→コール有利・フォールド寄り、チェック局面=エクイティ強弱。注意書きを1行に簡潔化(要望)。`useEquity` 常時化・`showPotOdds` prop 廃止(GamePage 受け渡しも除去)。ミス時は CoachPanel が答えを出すため reveal は出さない設計は維持。
 - **検証**: 型0・lint0・全365テスト緑(U17/U18 のテスト更新+追加)・build緑。Playwright で対象外スポットの reveal に OddsGuide(エクイティ強弱・短い注意書き)が主表示されることを実測。U17 は unit test(フォールド→遅延0で即決着・handCount===1)で確証。
+
+### 2026-06-06 オッズ学習の組み込み(オッズドリル + 答え合わせ→理論リンク)U19
+- **オッズドリル**: 新規 `lib/drill/oddsDrill.ts`(純計算・ソルバー不要)。3種=必要勝率 B/(P+2B)/コール判断(勝率vs必要勝率)/アウツ→勝率(×2/×4)。`generateOddsQuestion`/`judgeOdds`、検証用の `meta` 付き。`OddsDrillPanel`(PushFold をテンプレ)は種別 seg・正誤+計算解説・`TermChips`+`ConceptLink('pot-odds')`、`drillStore.recordDrill(kind:'odds')`。
+- **既存資産の再利用**: 理論 `pot-odds`・用語集(ポットオッズ/エクイティ/アウツ/EV)・`TermChips`/`ConceptLink`・`drillStore`(U4)。`DrillKind` に `'odds'` 追加、`LearnPage` の DrillTab に4つ目タブ+`DRILL_KIND_JP`/`DRILL_KINDS`(ダッシュボード/通算が自動対応)。
+- **ゲーム側の導線**: `LiveStrategyPanel` の `OddsGuide`(U18)に `ConceptLink('pot-odds', 'オッズの理論 ▶')`+用語チップ。答え合わせのオッズ目安から理論/用語へ。
+- **検証**: 型0・lint0・全372テスト緑(oddsDrill 6 + LiveStrategyPanel リンク+2)。build緑。Playwright で「学習→ドリル→オッズ」タブ→必要勝率の問題に正解→計算解説+用語チップ+関連理論→pot-odds 理論ページ遷移・通算成績記録を実測。

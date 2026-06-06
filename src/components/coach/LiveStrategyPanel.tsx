@@ -7,6 +7,7 @@ import { useSessionStore } from '../../stores/sessionStore'
 import { useSolution } from '../../hooks/useSolution'
 import { useEquity } from '../../hooks/useEquity'
 import { StrategyBars } from './StrategyBars'
+import { TermChips, ConceptLink } from '../common/TermChips'
 import type { PlayerAction } from '../../types/game'
 
 const ACTION_JP: Record<PlayerAction, string> = {
@@ -54,6 +55,11 @@ function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot }: {
           <span className="block text-[10px] text-zinc-500 mt-0.5">※ 大まかなエクイティ目安(GTO判断とは別)</span>
         </p>
       )}
+      {/* オッズ学習への導線: pot-odds 理論 + 用語チップ */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <ConceptLink conceptId="pot-odds" label="オッズの理論 ▶" />
+        <TermChips terms={['ポットオッズ', '必要勝率', 'エクイティ']} />
+      </div>
     </div>
   )
 }
