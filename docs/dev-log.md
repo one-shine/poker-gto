@@ -51,3 +51,13 @@ date: 2026-05-30
   - モバイルも `useContainSize(isMobile?5/6:16/9)` で利用可能高さにフィット。`GamePage` の測定高さ `tableH` を**モバイル卓コンテナにも付与**(従来 `isMobile||!gameState?undefined` を `!gameState?undefined` に)。`GamePage` の `isMobile` は不要になり削除。
   - `SEAT_POS_MOBILE`: ヒーロー 90→86、上席 8→13、左右席を上げて分離。`PlayerSeat` のヒーローカードを compact 時 md→sm に縮小(席が小さくなり重なり減)。
 - **検証**: Playwright を local dev(390/360/430 幅 × 640–844 高 + デスクトップ1280)で駆動し bounding box 実測。全モバイルサイズで **no-scroll**・**札↔ボタン gap 5–21px**・**上端見切れ解消**・ヒーロー↔側席の重なり解消(360幅のみ側席バッジが軽微近接)。デスクトップ回帰なし。型0/lint0/test339緑/build緑。
+
+### 2026-06-06 残バックログ一括(U4/U5/U6/U11/U12)— 計画ワークフロー + 順次実装
+- **進め方**: 4並列の計画ワークフロー(各機能の現状コード精査→構造化計画)を回し、ファイル競合を避けて U11→U6+U12→U4→U5 の順に実装・検証・コミット。最後に Playwright で全UI目視。
+- **U11 データ移送**: `src/lib/storage/dataTransfer.ts`(exportAll/importAll・3 persist 先を束ね・完全ローカル・version 検証/部分インポート)+ SettingsPage に書き出し/読み込み。
+- **U12 レンジ選択**: 27ピル羅列→種別×シナリオ2段選択。`preflop.ts` に `scenarioKind/scenarioOpponent/scenariosOfKind`(id規則・単一の真実源)。RangeVsRange は optgroup 化。
+- **U6 ヒートマップ**: `RangeGrid` に `heatmap`(off/raise/call)。暗→色の濃淡+角に頻度%+グラデ凡例。**EV は出さない**(approximate 規約・RangeCell に EV 無)→頻度のみ。
+- **U4 ドリル成績**: 新規 `drillStore`(IndexedDB)。byKind/byBucket/recent。3パネルで `recordDrill`。`evLossFrom`(postflop/pushfold のみ)。Dashboard/DrillTab に表示。
+- **U5 ハンド履歴**: `HandSummary` 型 + `sessionStore.handSummaries`。gameStore で純損益算出(netBB=グロス受取−拠出、拠出=開始−終了stack)。History に勝敗/純損益/ミス印、HandReplay にミス→理論/ドリル導線。handId 突合・旧履歴は degrade。
+- **検証**: 型0・lint0・**全359テスト緑**(+20: dataTransfer6/preflop.helpers4/drillStore5/evLoss3/sessionStore+2)。Playwright で 5機能すべて実機表示確認(ヒートマップ・2段選択・ドリル成績カード・履歴の勝敗バッジ+⚠+理論/ドリル導線・設定ボタン)。
+- **設計判断**: ドリルは集計軸が MistakeCategory に乗らない(postflop=street/potType, pushfold=role/stack)ため progressStore 拡張でなく専用 `drillStore`。純損益は「配当を stack に戻さない」実装前提(将来 payout を stack 反映する変更が入ると二重計上 → gameStore に理由コメント)。
