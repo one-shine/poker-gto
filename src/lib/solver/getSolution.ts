@@ -77,7 +77,8 @@ export async function getSolution(
     // 設計ルール4: マルチウェイは同じ HU レンジを「参考値」として返す (共有インスタンスは mutate せずコピー)。
     return spot.multiway ? { ...base, multiwayReference: true } : base
   }
-  // ポストフロップ: flop/turn/river を自前 CFR で都度求解 (turn/flop は showdown をエクイティ近似)。
+  // ポストフロップ: flop/turn/river を自前 CFR で都度求解。
+  // turn は完全チャンスノード CFR(river ベッティング織り込み)/ flop は showdown をエクイティ近似(賭け未考慮)。
   if (
     (spot.street === 'flop' || spot.street === 'turn' || spot.street === 'river') &&
     spot.board && spot.board.length >= 3 && spot.heroCards && spot.potBB != null

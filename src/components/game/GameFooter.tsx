@@ -71,7 +71,7 @@ export function GameFooter({ source }: GameFooterProps) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="閉じる"
-                className="min-h-9 min-w-9 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+                className="min-h-11 min-w-11 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
               >
                 ✕
               </button>

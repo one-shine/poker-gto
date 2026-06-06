@@ -10,8 +10,8 @@ import { handCategory } from '../cards/handCategory'
 import { evaluateBestHand } from '../cards/HandEvaluator'
 import { CATEGORY_EXPLAIN, preflopPrinciple, postflopPrinciple } from '../../lib/coach/coachConcepts'
 import { AgentBus } from './AgentBus'
+import { MIXED_STRATEGY_THRESHOLD as MIXED_THRESHOLD } from '../../types/gtoRules'
 
-const MIXED_THRESHOLD = 0.10 // 頻度10%以上は正解扱い (ミックス戦略)
 const T_INACCURACY = 0.5     // BB。これ以下=minor
 const T_MISTAKE = 2.0        // BB。これ超=critical
 

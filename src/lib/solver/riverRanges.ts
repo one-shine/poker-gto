@@ -1,5 +1,5 @@
 import type { Card, Position, Rank, Suit } from '../../types/game'
-import { RANKS, SUITS } from '../../engine/cards/Card'
+import { SUITS } from '../../engine/cards/Card'
 import { sameCard } from '../../engine/cards/Card'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 import type { Combo } from './riverSolver'
@@ -52,9 +52,6 @@ export function expandRange(
   }
   return combos
 }
-
-// 各カテゴリの出現順 (RANKS) を保証する補助 (未使用カテゴリ検出用)。
-export const ALL_RANKS = RANKS
 
 // hero の実手札を必ず重み1で含める (既存同一コンボは置換)。
 function forceHero(combos: Combo[], heroCards: [Card, Card]): Combo[] {

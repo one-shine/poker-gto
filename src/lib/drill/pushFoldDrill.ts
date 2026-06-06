@@ -1,6 +1,7 @@
 import type { NodeSolution, SolutionSource } from '../../types/solver'
 import { allHandCategories } from './preflopDrill'
 import { handTier } from '../coach/coachConcepts'
+import { MIXED_STRATEGY_THRESHOLD as MIXED_THRESHOLD } from '../../types/gtoRules'
 
 // HU プッシュ/フォールド ドリル。R4 で自前生成した厳密解 (hu-pf-*.json, solver_precomputed)
 // を出題基準にする。ショーダウン=オールイン勝率=真値のため**実 EV** が使える。
@@ -51,8 +52,6 @@ export interface PushFoldJudgement {
   source: SolutionSource | null
   exploitability?: number | null // 厳密解の到達 exploitability (BB/hand)
 }
-
-const MIXED_THRESHOLD = 0.10
 
 function optionsFor(role: PushFoldRole): { action: PFAction; label: string }[] {
   return role === 'sb'

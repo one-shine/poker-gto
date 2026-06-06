@@ -56,7 +56,7 @@ export function KeyboardHelp() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="min-h-8 px-3 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 text-zinc-100"
+                className="min-h-11 px-3 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 text-zinc-100"
               >
                 閉じる
               </button>

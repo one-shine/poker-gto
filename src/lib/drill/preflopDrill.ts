@@ -1,6 +1,7 @@
 import type { MistakeCategory } from '../../types/stats'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 import { handTier, preflopPrinciple } from '../coach/coachConcepts'
+import { MIXED_STRATEGY_THRESHOLD as MIXED_THRESHOLD } from '../../types/gtoRules'
 
 const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
 
@@ -30,8 +31,6 @@ export interface DrillJudgement {
   best: ActionFreq[] // 頻度 ≥ 0.10 の正解アクション
   all: ActionFreq[]  // 全アクションの頻度 (説明用)
 }
-
-const MIXED_THRESHOLD = 0.10
 
 export function allHandCategories(): string[] {
   const out: string[] = []

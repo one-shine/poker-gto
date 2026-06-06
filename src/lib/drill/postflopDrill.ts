@@ -8,9 +8,11 @@ import {
   REPRESENTATIVE_BOARDS, representativeSpotSet, representativeHeroCombos,
 } from '../solver/representativeBoards'
 import { boardTexture } from '../coach/coachConcepts'
+import { MIXED_STRATEGY_THRESHOLD as MIXED_THRESHOLD } from '../../types/gtoRules'
 
-// ポストフロップ ドリル (R23 + R16 3betポット)。HU の単一レイズド/3betポットを自前 CFR で
-// 都度求解し、solver_live 解を出題基準にする。turn/flop は showdown をエクイティ近似 (賭け未考慮)。
+// ポストフロップ ドリル (R23 + R16 3betポット + 代表ボード事前計算)。HU の単一レイズド/3betポットを
+// 自前 CFR で求解(代表ボードは事前計算済の厳密解、それ以外は live solve)。
+// turn は完全チャンスノード CFR(river ベッティング織り込み)/ flop は showdown をエクイティ近似 (賭け未考慮)。
 // 依存方向: drill ← solver。求解は async (Worker CFR) のため UI 側でローディングを持つ。
 
 export type PostflopStreet = 'flop' | 'turn' | 'river'
@@ -55,7 +57,6 @@ const SPOTS: DrillSpot[] = [
 const BOARD_LEN: Record<PostflopStreet, number> = { flop: 3, turn: 4, river: 5 }
 const BET_FRAC = 0.66
 const RAISE_FRAC = 0.5 // getSolution が渡す raiseSizes と一致させる
-const MIXED_THRESHOLD = 0.10
 
 // 被レイズ節の hero リードベット額 と 相手のレイズ to 額 (riverSolver の facingBet と同式)。
 function raiseSizing(potBB: number): { heroBet: number; raiseTo: number } {
