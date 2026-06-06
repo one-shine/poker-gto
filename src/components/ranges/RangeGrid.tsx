@@ -13,8 +13,28 @@ const RAISE_COLOR = '#16a34a' // green-600
 const CALL_COLOR = '#2563eb'  // blue-600
 const FOLD_COLOR = '#27272a'  // zinc-800
 
+// U6: 頻度ヒートマップの表示モード。'off'=従来のスプリット塗り / 'raise'|'call'=単一指標の濃淡。
+export type HeatmapMode = 'off' | 'raise' | 'call'
+
+const metricFreq = (cell: RangeCell | undefined, mode: HeatmapMode): number =>
+  !cell ? 0 : mode === 'call' ? cell.call : cell.raise
+
+// 暗→指標色を頻度 t で線形補間 (0=暗灰, 1=満色)。ダーク背景上なので文字は白で可読。
+function lerpHex(from: string, to: string, t: number): string {
+  const ch = (s: string) => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16))
+  const a = ch(from), b = ch(to)
+  const k = Math.max(0, Math.min(1, t))
+  const m = a.map((v, i) => Math.round(v + (b[i] - v) * k))
+  return `rgb(${m[0]},${m[1]},${m[2]})`
+}
+
 // C1: セル内を頻度比でスタック塗り(下から raise→call→fold)。混合戦略が一目でわかる。
-function cellStyle(cell: RangeCell | undefined): React.CSSProperties {
+// U6: heatmap モードでは指標(raise|call)頻度を暗→色の濃淡1色で塗る(分布が一目)。
+function cellStyle(cell: RangeCell | undefined, heatmap: HeatmapMode): React.CSSProperties {
+  if (heatmap !== 'off') {
+    const color = heatmap === 'call' ? CALL_COLOR : RAISE_COLOR
+    return { background: lerpHex(FOLD_COLOR, color, metricFreq(cell, heatmap)) }
+  }
   if (!cell || cell.fold >= 1) return { background: FOLD_COLOR }
   const { raise, call, fold } = cell
   const stops: string[] = []
@@ -51,12 +71,15 @@ function actionToken(cell: RangeCell | undefined): string {
 
 interface Props {
   scenario: RangeScenario
+  heatmap?: HeatmapMode // U6: 既定 'off'=従来塗り。RangeVsRange 等は省略で従来描画。
 }
 
-export function RangeGrid({ scenario }: Props) {
+export function RangeGrid({ scenario, heatmap = 'off' }: Props) {
   const hasCall = Object.values(scenario.cells).some(c => c.call > 0)
   // 対3bet スポット(opener応答)では raise=4bet。それ以外で call を含む=3bet。
   const raiseLabel = scenario.id.endsWith('-3bet') ? '4-Bet' : hasCall ? '3-Bet' : 'レイズ'
+  const heatColor = heatmap === 'call' ? CALL_COLOR : RAISE_COLOR
+  const heatLabel = heatmap === 'call' ? 'コール頻度' : raiseLabel + '頻度'
 
   return (
     <div className="space-y-3">
@@ -83,20 +106,22 @@ export function RangeGrid({ scenario }: Props) {
               const hand = handName(row, col)
               const cell = scenario.cells[hand]
               const token = actionToken(cell)
-              const folded = !cell || cell.fold >= 1
+              const heatF = heatmap !== 'off' ? metricFreq(cell, heatmap) : 0
+              // 色覚配慮: heatmap では色の濃淡だけに依らず頻度%を角に併記、通常時は R/C/M トークン。
+              const corner = heatmap !== 'off' ? (heatF > 0 ? `${Math.round(heatF * 100)}` : '') : token
+              const dim = heatmap !== 'off' ? heatF <= 0 : (!cell || cell.fold >= 1)
               return (
                 <div
                   key={`${row}-${col}`}
-                  style={cellStyle(cell)}
+                  style={cellStyle(cell, heatmap)}
                   className={`relative aspect-square flex items-center justify-center text-[11px] font-data font-bold rounded-[3px] border border-black/30 select-none cursor-default ${
-                    folded ? 'text-zinc-500' : 'text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]'
+                    dim ? 'text-zinc-500' : 'text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]'
                   }`}
                   title={cellTitle(hand, cell)}
                 >
                   {hand}
-                  {/* 色覚配慮: 行動トークンを角に併記 */}
-                  {token && (
-                    <span className="absolute top-0 right-0.5 text-[8px] font-extrabold opacity-90 leading-none">{token}</span>
+                  {corner && (
+                    <span className="absolute top-0 right-0.5 text-[8px] font-extrabold opacity-90 leading-none">{corner}</span>
                   )}
                 </div>
               )
@@ -105,7 +130,22 @@ export function RangeGrid({ scenario }: Props) {
         </div>
       </div>
 
-      {/* Legend — 色 + トークン (R/C/M) 併記で色覚配慮 */}
+      {/* Legend (heatmap) — グラデバー + 0/50/100% 目盛りで色覚配慮 */}
+      {heatmap !== 'off' ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-zinc-400">
+          <span className="font-semibold text-zinc-300">{heatLabel}:</span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-zinc-500">0%</span>
+            <span
+              className="h-3 w-28 rounded-sm border border-black/30"
+              style={{ backgroundImage: `linear-gradient(to right, ${FOLD_COLOR}, ${heatColor})` }}
+            />
+            <span className="text-zinc-300 font-semibold">100%</span>
+          </span>
+          <span className="text-zinc-500 italic">濃いほど高頻度 / 角の数字 = その行動の頻度%</span>
+        </div>
+      ) : (
+      /* Legend (通常) — 色 + トークン (R/C/M) 併記で色覚配慮 */
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-400">
         <span className="font-semibold text-zinc-300">凡例:</span>
         <span className="flex items-center gap-1.5">
@@ -130,6 +170,7 @@ export function RangeGrid({ scenario }: Props) {
         </span>
         <span className="ml-1 text-zinc-500 italic">セル内の塗り分け = 各行動の頻度比 / 角の R·C·M は主行動</span>
       </div>
+      )}
     </div>
   )
 }

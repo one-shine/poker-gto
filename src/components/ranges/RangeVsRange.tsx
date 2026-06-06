@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { RangeScenario } from '../../types/ranges'
-import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
+import { PREFLOP_SCENARIOS, scenariosOfKind, SCENARIO_KIND_LABEL, type ScenarioKind } from '../../data/ranges/preflop'
+
+const KINDS: ScenarioKind[] = ['open', 'defense', '3bet']
 import { RangeGrid } from './RangeGrid'
 import { RangeEquityDistribution } from './RangeEquityDistribution'
 import { rangeStats } from '../../lib/ranges/rangeStats'
@@ -52,8 +54,12 @@ function Picker({ value, onChange, label }: { value: string; onChange: (v: strin
         onChange={e => onChange(e.target.value)}
         className="mt-1 w-full min-h-10 px-3 rounded-lg bg-base-800 border border-white/10 text-sm text-zinc-100 focus:border-brass-500/50 focus:outline-none"
       >
-        {PREFLOP_SCENARIOS.map(s => (
-          <option key={s.id} value={s.id}>{s.label}</option>
+        {KINDS.map(k => (
+          <optgroup key={k} label={SCENARIO_KIND_LABEL[k]}>
+            {scenariosOfKind(k).map(s => (
+              <option key={s.id} value={s.id}>{s.label}</option>
+            ))}
+          </optgroup>
         ))}
       </select>
     </label>

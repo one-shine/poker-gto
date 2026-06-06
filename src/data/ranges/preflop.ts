@@ -464,3 +464,35 @@ export const PREFLOP_SCENARIOS: RangeScenario[] = [
   { id: 'mp-vs-btn-3bet', label:'MP vs BTN 3Bet', position:'MP', raiseSize:11, cells: mpVsBtn3bet },
   { id: 'sb-vs-bb-3bet',  label:'SB vs BB 3Bet',  position:'SB', raiseSize:11, cells: sbVsBb3bet },
 ]
+
+// ── シナリオ分類ヘルパ (U12: 選択UIをコンパクト化する単一の真実源) ──────────────
+// id 命名規則に基づく分類: `{pos}-open` / `{pos}-vs-{opp}` / `{pos}-vs-{opp}-3bet`。
+export type ScenarioKind = 'open' | 'defense' | '3bet'
+
+export function scenarioKind(id: string): ScenarioKind {
+  if (id.endsWith('-3bet')) return '3bet'
+  if (id.includes('-vs-')) return 'defense'
+  return 'open'
+}
+
+// 相手(opener / 3bettor)のポジション略号。open は相手なし=null。
+export function scenarioOpponent(id: string): string | null {
+  const m = id.match(/-vs-([a-z]+)(?:-3bet)?$/)
+  return m ? m[1] : null
+}
+
+export const SCENARIO_KIND_LABEL: Record<ScenarioKind, string> = {
+  open: 'オープン',
+  defense: 'vsオープン',
+  '3bet': '対3Bet',
+}
+
+// ヒーローのポジション表示順 (UTG→BB)。選択UIの並びを安定させる。
+const POSITION_ORDER = ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB']
+
+// 指定 kind のシナリオを position 順に返す (選択UIの第2段用)。
+export function scenariosOfKind(kind: ScenarioKind): RangeScenario[] {
+  return PREFLOP_SCENARIOS
+    .filter(s => scenarioKind(s.id) === kind)
+    .sort((a, b) => POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position))
+}
