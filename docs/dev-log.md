@@ -5,6 +5,14 @@ date: 2026-05-30
 ---
 # poker-gto 開発ログ
 
+### 2026-06-06 ポット二重計上修正 + 全方位レビュー
+- **ポット二重計上(U20・commit 608420d)**: ユーザーの「なぜ開始ポットが3BBか」から発覚。`GameState` がブラインドを `mainPotBB:1.5` と `currentBetBB` の両方に入れていた=チップ保存則破れ(600→601.5)。表示2倍に加え `collectBetsIntoPot` が膨らんだ mainPot へ加算しポストフロップ確定ポット・配当・spotKey の求解ポットまで +1.5 過大(毎ハンドリセットで累積はしないが表示/解は誤り)。→ `mainPotBB:0`(ブラインドは currentBetBB のみ・pot は collect で単一経路集約)+ `record.potBB`=実ポット(getTotalPot+現ベット)。`potAccounting.test.ts` で保存則を回帰化。
+- **全方位レビュー(workflow・64エージェント)**: 10次元(engine会計/GTO正直さ/評価ルール/multiway勝率/事前計算/a11y/security/データライセンス/テスト網羅/UX)を find→**敵対的verify**→synthesis。確証42件(high21)。
+  - **採用した確証修正**: ①最小レイズ過大バグ(U21・commit 43a9454)②CoachToast の solver_live ラベル補完(ルール1)③turn=完全チャンスCFR の誤コメント修正 ④MIXED_STRATEGY_THRESHOLD 4重複を types/gtoRules に一元化 ⑤未使用 ALL_RANKS 削除 ⑥close/次へ ボタンのタップ44px化(commit c412528)。
+  - **却下した誤検出**: isHeroIP の「button≠0でバグ」(実際は完全に button 相対=正しい)/ useEquity の reference stale(`cancelled` ガードで防御済)。
+  - **保留(妥当だが低優先)**: rejection sampling のサンプル減(参考値として許容・スクラッチ調査でも実効率高)/ 多数のテスト網羅ギャップ(Showdown/GameStateMachine 専用ユニット等)/ 一部 a11y(色のみ強調の WeaknessCard/RangeGrid)/ データライセンスのビルド時強制。
+- **検証**: 型0・lint0・全410テスト緑・build緑・CI/Pages 緑。
+
 ### 2026-06-06 リリースのバージョニング + 3betポット代表盤面
 - **バージョニング(E節)**: `package.json` を version の正に統一(0.0.0→0.1.0・tauri.conf.json 0.1.0 と一致)。`scripts/check-version.mjs`(package.json===tauri.conf.json を検証・tag 引数で tag とも照合)+ `npm run version:check` を CI に追加(push/PR ごとにドリフト検出)。`.github/workflows/release.yml`: `v*` タグ push で ①タグ形式 vX.Y.Z 検証 ②`tag==package.json==tauri.conf.json` 保証 ③build→dist を zip 添付 ④`gh release create --generate-notes`。配信は PWA(Pages 自動デプロイ)が本線で Release は履歴の節目+固定版アーカイブ。手順は RELEASE.md §8。**セキュリティ**: `GITHUB_REF_NAME` は引用済み env 参照(`${{}}` 補間なし)+ 先頭で vX.Y.Z 形式に限定(security-guidance hook 指摘の workflow injection 対策)。commit `a1b6d6e`。
 - **3betポット代表盤面(A節 追補)**: 代表ボード事前計算を pot 種別で一般化。`representativeBoards.ts` に `REPRESENTATIVE_SPOT_SETS`(srp: pot5.5/stack100/4スポット, 3bet: pot22.5/stack89/6スポット=BB/SB 3bet vs BTN/CO の 3better OOP×caller IP)。`precompute-postflop.ts` を pot 横断ループに(`--pot-type` フィルタ)。3bet は **96ファイル**(代表8×6スポット×phase2)を生成(turn iters160/cap64 で exploit 0.8〜1.1% / river <0.5%)。**計160ファイル**。ドリル代表モードに SRP/3bet トグルを表示(`generateRepresentativePostflopQuestion(rng, potType)`)。getSolution は spotId/pot/stack で別キーなので無改修でヒット。
