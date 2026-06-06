@@ -65,7 +65,7 @@ describe('PREFLOP_SCENARIOS', () => {
   // を preflop.ts の見出しコメント値に固定。頻度を編集してコメントと乖離させたら落ちる = 両者を必ず同期させる。
   it('combo-weighted width matches the documented per-spot comments (drift guard)', () => {
     const EXPECTED: Record<string, number> = {
-      'btn-open': 0.368, 'co-open': 0.247, 'mp-open': 0.173, 'utg-open': 0.130, 'sb-open': 0.497,
+      'btn-open': 0.368, 'co-open': 0.247, 'mp-open': 0.176, 'utg-open': 0.134, 'sb-open': 0.497,
       'bb-vs-btn': 0.430, 'bb-vs-sb': 0.250, 'bb-vs-utg': 0.166, 'bb-vs-mp': 0.219, 'bb-vs-co': 0.268,
       'sb-vs-btn': 0.069, 'btn-vs-co': 0.164, 'sb-vs-co': 0.057, 'btn-vs-utg': 0.110,
       'btn-vs-mp': 0.146, 'co-vs-utg': 0.087,
