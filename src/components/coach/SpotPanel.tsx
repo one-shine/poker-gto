@@ -37,6 +37,7 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
   const review = phase === 'review'
   const [open, setOpen] = useState(review)
   const [revealed, setRevealed] = useState(review)
+  const [theoryOpen, setTheoryOpen] = useState(false) // 関連理論・用語は既定折りたたみ(場所を取りすぎる)
   const markHinted = useSessionStore(s => s.markHinted)
   const studyShowStrategy = useSettingsStore(s => s.studyShowStrategy)
 
@@ -134,10 +135,24 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
     )
   }
 
+  // 関連理論・用語は既定で畳む(大ボタン+チップで縦に伸び、卓を圧迫し場所を取りすぎるため)。
   const theory = (conceptLinks.length > 0 || guidance.terms.length > 0) ? (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-      {conceptLinks.map(c => <ConceptLink key={c.id} conceptId={c.id} label={`${c.title} ▶`} />)}
-      <TermChips terms={guidance.terms} />
+    <div className="border-t border-white/5 pt-1.5">
+      <button
+        type="button"
+        onClick={() => setTheoryOpen(o => !o)}
+        aria-expanded={theoryOpen}
+        className="text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors
+          focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-300"
+      >
+        <span aria-hidden="true">📚</span> 関連理論・用語 <span aria-hidden="true">{theoryOpen ? '▲' : '▾'}</span>
+      </button>
+      {theoryOpen && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {conceptLinks.map(c => <ConceptLink key={c.id} conceptId={c.id} label={`${c.title} ▶`} />)}
+          <TermChips terms={guidance.terms} />
+        </div>
+      )}
     </div>
   ) : null
 
@@ -169,8 +184,9 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
 
   // review: インライン・自動展開。
   if (review) {
+    // 高さ上限+内部スクロール: パネルが伸びても卓の高さを奪い座席が重なるのを防ぐ(防御)。
     return (
-      <div className="w-full max-w-2xl rounded-2xl border border-brass-500/25 bg-base-800/85 backdrop-blur-md p-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
+      <div className="w-full max-w-2xl max-h-[48vh] overflow-auto rounded-2xl border border-brass-500/25 bg-base-800/85 backdrop-blur-md p-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
         <div className="flex items-center gap-1.5 flex-wrap mb-2">
           <svg className="w-3.5 h-3.5 shrink-0 text-brass-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3v18h18" /><rect x="7" y="11" width="3" height="6" rx="0.5" /><rect x="12" y="7" width="3" height="10" rx="0.5" /><rect x="17" y="13" width="3" height="4" rx="0.5" /></svg>
           <span className="text-[11px] font-bold text-brass-300">答え合わせ</span>
