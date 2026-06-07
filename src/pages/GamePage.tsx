@@ -104,7 +104,7 @@ export function GamePage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div ref={contentRef} className="flex-1 flex flex-col items-center justify-start gap-3 sm:gap-4 p-3 sm:p-4 min-h-0 overflow-auto">
+      <div ref={contentRef} className="flex-1 flex flex-col items-center justify-center gap-3 sm:gap-4 p-3 sm:p-4 min-h-0 overflow-auto">
         {/* テーブル領域: 高さは実測値で固定し、卓を幅×高さの両制約でフィット (R30)。
             操作領域と合わせて中央寄せされる。モバイルは縦長 CSS に任せ高さ自動。 */}
         <div
