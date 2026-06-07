@@ -36,7 +36,9 @@ GTO評価の基準は `src/lib/solver/getSolution()` が返す `NodeSolution` (`
   bus/dealer はモジュールスコープ保持(再レンダーで再生成しない)。`pendingHeroAction != null` で ActionPanel 表示。
 - `settingsStore.ts` ✅ — `useSettingsStore` (persist key `poker-gto-settings`)。
   `appMode`('play'|'study'), `opponentMode`('trainer'|'exploit', 既定exploit), `stackBB`, `autoAdvanceSeconds`(既定5), `studyShowStrategy`(アクション後の答え合わせ表示・U8), `aiSpeed`('slow'|'normal'|'fast', 既定normal・相手の間・U9), `onboardingComplete` + 各セッター。型 `AppMode`/`OpponentMode`/`AiSpeed` をexport。
-- `sessionStore.ts` / `progressStore.ts` ⬜ — Phase 4
+- `sessionStore.ts` ✅ — `useSessionStore` (persist IndexedDB `poker-gto` / key `poker-gto-session`)。セッション統計・ミス記録・`handSummaries`(勝敗/純損益・U5)・`gtoAccuracy()`(ヒント済みハンドは精度から除外)・`recordEvaluation()`。
+- `progressStore.ts` ✅ — `useProgressStore`。レベル/XP・ミス履歴。スキル昇格(beginner→pro)を駆動。
+- `drillStore.ts` ✅ — `useDrillStore` (persist `poker-gto-drill`)。ドリル試行/正誤を種別(preflop/postflop/pushfold/odds)・bucket 別に永続化(U4/U19)。
 
 ### components/game/
 - `CardDisplay.tsx` ✅ — `<CardDisplay card faceDown size>` (size: sm/md/lg)。♠♥♦♣+赤/黒、裏面、T→"10"、`role="img"`+aria-label。

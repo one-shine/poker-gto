@@ -55,7 +55,7 @@ function SingleRange() {
         <div>
           <p className="text-sm text-zinc-400">
             100BB・6-max テーブル。セル内の塗り分けが各行動の頻度比 (混合戦略) です。
-            セルにカーソルで詳細頻度を表示。
+            セルをタップ (PC はカーソル) で詳細頻度を表示。
           </p>
           <p className="text-xs text-zinc-500 mt-0.5">
             GTO近似レンジ (一般理論ベースの手作り・source: approximate)

@@ -63,7 +63,7 @@ function TermChip({ term }: ChipProps) {
         aria-expanded={open}
         aria-controls={open ? tipId : undefined}
         aria-describedby={open ? tipId : undefined}
-        className="inline-flex items-center gap-1 min-h-9 px-2 rounded-md text-[11px] font-bold
+        className="inline-flex items-center gap-1 min-h-11 px-3 rounded-md text-[11px] font-bold
           border border-brass-500/40 bg-brass-500/10 text-brass-200 underline decoration-dotted
           underline-offset-2 hover:bg-brass-500/20 transition-colors
           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brass-300"
