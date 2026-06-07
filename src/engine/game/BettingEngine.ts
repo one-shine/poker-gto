@@ -56,7 +56,11 @@ export function applyAction(
     amountBB = actor.currentBetBB // to-amount: 到達したベット水準 (call で揃えた額)
     if (actor.stackBB === 0) actor.isAllIn = true
   } else if (action === 'raise') {
-    const target = raiseToAmount > 0 ? raiseToAmount : getMinRaiseToAmount(state)
+    const requested = raiseToAmount > 0 ? raiseToAmount : getMinRaiseToAmount(state)
+    // レイズ到達額はアクターの持ち分 (現ベット + スタック) を超えられない。
+    // 超える指定は実質オールイン。キャップしないと持ち分超のベットが「幽霊チップ」になり、
+    // 相手がコールできない超過分が単独 eligible のサイドポットになって2人勝者/チップ増殖を招く。
+    const target = Math.min(requested, actor.currentBetBB + actor.stackBB)
     const added = target - actor.currentBetBB
     actor.stackBB -= added
     actor.currentBetBB = target
