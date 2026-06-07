@@ -201,9 +201,10 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
     )
   }
 
-  // decision: 折りたたみ + 開くとオーバーレイ(卓の高さを奪わない=座席の重なり防止)。
+  // decision: 1行バー + 開くと「固定ボトムシート」。固定にすることで上端が祖先の overflow に
+  // クリップされず(「上が見切れて戻れない」回避)、卓の高さも奪わない(座席の重なり回避)。
   return (
-    <div className="relative w-full max-w-2xl">
+    <div className="w-full max-w-2xl">
       <div className="rounded-2xl border border-sky-500/25 bg-base-800/70 backdrop-blur-md overflow-hidden">
         <button
           type="button"
@@ -214,16 +215,35 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
         >
           <span className="text-[11px] font-bold text-sky-300 flex items-center gap-1.5">
             <span aria-hidden="true">💡</span> この局面の考え方
-            {!open && <span className="text-zinc-500 font-normal">(タップで開く・答えは出ません)</span>}
+            <span className="text-zinc-500 font-normal">(タップで開く・答えは出ません)</span>
           </span>
-          <span className="text-zinc-400 text-xs shrink-0" aria-hidden="true">{open ? '▲ 閉じる' : '▼ 開く'}</span>
+          <span className="text-zinc-400 text-xs shrink-0" aria-hidden="true">▼ 開く</span>
         </button>
       </div>
       {open && (
-        <div className="absolute left-0 right-0 bottom-full mb-2 z-20 max-h-[55vh] overflow-auto
-          rounded-2xl border border-sky-500/30 bg-base-900/95 backdrop-blur-md p-3 shadow-[0_8px_30px_rgba(0,0,0,0.6)]">
-          {bodyInner}
-        </div>
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="この局面の考え方"
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-auto rounded-t-2xl border-t border-sky-500/30
+              bg-base-900/98 backdrop-blur-md p-3 pb-6 shadow-[0_-8px_30px_rgba(0,0,0,0.7)]"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[12px] font-bold text-sky-300"><span aria-hidden="true">💡</span> この局面の考え方</span>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="min-h-8 px-2 text-xs text-zinc-300 hover:text-zinc-100
+                  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-300"
+              >
+                ✕ 閉じる
+              </button>
+            </div>
+            {bodyInner}
+          </div>
+        </>
       )}
     </div>
   )

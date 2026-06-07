@@ -134,9 +134,9 @@ describe('SpotPanel', () => {
   it('decision: 開いても答えは「答えを見る」まで出ない(観点のみ)', () => {
     render(<SpotPanel pending={pending()} phase="decision" />)
     openGuide()
-    expect(screen.getByText(/この局面の考え方/)).toBeInTheDocument()
+    expect(screen.getByText('ハンド')).toBeInTheDocument() // 観点(考え方)は出る
     expect(screen.getByRole('button', { name: /GTO の答えを見る/ })).toBeInTheDocument()
-    expect(screen.queryByText(/AKs @ btn-open/)).toBeNull()
+    expect(screen.queryByText(/AKs @ btn-open/)).toBeNull() // 答えはまだ出ない
   })
 
   it('decision: 「答えを見る」で頻度を表示し、その手を精度サンプルから除外(markHinted)', async () => {

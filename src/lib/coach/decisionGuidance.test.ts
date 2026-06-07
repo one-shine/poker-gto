@@ -80,10 +80,8 @@ describe('buildDecisionGuidance', () => {
     expect(g.conceptIds).toContain('bb-defense')
     expect(g.conceptIds).toContain('pot-odds')
     expect(g.considerations.some(c => c.label === '相手レンジ')).toBe(true)
-    // コール直面 → オッズ観点に必要勝率と勝率が入る
-    const odds = g.considerations.find(c => c.label.startsWith('オッズ'))
-    expect(odds?.value).toContain('必要勝率 30%')
-    expect(odds?.value).toContain('あなたの勝率 42%')
+    // オッズ数値は OddsGuide が1回だけ出す → 観点には含めない(二重表示回避)
+    expect(g.considerations.some(c => c.label.startsWith('オッズ'))).toBe(false)
   })
 
   it('postflop OOP facing bet → 位置OOP + ボード + pot-odds、equity null は理由文', () => {
@@ -103,9 +101,8 @@ describe('buildDecisionGuidance', () => {
     expect(g.conceptIds).toContain('board-texture')
     expect(g.conceptIds).toContain('pot-odds')
     expect(g.considerations.some(c => c.label === 'ボード')).toBe(true)
-    const odds = g.considerations.find(c => c.label.startsWith('オッズ'))
-    expect(odds?.value).toContain('必要勝率 30%')
-    expect(odds?.value).not.toContain('あなたの勝率') // 出せない局面では勝率を出さない
+    // オッズ数値は OddsGuide が出すため観点には含めない
+    expect(g.considerations.some(c => c.label.startsWith('オッズ'))).toBe(false)
   })
 
   it('postflop IP 先制 (未ベット) → cbet-ip', () => {

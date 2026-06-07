@@ -52,24 +52,8 @@ const STREET_JP: Record<string, string> = {
   flop: 'フロップ', turn: 'ターン', river: 'リバー', preflop: 'プリフロップ', showdown: 'ショーダウン',
 }
 
-function oddsConsideration(ctx: GuidanceContext): Consideration {
-  const req = `${Math.round(ctx.reqEquity * 100)}%`
-  if (ctx.equity != null) {
-    const eq = `${Math.round(ctx.equity * 100)}%`
-    return {
-      label: ctx.reference ? 'オッズ(参考)' : 'オッズ',
-      value: `必要勝率 ${req} / あなたの勝率 ${eq}`,
-      note: 'GTO 頻度ではなく算術の目安。勝率が必要勝率を上回るかを考える。',
-    }
-  }
-  return {
-    label: 'オッズ',
-    value: `必要勝率 ${req}`,
-    note: '勝率は出せない局面(理由は下のオッズ目安を参照)。必要勝率と手の強さで考える。',
-  }
-}
-
 // 現局面で「考えるべきこと」を組み立てる。答え(GTO頻度/推奨アクション)は出さない。
+// 注: 必要勝率/オッズの数値は OddsGuide が1回だけ出すため、ここの観点には含めない(二重表示回避)。
 export function buildDecisionGuidance(state: GameState, heroId: string, ctx: GuidanceContext): DecisionGuidance {
   const hero = state.players.find(p => p.id === heroId)
   const considerations: Consideration[] = []
@@ -115,7 +99,7 @@ export function buildDecisionGuidance(state: GameState, heroId: string, ctx: Gui
     }
 
     if (ctx.callAmount > 0) {
-      considerations.push(oddsConsideration(ctx))
+      // オッズ数値は OddsGuide が出す(ここでは観点の理論リンクのみ)。
       conceptIds.push('pot-odds')
       terms.push('ポットオッズ', '必要勝率', 'エクイティ')
     }
@@ -137,7 +121,7 @@ export function buildDecisionGuidance(state: GameState, heroId: string, ctx: Gui
 
     if (ctx.callAmount > 0) {
       situation = `${STREET_JP[state.street]}・${ip ? 'IP' : 'OOP'}でベットに直面 — 続行の判断`
-      considerations.push(oddsConsideration(ctx))
+      // オッズ数値は OddsGuide が出す(ここでは観点の理論リンクのみ)。
       conceptIds.push('pot-odds', 'equity-realization')
       terms.push('ポットオッズ', '必要勝率', 'エクイティ')
     } else {
