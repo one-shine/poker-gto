@@ -212,6 +212,32 @@ export function SettingsPage() {
           </button>
         </Section>
 
+        <Section title="スタディ: アクション前の考え方ガイド">
+          <button
+            type="button"
+            onClick={() => s.setShowReasoningGuide(!s.showReasoningGuide)}
+            aria-pressed={s.showReasoningGuide}
+            className={`w-full text-left rounded-xl border p-3 transition-all ${
+              s.showReasoningGuide
+                ? 'border-brass-400 bg-brass-400/10'
+                : 'border-white/10 bg-base-800/60 hover:border-brass-500/40'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-display font-bold text-sm">
+                {s.showReasoningGuide ? '考え方ガイド ON' : '考え方ガイド OFF'}
+              </span>
+              <span className={`text-xs font-bold ${s.showReasoningGuide ? 'text-brass-300' : 'text-zinc-400'}`}>
+                {s.showReasoningGuide ? '表示' : '非表示'}
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
+              ON: 自分が打つ前に「この局面の考え方」(位置・オッズ・相手レンジ・ボード等の観点)を表示。
+              GTOの答え(頻度)は見せないので測定には影響しません。OFF: 非表示。
+            </p>
+          </button>
+        </Section>
+
         <Section title="スタディ: 自動再開">
           <div className="flex items-center gap-3">
             <input

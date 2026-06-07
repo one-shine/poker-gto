@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { GameState, Player, ActionRecord, Position } from '../../types/game'
-import { resolveOpponentRanges, resolveOpponentRangesEx } from './opponentRange'
+import { resolveOpponentRanges, resolveOpponentRangesEx, resolveOpponentRangesResult, isResolved } from './opponentRange'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 
 function player(id: string, position: Position, seatIndex: number, over: Partial<Player> = {}): Player {
@@ -171,8 +171,8 @@ describe('resolveOpponentRanges (action-sequence-aware)', () => {
     expect(resolveOpponentRanges(s, 'hero')).toBeNull()
   })
 
-  it('unknown / unsupported defender scenario id → null', () => {
-    // villain=MP cold-calls a UTG open. MP-vs-UTG defender scenario is not collected → null.
+  it('MP cold-calls a UTG open → mp-vs-utg call range (2026-06-07 追加スポットで解決)', () => {
+    // 以前は mp-vs-utg 未収録で null だったが、4対追加 + ミラー同期で解決するようになった。
     const s = state({
       players: [
         player('hero', 'UTG', 3), player('mp', 'MP', 4),
@@ -181,7 +181,9 @@ describe('resolveOpponentRanges (action-sequence-aware)', () => {
       ],
       actionHistory: [rec('hero', 'raise'), rec('mp', 'call')],
     })
-    expect(resolveOpponentRanges(s, 'hero')).toBeNull()
+    const ranges = resolveOpponentRanges(s, 'hero')
+    expect(ranges).not.toBeNull()
+    expect(ranges![0].sort()).toEqual(hands('mp-vs-utg', (_r, c) => c > 0).sort())
   })
 
   it('no hero in state → null', () => {
@@ -256,5 +258,75 @@ describe('resolveOpponentRangesEx (multiway 参考値)', () => {
       actionHistory: [rec('co', 'raise')],
     })
     expect(resolveOpponentRangesEx(s, 'hero')).toBeNull()
+  })
+})
+
+describe('resolveOpponentRangesResult (理由コード + 新スポット同期)', () => {
+  const reasonOf = (s: GameState) => {
+    const r = resolveOpponentRangesResult(s, 'hero')
+    return isResolved(r) ? null : r.reason
+  }
+
+  it('リンプ (0 raises) → reason "limped"', () => {
+    const s = state({
+      players: [
+        player('hero', 'BB', 2), player('btn', 'BTN', 0), player('co', 'CO', 5),
+        folded(player('sb', 'SB', 1)), folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [rec('co', 'call'), rec('btn', 'call')],
+    })
+    expect(reasonOf(s)).toBe('limped')
+  })
+
+  it('4bet 以上 (3 raises) → reason "fourbet_plus"', () => {
+    const s = state({
+      players: [
+        player('hero', 'BTN', 0), player('co', 'CO', 5),
+        folded(player('sb', 'SB', 1)), folded(player('bb', 'BB', 2)),
+        folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [rec('hero', 'raise'), rec('co', 'raise'), rec('hero', 'raise')],
+    })
+    expect(reasonOf(s)).toBe('fourbet_plus')
+  })
+
+  it('未収録ライン (MP が CO オープンへ cold-call) → reason "uncovered_line"', () => {
+    const s = state({
+      players: [
+        player('hero', 'BB', 2), player('co', 'CO', 5), player('mp', 'MP', 4),
+        folded(player('sb', 'SB', 1)), folded(player('utg', 'UTG', 3)), folded(player('btn', 'BTN', 0)),
+      ],
+      actionHistory: [rec('co', 'raise')],
+    })
+    expect(reasonOf(s)).toBe('uncovered_line')
+  })
+
+  it('相手0人 → reason "no_opponent"', () => {
+    const s = state({
+      players: [
+        player('hero', 'BTN', 0), folded(player('co', 'CO', 5)), folded(player('sb', 'SB', 1)),
+        folded(player('bb', 'BB', 2)), folded(player('utg', 'UTG', 3)), folded(player('mp', 'MP', 4)),
+      ],
+      actionHistory: [rec('co', 'raise')],
+    })
+    expect(reasonOf(s)).toBe('no_opponent')
+  })
+
+  it('新スポット同期: CO が MP オープンに cold-call → co-vs-mp で解決 (マルチウェイ参考値)', () => {
+    // hero=BB, MP opened, CO cold-called → villains: MP(opener)=mp-open / CO=co-vs-mp call。両方解決。
+    const s = state({
+      players: [
+        player('hero', 'BB', 2), player('mp', 'MP', 4), player('co', 'CO', 5),
+        folded(player('sb', 'SB', 1)), folded(player('utg', 'UTG', 3)), folded(player('btn', 'BTN', 0)),
+      ],
+      actionHistory: [rec('mp', 'raise'), rec('co', 'call')],
+    })
+    const r = resolveOpponentRangesResult(s, 'hero')
+    expect(isResolved(r)).toBe(true)
+    if (isResolved(r)) {
+      expect(r.reference).toBe(true) // 相手2人=マルチウェイ参考値
+      expect(r.ranges).toHaveLength(2)
+      expect(r.ranges.every(rg => rg.length > 0)).toBe(true)
+    }
   })
 })

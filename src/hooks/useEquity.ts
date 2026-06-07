@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import type { GameState } from '../types/game'
 import { computeEquityAsync } from '../lib/equity/equityClient'
-import { resolveOpponentRangesEx } from '../lib/equity/opponentRange'
+import { resolveOpponentRangesResult, isResolved } from '../lib/equity/opponentRange'
+import type { EquityUnavailableReason } from '../lib/equity/opponentRange'
 
 export interface EquityState {
   equity: number | null // null = 算出不能/未対応
   loading: boolean
   // true = マルチウェイ(相手2人以上)の参考値。UI は「参考」と明示する(設計ルール4)。
   reference: boolean
+  // equity=null のとき「なぜ出せないか」(UI で1行明示)。算出できたら undefined。
+  reason?: EquityUnavailableReason
 }
 
 const ITERATIONS = 8000
@@ -29,9 +32,9 @@ export function useEquity(state: GameState | null, heroId: string, enabled: bool
       setSt({ equity: null, loading: false, reference: false })
       return
     }
-    const resolved = resolveOpponentRangesEx(state, heroId)
-    if (!resolved) {
-      setSt({ equity: null, loading: false, reference: false })
+    const resolved = resolveOpponentRangesResult(state, heroId)
+    if (!isResolved(resolved)) {
+      setSt({ equity: null, loading: false, reference: false, reason: resolved.reason })
       return
     }
     let cancelled = false
@@ -42,7 +45,10 @@ export function useEquity(state: GameState | null, heroId: string, enabled: bool
       opponentRanges: resolved.ranges,
       iterations: ITERATIONS,
     }).then(r => {
-      if (!cancelled) setSt({ equity: r.samples > 0 ? r.equity : null, loading: false, reference: resolved.reference })
+      // samples=0 = 有効な相手ハンド割当が無い(極稀・ブロッカーで全消し)。
+      if (!cancelled) setSt(r.samples > 0
+        ? { equity: r.equity, loading: false, reference: resolved.reference }
+        : { equity: null, loading: false, reference: resolved.reference, reason: 'sampling_failed' })
     }).catch(() => {
       if (!cancelled) setSt({ equity: null, loading: false, reference: false })
     })

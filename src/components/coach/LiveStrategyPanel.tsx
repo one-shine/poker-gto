@@ -9,19 +9,31 @@ import { useEquity } from '../../hooks/useEquity'
 import { StrategyBars } from './StrategyBars'
 import { TermChips, ConceptLink } from '../common/TermChips'
 import type { PlayerAction } from '../../types/game'
+import type { EquityUnavailableReason } from '../../lib/equity/opponentRange'
 
 const ACTION_JP: Record<PlayerAction, string> = {
   fold: 'フォールド', check: 'チェック', call: 'コール', raise: 'レイズ', allin: 'オールイン',
 }
 
+// equity=null の理由を1行で説明 (透明性: 「壊れている」ではなく「出せない局面」と伝える)。
+const EQUITY_REASON_JP: Record<EquityUnavailableReason, string> = {
+  no_opponent: '相手がいないため勝率は出せません',
+  limped: 'リンプ(未オープン)で相手レンジが定まらないため勝率は出せません',
+  fourbet_plus: '4bet 以上の応酬は未対応のため勝率は出せません',
+  uncovered_line: '未収録の対戦ライン(相手レンジ不明)のため勝率は出せません',
+  sampling_failed: '相手レンジと手札の衝突で勝率を算出できません',
+}
+
 // U18: オッズ基準の目安。GTO 解の有無に関わらず常時併記する(GTO が本筋・これは単純化の目安)。
 //  - コール直面: ポットオッズ / 必要勝率 vs 実勝率 → コール有利 / フォールド寄り。
 //  - コール無し(チェック/ベット先頭): エクイティの強弱目安(GTOのベット/チェック判断とは別)。
-function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot, reference }: {
+function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot, reference, reason }: {
   callAmount: number; reqEquity: number; equity: number | null; eqLoading: boolean; effPot: number
   reference?: boolean // true = マルチウェイの参考勝率 (厳密でない・設計ルール4)
+  reason?: EquityUnavailableReason // equity=null の理由 (透明性)
 }) {
   const eqText = eqLoading ? '計算中…' : equity != null ? `${Math.round(equity * 100)}%` : '—'
+  const reasonText = !eqLoading && equity == null && reason ? EQUITY_REASON_JP[reason] : null
   // マルチウェイ(相手2人以上)の勝率は全相手レンジ vs hero の参考値。実現は割り引かれる。
   const eqLabel = reference ? 'あなたの勝率(参考)' : 'あなたの勝率'
   return (
@@ -66,6 +78,12 @@ function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot, reference
           </span>
         </p>
       )}
+      {/* 勝率が出せない局面はその理由を1行で明示 (「壊れている」誤解を防ぐ・透明性) */}
+      {reasonText && (
+        <p className="mt-1 text-[10px] text-zinc-500 leading-snug">
+          <span aria-hidden="true">ℹ️ </span>{reasonText}
+        </p>
+      )}
       {/* オッズ学習への導線: pot-odds 理論 + 用語チップ */}
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         <ConceptLink conceptId="pot-odds" label="オッズの理論 ▶" />
@@ -93,7 +111,7 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, revealActed }: Prop
   const { node, loading } = useSolution(pending.state, HERO_ID, allowLiveSolve, true)
   // R8/U18: エクイティ。オッズ目安を常時併記する(コール直面=必要勝率比較 / チェック局面=強弱目安)ため常時有効化。
   // マルチウェイ(相手2人以上)は reference=true の参考勝率として出す(設計ルール4)。
-  const { equity, loading: eqLoading, reference: eqReference } = useEquity(pending.state, HERO_ID, true)
+  const { equity, loading: eqLoading, reference: eqReference, reason: eqReason } = useEquity(pending.state, HERO_ID, true)
 
   const hero = pending.state.players.find(p => p.id === HERO_ID)
   const handKey = hero?.holeCards ? handCategory(hero.holeCards) : null
@@ -157,7 +175,7 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, revealActed }: Prop
             <span className="text-zinc-600">{activeCount >= 3 ? '(マルチウェイ)' : '(未収録スポット)'}</span>
           </span>
           {/* 対象外でも、オッズ目安は主表示として出す (U18)。マルチウェイは参考勝率。 */}
-          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} reference={eqReference} />
+          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} reference={eqReference} reason={eqReason} />
         </div>
       ) : (
         <div className="space-y-2">
@@ -175,7 +193,7 @@ export function LiveStrategyPanel({ pending, allowLiveSolve, revealActed }: Prop
             </p>
           )}
           {/* U18: GTO 解があるときも、オッズ目安をバーの下に副表示で常時併記 (GTO が本筋)。 */}
-          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} reference={eqReference} />
+          <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity} eqLoading={eqLoading} effPot={effPot} reference={eqReference} reason={eqReason} />
         </div>
       )}
     </div>

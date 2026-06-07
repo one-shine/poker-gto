@@ -12,6 +12,7 @@ import { CoachPanel } from '../components/coach/CoachPanel'
 import { PostflopReviewPanel } from '../components/coach/PostflopReviewPanel'
 import { CoachToast } from '../components/coach/CoachToast'
 import { LiveStrategyPanel } from '../components/coach/LiveStrategyPanel'
+import { ReasoningGuide } from '../components/coach/ReasoningGuide'
 import { KeyboardHelp } from '../components/game/KeyboardHelp'
 import { useSoundEffects } from '../hooks/useSoundEffects'
 
@@ -24,6 +25,7 @@ export function GamePage() {
   const stackBB = useSettingsStore(s => s.stackBB)
   const autoAdvanceSeconds = useSettingsStore(s => s.autoAdvanceSeconds)
   const studyShowStrategy = useSettingsStore(s => s.studyShowStrategy)
+  const showReasoningGuide = useSettingsStore(s => s.showReasoningGuide)
   const sessionHandCount = useSessionStore(s => s.sessionHandCount)
   const openReflection = useNavStore(s => s.openReflection)
 
@@ -170,8 +172,11 @@ export function GamePage() {
               </div>
             </>
           ) : pendingHeroAction ? (
-            // U8: アクション前は戦略を見せない (事前に答えを見ないで自分で判断させる)。打ってから答え合わせ。
-            <ActionPanel pending={pendingHeroAction} onAction={submitHeroAction} />
+            // U8: アクション前は戦略(答え)を見せない。代わりに「考え方」(答え中立の観点)を出して思考を促す。
+            <>
+              {appMode === 'study' && showReasoningGuide && <ReasoningGuide pending={pendingHeroAction} />}
+              <ActionPanel pending={pendingHeroAction} onAction={submitHeroAction} />
+            </>
           ) : (
             <>
               {/* U8: 自分が打った後に GTO 戦略を答え合わせ表示。事前に見せないので精度サンプルにも入る。 */}

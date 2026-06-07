@@ -15,6 +15,8 @@ interface SettingsStore {
   autoAdvanceSeconds: number // study mode で CoachPanel 後に自動再開する秒数
   // study 中、自分のアクション後に GTO 戦略を「答え合わせ」表示するか。false = 表示しない(純粋にテスト)。
   studyShowStrategy: boolean
+  // study 中、自分のアクション前に「この局面の考え方」(答え中立の観点)を表示するか。
+  showReasoningGuide: boolean
   aiSpeed: AiSpeed // 相手アクションの速さ (slow/normal/fast)
   onboardingComplete: boolean
   // 効果音/ハプティクス。既定 OFF (不意に音を鳴らさない)。
@@ -26,6 +28,7 @@ interface SettingsStore {
   setStackBB: (n: number) => void
   setAutoAdvanceSeconds: (n: number) => void
   setStudyShowStrategy: (b: boolean) => void
+  setShowReasoningGuide: (b: boolean) => void
   setAiSpeed: (s: AiSpeed) => void
   setSoundEnabled: (b: boolean) => void
   setHapticsEnabled: (b: boolean) => void
@@ -42,6 +45,7 @@ export const useSettingsStore = create<SettingsStore>()(
       stackBB: 100,
       autoAdvanceSeconds: 5,
       studyShowStrategy: true,
+      showReasoningGuide: true,
       aiSpeed: 'normal',
       onboardingComplete: false,
       soundEnabled: false,
@@ -52,6 +56,7 @@ export const useSettingsStore = create<SettingsStore>()(
       setStackBB: n => set({ stackBB: n }),
       setAutoAdvanceSeconds: n => set({ autoAdvanceSeconds: n }),
       setStudyShowStrategy: b => set({ studyShowStrategy: b }),
+      setShowReasoningGuide: b => set({ showReasoningGuide: b }),
       setAiSpeed: sp => set({ aiSpeed: sp }),
       setSoundEnabled: b => set({ soundEnabled: b }),
       setHapticsEnabled: b => set({ hapticsEnabled: b }),

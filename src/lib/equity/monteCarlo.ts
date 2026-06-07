@@ -59,13 +59,13 @@ export function computeEquity(input: EquityInput): EquityResult {
     const oppHands: [Card, Card][] = []
     let ok = true
     for (const combos of oppCombos) {
-      // 使用済みと衝突しないコンボを引く(リジェクションサンプリング)
-      let pick: [Card, Card] | null = null
-      for (let tries = 0; tries < 30; tries++) {
-        const cand = combos[(Math.random() * combos.length) | 0]
-        if (!used.has(key(cand[0])) && !used.has(key(cand[1]))) { pick = cand; break }
-      }
-      if (!pick) { ok = false; break }
+      // 使用済みと衝突しないコンボを「先に絞ってから一様抽選」。
+      // 旧実装は 30 回上限のリジェクションサンプリングで、マルチウェイ(相手×使用済みカードの
+      // 衝突確率が高い)だと全イテレーション失敗 → samples=0 → 勝率が出ない不具合があった。
+      // 有効集合を直接引けば、割当が存在する限り必ず成功する。
+      const valid = combos.filter(c => !used.has(key(c[0])) && !used.has(key(c[1])))
+      if (valid.length === 0) { ok = false; break }
+      const pick = valid[(Math.random() * valid.length) | 0]
       used.add(key(pick[0])); used.add(key(pick[1]))
       oppHands.push(pick)
     }

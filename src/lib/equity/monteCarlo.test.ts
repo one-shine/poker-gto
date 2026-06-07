@@ -64,6 +64,18 @@ describe('computeEquity (Monte Carlo)', () => {
     expect(threeWay.equity).toBeGreaterThan(0.5)    // AA は依然有利
   })
 
+  // 回帰: 有効な割当が存在するイテレーションを取りこぼさない (filter→一様抽選)。
+  // 旧実装は 30 回上限のリジェクションで全失敗すると samples=0 → 勝率が出ない不具合があった。
+  it('multiway never skips iterations that have a valid assignment (samples === iterations)', () => {
+    const r = computeEquity({
+      holeCards: [c('A', 'spades'), c('A', 'diamonds')],
+      board: [],
+      opponentRanges: [['KK'], ['QQ'], ['JJ']], // hero と被りなし=各イテで必ず割当可能
+      iterations: 2000,
+    })
+    expect(r.samples).toBe(2000)
+  })
+
   it('multiway: AA vs KK vs QQ (set-mining domination) stays very high on a blank board', () => {
     const r = computeEquity({
       holeCards: [c('A', 'spades'), c('A', 'diamonds')],
