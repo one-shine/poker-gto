@@ -1,0 +1,214 @@
+import { useMemo, useState } from 'react'
+import type { ActionRequiredPayload } from '../../engine/agents/AgentBus'
+import { getTotalPot } from '../../engine/game/BettingEngine'
+import { handCategory } from '../../engine/cards/handCategory'
+import { HERO_ID } from '../../stores/gameStore'
+import { useSessionStore } from '../../stores/sessionStore'
+import { useSettingsStore } from '../../stores/settingsStore'
+import { useSolution } from '../../hooks/useSolution'
+import { useEquity } from '../../hooks/useEquity'
+import { buildDecisionGuidance } from '../../lib/coach/decisionGuidance'
+import { conceptById } from '../../data/theory/concepts'
+import { StrategyBars } from './StrategyBars'
+import { OddsGuide } from './OddsGuide'
+import { TermChips, ConceptLink } from '../common/TermChips'
+import type { PlayerAction } from '../../types/game'
+import type { ActionSolution } from '../../types/solver'
+
+// 手作りプリフロップレンジは「降り100%」の手をデータから省く。収録スポット(node あり)でも
+// handKey が無い=レンジ外=純フォールド。これを「対象外」ではなく「フォールド100%」と表示する。
+const FOLD_ONLY: ActionSolution[] = [{ action: 'fold', frequency: 1, ev: 0 }]
+
+const ACTION_JP: Record<PlayerAction, string> = {
+  fold: 'フォールド', check: 'チェック', call: 'コール', raise: 'レイズ', allin: 'オールイン',
+}
+
+interface Props {
+  pending: ActionRequiredPayload
+  // decision = アクション前(折りたたみ・答えは「答えを見る」で任意表示)
+  // review   = アクション後(自動展開・答え合わせを表示)
+  phase: 'decision' | 'review'
+  actedAction?: PlayerAction // review で「あなた: ◯◯」に出す
+}
+
+// 局面の説明を1パネルに統合: 考え方観点 / オッズ目安(1回) / GTOの答え / 関連理論。
+// U8: アクション前は答え(GTO頻度)を自動表示しない。見るには明示操作 → その手は精度測定から除外。
+export function SpotPanel({ pending, phase, actedAction }: Props) {
+  const review = phase === 'review'
+  const [open, setOpen] = useState(review)
+  const [revealed, setRevealed] = useState(review)
+  const markHinted = useSessionStore(s => s.markHinted)
+  const studyShowStrategy = useSettingsStore(s => s.studyShowStrategy)
+
+  // allowLiveSolve は revealed に連動: 答えを見るまで postflop の live solve を走らせない。
+  const { node, loading } = useSolution(pending.state, HERO_ID, revealed, true)
+  const { equity, loading: eqLoading, reference, reason } = useEquity(pending.state, HERO_ID, true)
+
+  const hero = pending.state.players.find(p => p.id === HERO_ID)
+  const handKey = hero?.holeCards ? handCategory(hero.holeCards) : null
+  const rawStrategy = node && handKey ? node.strategy[handKey] ?? null : null
+  // preflop の収録スポットで handKey 無し = レンジ外 = フォールド100%(降りの手はデータ省略)。
+  const foldOut = !rawStrategy && !!node && node.street === 'preflop' &&
+    (node.source === 'approximate' || node.source === 'approximate_with_ev')
+  const strategy = rawStrategy ?? (foldOut ? FOLD_ONLY : null)
+  const activeCount = pending.state.players.filter(p => !p.isFolded).length
+
+  const callAmount = pending.callAmount
+  const effPot = getTotalPot(pending.state) + pending.state.players.reduce((s, p) => s + p.currentBetBB, 0)
+  const reqEquity = callAmount > 0 ? callAmount / (effPot + callAmount) : 0
+
+  const guidance = useMemo(
+    () => buildDecisionGuidance(pending.state, HERO_ID, { callAmount, reqEquity, equity, reference, equityReason: reason }),
+    [pending.state, callAmount, reqEquity, equity, reference, reason],
+  )
+  const conceptLinks = guidance.conceptIds
+    .map(id => ({ id, title: conceptById(id)?.title }))
+    .filter((c): c is { id: string; title: string } => !!c.title)
+    .slice(0, 3)
+
+  // decision で答えを開いた手は精度測定から除外(review は既に打ったので不要)。
+  function reveal() {
+    if (!review) markHinted(pending.state.handId)
+    setRevealed(true)
+  }
+
+  const odds = (
+    <OddsGuide callAmount={callAmount} reqEquity={reqEquity} equity={equity}
+      eqLoading={eqLoading} effPot={effPot} reference={reference} reason={reason} />
+  )
+
+  const sourceBadge = node?.source === 'approximate'
+    ? '参考: GTO近似' : node?.source === 'approximate_with_ev' ? 'GTO近似 + 概算EV' : null
+
+  let answer: React.ReactNode = null
+  if (!revealed) {
+    // decision かつ study(答え表示ON)のときだけ「答えを見る」を出す。純テスト時は出さない。
+    if (!review && studyShowStrategy) {
+      answer = (
+        <button type="button" onClick={reveal}
+          className="min-h-11 px-3 rounded-lg text-xs font-bold bg-brass-500/15 text-brass-200 hover:bg-brass-500/25
+            transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brass-300">
+          ▸ GTO の答えを見る <span className="text-zinc-400 font-normal">(この手は精度測定から除外)</span>
+        </button>
+      )
+    }
+  } else if (loading) {
+    answer = (
+      <span className="text-xs text-brass-300/80 flex items-center gap-1.5">
+        <span className="inline-block w-3 h-3 rounded-full border-2 border-brass-400/40 border-t-brass-300 animate-spin" />
+        GTO 解を求めています…
+      </span>
+    )
+  } else if (!node || !strategy) {
+    answer = (
+      <span className="block text-xs text-zinc-500">
+        GTO 解の<strong className="text-zinc-400">対象外</strong>
+        <span className="text-zinc-600">{activeCount >= 3 ? '(マルチウェイ)' : '(未収録スポット)'}</span>
+      </span>
+    )
+  } else {
+    answer = (
+      <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-bold text-brass-300">GTO 戦略</span>
+          {handKey && node && <span className="text-[10px] text-zinc-400">{handKey} @ {node.spotId}</span>}
+          {node.multiwayReference && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300"
+              title="3人以上(マルチウェイ)。ヘッズアップのレンジを参考表示(厳密解ではない・精度測定対象外)。">マルチウェイ=参考値</span>
+          )}
+          {sourceBadge && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300">{sourceBadge}</span>}
+        </div>
+        <StrategyBars
+          strategy={strategy}
+          source={node.source}
+          showEv={!foldOut && !node.multiwayReference && node.source !== 'approximate'}
+          approxEv={!foldOut && !node.multiwayReference && node.source === 'approximate_with_ev'}
+        />
+        {node.multiwayReference && (
+          <p className="text-[11px] text-amber-300/80 leading-snug">
+            ※ 3人以上(マルチウェイ)のため、相手レイザーに対する<strong className="text-amber-200">ヘッズアップのレンジを参考</strong>として表示しています。
+            実際の最適頻度はこれより気持ちタイトになります。厳密解ではないため精度測定には含めません。
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  const theory = (conceptLinks.length > 0 || guidance.terms.length > 0) ? (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      {conceptLinks.map(c => <ConceptLink key={c.id} conceptId={c.id} label={`${c.title} ▶`} />)}
+      <TermChips terms={guidance.terms} />
+    </div>
+  ) : null
+
+  // 本文(共有): decision は観点を出す / review は答え主体で観点は省略。オッズは常に1回。
+  const bodyInner = (
+    <div className="space-y-2">
+      {!review && (
+        <>
+          <p className="text-[11px] text-zinc-400">{guidance.situation}</p>
+          <ul className="space-y-1.5">
+            {guidance.considerations.map((c, i) => (
+              <li key={i} className="text-xs text-zinc-300 leading-snug flex gap-2">
+                <span className="shrink-0 text-sky-300/90 font-bold min-w-[3.5rem]">{c.label}</span>
+                <span>
+                  {c.value && <span className="font-data text-zinc-100">{c.value}</span>}
+                  {c.value && c.note && <span className="text-zinc-500"> — </span>}
+                  {c.note && <span className="text-zinc-400">{c.note}</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {odds}
+      {answer}
+      {theory}
+    </div>
+  )
+
+  // review: インライン・自動展開。
+  if (review) {
+    return (
+      <div className="w-full max-w-2xl rounded-2xl border border-brass-500/25 bg-base-800/85 backdrop-blur-md p-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
+        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+          <svg className="w-3.5 h-3.5 shrink-0 text-brass-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3v18h18" /><rect x="7" y="11" width="3" height="6" rx="0.5" /><rect x="12" y="7" width="3" height="10" rx="0.5" /><rect x="17" y="13" width="3" height="4" rx="0.5" /></svg>
+          <span className="text-[11px] font-bold text-brass-300">答え合わせ</span>
+          {actedAction && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-base-700 text-zinc-200 border border-white/10">
+              あなた: <span className="font-bold text-zinc-100">{ACTION_JP[actedAction]}</span>
+            </span>
+          )}
+        </div>
+        {bodyInner}
+      </div>
+    )
+  }
+
+  // decision: 折りたたみ + 開くとオーバーレイ(卓の高さを奪わない=座席の重なり防止)。
+  return (
+    <div className="relative w-full max-w-2xl">
+      <div className="rounded-2xl border border-sky-500/25 bg-base-800/70 backdrop-blur-md overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left
+            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-300"
+        >
+          <span className="text-[11px] font-bold text-sky-300 flex items-center gap-1.5">
+            <span aria-hidden="true">💡</span> この局面の考え方
+            {!open && <span className="text-zinc-500 font-normal">(タップで開く・答えは出ません)</span>}
+          </span>
+          <span className="text-zinc-400 text-xs shrink-0" aria-hidden="true">{open ? '▲ 閉じる' : '▼ 開く'}</span>
+        </button>
+      </div>
+      {open && (
+        <div className="absolute left-0 right-0 bottom-full mb-2 z-20 max-h-[55vh] overflow-auto
+          rounded-2xl border border-sky-500/30 bg-base-900/95 backdrop-blur-md p-3 shadow-[0_8px_30px_rgba(0,0,0,0.6)]">
+          {bodyInner}
+        </div>
+      )}
+    </div>
+  )
+}

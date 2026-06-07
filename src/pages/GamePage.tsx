@@ -11,8 +11,7 @@ import { GameFooter } from '../components/game/GameFooter'
 import { CoachPanel } from '../components/coach/CoachPanel'
 import { PostflopReviewPanel } from '../components/coach/PostflopReviewPanel'
 import { CoachToast } from '../components/coach/CoachToast'
-import { LiveStrategyPanel } from '../components/coach/LiveStrategyPanel'
-import { ReasoningGuide } from '../components/coach/ReasoningGuide'
+import { SpotPanel } from '../components/coach/SpotPanel'
 import { KeyboardHelp } from '../components/game/KeyboardHelp'
 import { useSoundEffects } from '../hooks/useSoundEffects'
 
@@ -50,10 +49,10 @@ export function GamePage() {
   // U8: アクション後の「答え合わせ」。打った決定が残っていれば、相手の番でもハンド終了後でも表示する
   // (CoachPanel が答えを出すミス時は二重を避けて省略・U7)。事前に見せないので markHinted しない。
   const strategyReveal = appMode === 'study' && studyShowStrategy && lastHeroDecision && !showCoachPanel ? (
-    <LiveStrategyPanel
+    <SpotPanel
       pending={lastHeroDecision.payload}
-      allowLiveSolve
-      revealActed={lastHeroDecision.action}
+      phase="review"
+      actedAction={lastHeroDecision.action}
     />
   ) : null
 
@@ -174,7 +173,7 @@ export function GamePage() {
           ) : pendingHeroAction ? (
             // U8: アクション前は戦略(答え)を見せない。代わりに「考え方」(答え中立の観点)を出して思考を促す。
             <>
-              {appMode === 'study' && showReasoningGuide && <ReasoningGuide pending={pendingHeroAction} />}
+              {appMode === 'study' && showReasoningGuide && <SpotPanel pending={pendingHeroAction} phase="decision" />}
               <ActionPanel pending={pendingHeroAction} onAction={submitHeroAction} />
             </>
           ) : (

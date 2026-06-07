@@ -43,14 +43,15 @@ GTO評価の基準は `src/lib/solver/getSolution()` が返す `NodeSolution` (`
 - `PlayerSeat.tsx` ✅ — `<PlayerSeat player isActing revealCards lastAction>`。type `SeatLastAction` export。hero表/相手裏(reveal対応)、手番リング、オールイン、フォールド減光。
 - `PokerTable.tsx` ✅ — `<PokerTable state>`。楕円テーブル + seatIndex絶対配置(SEAT_POS) + 中央ポット/ボード + ディーラーボタン + ショーダウンでカード公開。
 - `ActionPanel.tsx` ✅ — `<ActionPanel pending onAction>`。Fold/Check·Call/Bet·Raise動的切替、プリセット(preflop=BB / postflop=%·Pot·Overbet·All-in)、スライダー、キーボード f/c/r/Enter。ベット計算は engine `getTotalPot` 使用。
-- `coach/LiveStrategyPanel.tsx` ✅ (Phase 4, HintPanel を置換) — study専用。**GamePage では `revealActed` で「アクション後の答え合わせ」表示(U8・事前に答えを見せない)**。事前表示しないので markHinted せず精度サンプルに入る。getSolution→StrategyBars頻度バー、A2ポットオッズ/必要勝率(showPotOdds時)。`revealActed` 無しの既定モード(常時表示+markHinted除外)はコンポーネントとして残置(現状未使用)。
+- `coach/SpotPanel.tsx` ✅ (U25・LiveStrategyPanel/ReasoningGuide を統合) — 局面説明を1パネルに集約。`phase='decision'`(手番前・既定折りたたみ・開くとオーバーレイで卓を潰さない)= 考え方観点 + `OddsGuide`(1回)+「GTOの答えを見る」(押すと頻度+EV表示し `markHinted`=精度除外) / `phase='review'`(打った後・自動展開)= 答え合わせ(`StrategyBars` 頻度+EV)+`OddsGuide`(1回)+「あなた:◯◯」。`buildDecisionGuidance`(答え中立の観点)を decision で利用。純テスト(`studyShowStrategy=false`)では答え欄を出さない。
+- `coach/OddsGuide.tsx` ✅ — ポットオッズ/必要勝率/勝率(+ null 時の理由)の共有部品。SpotPanel 内で1回だけ描画(前後の重複を解消)。
 - `coach/CoachPanel.tsx` / `coach/CoachToast.tsx` / `coach/StrategyBars.tsx` ✅ — 評価フィードバック(study=パネル/play=criticalトースト)+ 頻度バー(色+ラベル併記)。
 - `GameFooter.tsx` ✅ — `<GameFooter source?>`。「6-max キャッシュ · {stackBB}BB · ノーレーク · ICM非考慮」常時バー + source信頼度(✓本物/△近似、色非依存)。クリックで前提条件モーダル(Escで閉)。
 
 ### components/layout/ · onboarding/ · pages/
 - `AppShell.tsx` ✅ — `<AppShell active onNavigate>{children}`。`PageId`型 / `NAV_ITEMS` export。desktopサイドバー+mobileボトムタブ、6タブ、aria-current+アイコン+ラベル(色非依存)。
 - `OnboardingFlow.tsx` ✅ — `<OnboardingFlow onComplete?>`。5画面(ようこそ/ポジション/グリッド凡例R·C·M/モード/開始)、戻る·次へ·スキップ、完了で `completeOnboarding()`。
-- `pages/GamePage.tsx` ✅ — PokerTable + ActionPanel(study はアクション後に LiveStrategyPanel で答え合わせ・U8) + GameFooter統合。起動時initGame、source解決→Footer、ショーダウン結果、Space=New Hand。CoachPanel(study)/CoachToast(play critical)。アクション履歴(BetLine)は卓の各シートが直近アクションを出すため冗長 + 場所を取るので廃止(U7)。
+- `pages/GamePage.tsx` ✅ — PokerTable + ActionPanel(study はアクション前に SpotPanel `decision`=考え方、後に SpotPanel `review`=答え合わせ・U8) + GameFooter統合。起動時initGame、source解決→Footer、ショーダウン結果、Space=New Hand。CoachPanel(study)/CoachToast(play critical)。アクション履歴(BetLine)は卓の各シートが直近アクションを出すため冗長 + 場所を取るので廃止(U7)。
 - `App.tsx` ✅ — PageId状態でページ切替。onboardingComplete=false時 OnboardingFlow最前面。未実装ページはComingSoonプレースホルダー。
 
 ### ビルド/テスト設定 (Step 13で整備)
