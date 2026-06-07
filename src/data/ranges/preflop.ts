@@ -330,6 +330,70 @@ const coVsUtg = build({
   'KQo':[0,0.5],
 })
 
+// ── MP vs UTG open 2.5BB (3bet + 少しのフラット、背後4人=最もタイト · combo比 ≈7.3%) ──
+// heuristic approximate: not GTO-exact。UTG (最強レンジ) 相手 + 背後4人の squeeze リスクで
+// co-vs-utg より更にタイト。プレミアムの flat と一部 3bet のみ、周辺は降りる。
+
+const mpVsUtg = build({
+  'AA':[1,0],'KK':[1,0],'QQ':[0.7,0.3],'JJ':[0.3,0.5],'TT':[0.15,0.55],
+  'AKs':[0.55,0.45],'AKo':[0.65,0.35],
+  '99':[0,0.65],'88':[0,0.55],'77':[0,0.45],'66':[0,0.35],'55':[0,0.3],'44':[0,0.25],'33':[0,0.2],'22':[0,0.2],
+  'AQs':[0.2,0.6],'AJs':[0.1,0.55],'ATs':[0,0.5],'A5s':[0.25,0.1],'A4s':[0.15,0.1],
+  'KQs':[0.15,0.6],'KJs':[0,0.55],'KTs':[0,0.35],
+  'QJs':[0,0.55],'QTs':[0,0.3],
+  'JTs':[0,0.45],'T9s':[0,0.3],
+  'AQo':[0,0.45],'AJo':[0,0.2],
+  'KQo':[0,0.4],
+})
+
+// ── CO vs MP open 2.5BB (3bet + フラット、IP・背後3人・MP は UTG より広い · combo比 ≈11.8%) ──
+// heuristic approximate: not GTO-exact。MP (≈19%) は UTG (≈16%) より広いので co-vs-utg より
+// 気持ち広くフラット + ブラフ3bet を増やす。背後の squeeze リスクは co-vs-utg と同程度。
+
+const coVsMp = build({
+  'AA':[1,0],'KK':[1,0],'QQ':[0.7,0.3],'JJ':[0.3,0.6],'TT':[0.15,0.7],'99':[0.1,0.6],
+  'AKs':[0.55,0.45],'AKo':[0.65,0.35],
+  '88':[0,0.7],'77':[0,0.65],'66':[0,0.6],'55':[0,0.55],'44':[0,0.5],'33':[0,0.45],'22':[0,0.45],
+  'AQs':[0.2,0.7],'AJs':[0.1,0.75],'ATs':[0,0.75],'A9s':[0,0.55],'A8s':[0,0.4],'A7s':[0,0.25],'A5s':[0.3,0.25],'A4s':[0.2,0.2],'A3s':[0.1,0.1],
+  'KQs':[0.15,0.75],'KJs':[0,0.8],'KTs':[0,0.6],'K9s':[0,0.35],
+  'QJs':[0,0.7],'QTs':[0,0.5],'Q9s':[0,0.3],
+  'JTs':[0,0.65],'J9s':[0,0.4],
+  'T9s':[0,0.55],'T8s':[0,0.3],'98s':[0,0.5],'87s':[0,0.4],'76s':[0,0.3],'65s':[0,0.2],
+  'AQo':[0,0.7],'AJo':[0,0.5],'ATo':[0,0.3],
+  'KQo':[0,0.7],'KJo':[0,0.4],
+  'QJo':[0,0.35],
+})
+
+// ── SB vs UTG open 2.5BB (3bet-or-fold、OOP・最強オープナー=最タイト · combo比 ≈4.4%) ──
+// heuristic approximate: not GTO-exact。SB は OOP のためフラットせず 3bet-or-fold。
+// UTG (最強) 相手はバリュー主体 + ブロッカー少々、sb-vs-co/sb-vs-mp より明確にタイト。
+
+const sbVsUtg = build({
+  'AA':1,'KK':1,'QQ':1,'JJ':0.85,'TT':0.45,'99':0.1,
+  'AKs':1,'AQs':0.85,'AJs':0.3,
+  'AKo':1,'AQo':0.4,
+  'KQs':0.35,'KJs':0.15,
+  // ブロッカー/ホイール系のブラフ3bet (強い UTG 相手なので控えめ・ホイールは A5s-A2s で単調)
+  'A5s':0.4,'A4s':0.3,'A3s':0.15,'A2s':0.1,
+  'KQo':0.1,
+})
+
+// ── SB vs MP open 2.5BB (3bet-or-fold、OOP・MP は CO より狭い=sb-vs-co よりタイト · combo比 ≈5.2%) ──
+// heuristic approximate: not GTO-exact。SB OOP の 3bet-or-fold。MP (≈19%) は CO (≈28%) より
+// 強いので sb-vs-co よりタイト、sb-vs-utg よりは広い。
+
+const sbVsMp = build({
+  'AA':1,'KK':1,'QQ':1,'JJ':1,'TT':0.6,'99':0.15,
+  'AKs':1,'AQs':1,'AJs':0.4,'ATs':0.15,
+  'AKo':1,'AQo':0.5,'AJo':0.1,
+  'KQs':0.5,'KJs':0.25,
+  'QJs':0.2,
+  // ブロッカー/ホイール系のブラフ3bet
+  'A5s':0.5,'A4s':0.4,'A3s':0.2,'A2s':0.15,
+  'K9s':0.15,
+  'KQo':0.15,
+})
+
 // ── opener が 3bet に直面 (4bet or call or fold)。raise=4bet, call=コール ───────
 // heuristic approximate: not GTO-exact。raiseSize は直面している 3bet サイズ (≈11BB)。
 // IP opener (BTN/CO) は広くコールで応戦、強い手 + A5s/A4s 等のブロッカーで 4bet。
@@ -450,6 +514,10 @@ export const PREFLOP_SCENARIOS: RangeScenario[] = [
   { id: 'btn-vs-utg',label:'BTN vs UTG',position: 'BTN',raiseSize: 2.5, cells: btnVsUtg },
   { id: 'btn-vs-mp',label: 'BTN vs MP',position: 'BTN', raiseSize: 2.5, cells: btnVsMp },
   { id: 'co-vs-utg',label: 'CO vs UTG',position: 'CO',  raiseSize: 2.5, cells: coVsUtg },
+  { id: 'mp-vs-utg',label: 'MP vs UTG',position: 'MP',  raiseSize: 2.5, cells: mpVsUtg },
+  { id: 'co-vs-mp', label: 'CO vs MP', position: 'CO',  raiseSize: 2.5, cells: coVsMp  },
+  { id: 'sb-vs-utg',label: 'SB vs UTG',position: 'SB',  raiseSize: 2.5, cells: sbVsUtg },
+  { id: 'sb-vs-mp', label: 'SB vs MP', position: 'SB',  raiseSize: 2.5, cells: sbVsMp  },
   // opener が 3bet に直面 (4bet/call/fold)。raiseSize = 直面 3bet サイズ ≈11BB。
   { id: 'btn-vs-sb-3bet',label:'BTN vs SB 3Bet',position:'BTN',raiseSize:11, cells: btnVsSb3bet },
   { id: 'btn-vs-bb-3bet',label:'BTN vs BB 3Bet',position:'BTN',raiseSize:11, cells: btnVsBb3bet },

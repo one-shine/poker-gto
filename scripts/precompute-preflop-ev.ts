@@ -60,6 +60,9 @@ const DEFENDER_TO_OPENER: Record<string, string> = {
   'btn-vs-utg': 'utg-open',
   'btn-vs-mp': 'mp-open',
   'co-vs-utg': 'utg-open',
+  // 注: 2026-06-07 追加の単独オープン防御 4 対 (mp-vs-utg/co-vs-mp/sb-vs-utg/sb-vs-mp) は
+  // facing-3bet シナリオ (utg-vs-mp-3bet 等) が無く 3bet EV=0 になる。EV あり防御は全て実 3bet EV を
+  // 持つ不変条件を保つため、これらは EV を付けず `approximate`(頻度のみ)で配給する。
 }
 
 // defender (3better) → opener の 3bet 応答シナリオ。これがある defender だけ 3bet EV を載せる。

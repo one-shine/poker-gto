@@ -5,7 +5,6 @@ import { useNavStore } from '../stores/navStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useSolution } from '../hooks/useSolution'
 import { PokerTable } from '../components/game/PokerTable'
-import { BetLine } from '../components/game/BetLine'
 import { HandResultOverlay } from '../components/game/HandResultOverlay'
 import { ActionPanel } from '../components/game/ActionPanel'
 import { GameFooter } from '../components/game/GameFooter'
@@ -132,14 +131,6 @@ export function GamePage() {
 
         {/* 結果 / コーチ / アクション領域: 縮まずに常に表示される (卓が先に縮む) */}
         <div ref={actionRef} className="w-full flex flex-col items-center gap-3 shrink-0">
-        {/* B2: ハンド内アクション履歴 (ストリート別ベットライン)。履歴が空なら null=非表示。
-            U7: モバイルは卓の各シートが直近アクションを出すため冗長 + 場所を取るので非表示 (sm 以上のみ)。 */}
-        {gameState && (
-          <div className="hidden sm:block w-full max-w-2xl">
-            <BetLine state={gameState} />
-          </div>
-        )}
-
         {/* ショーダウン結果 */}
         {handComplete && gameState && lastResults && (
           <HandResultOverlay results={lastResults} players={gameState.players} />

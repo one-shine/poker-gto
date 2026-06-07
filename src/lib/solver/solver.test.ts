@@ -159,15 +159,49 @@ describe('resolveSpotKey', () => {
     expect(hu?.multiwayReference).toBeUndefined()
   })
 
-  it('unsupported defender pairing (e.g. MP vs UTG) → null', () => {
+  // 2026-06-07: 単独オープン HU 防御の未収録 4 対を追加配線 (これまで「対象外」だった局面で答えが出る)。
+  it('MP facing single UTG open → mp-vs-utg', () => {
     const s = baseState({
       players: [
-        player('hero', 'MP', 4), player('btn', 'BTN', 0), player('sb', 'SB', 1),
-        player('bb', 'BB', 2), player('utg', 'UTG', 3), player('co', 'CO', 5),
+        player('hero', 'MP', 4), player('utg', 'UTG', 3), player('co', 'CO', 5),
+        player('btn', 'BTN', 0), player('sb', 'SB', 1), player('bb', 'BB', 2),
       ],
       actionHistory: [rec('utg', 'raise')],
     })
-    expect(resolveSpotKey(s, 'hero')).toBeNull()
+    expect(resolveSpotKey(s, 'hero')).toEqual({ baseSpotId: 'mp-vs-utg', street: 'preflop' })
+  })
+
+  it('CO facing single MP open (UTG folded) → co-vs-mp', () => {
+    const s = baseState({
+      players: [
+        player('hero', 'CO', 5), folded(player('utg', 'UTG', 3)), player('mp', 'MP', 4),
+        player('btn', 'BTN', 0), player('sb', 'SB', 1), player('bb', 'BB', 2),
+      ],
+      actionHistory: [rec('utg', 'fold'), rec('mp', 'raise')],
+    })
+    expect(resolveSpotKey(s, 'hero')).toEqual({ baseSpotId: 'co-vs-mp', street: 'preflop' })
+  })
+
+  it('SB facing single UTG open (3bet-or-fold) → sb-vs-utg', () => {
+    const s = baseState({
+      players: [
+        player('hero', 'SB', 1), folded(player('btn', 'BTN', 0)), player('bb', 'BB', 2),
+        player('utg', 'UTG', 3), folded(player('mp', 'MP', 4)), folded(player('co', 'CO', 5)),
+      ],
+      actionHistory: [rec('utg', 'raise'), rec('mp', 'fold'), rec('co', 'fold'), rec('btn', 'fold')],
+    })
+    expect(resolveSpotKey(s, 'hero')).toEqual({ baseSpotId: 'sb-vs-utg', street: 'preflop' })
+  })
+
+  it('SB facing single MP open (3bet-or-fold) → sb-vs-mp', () => {
+    const s = baseState({
+      players: [
+        player('hero', 'SB', 1), folded(player('btn', 'BTN', 0)), player('bb', 'BB', 2),
+        folded(player('utg', 'UTG', 3)), player('mp', 'MP', 4), folded(player('co', 'CO', 5)),
+      ],
+      actionHistory: [rec('utg', 'fold'), rec('mp', 'raise'), rec('co', 'fold'), rec('btn', 'fold')],
+    })
+    expect(resolveSpotKey(s, 'hero')).toEqual({ baseSpotId: 'sb-vs-mp', street: 'preflop' })
   })
 
   // R2: opener が 3bet に直面 (HU・4bet/call/fold)。
@@ -392,7 +426,7 @@ describe('getSolution', () => {
   })
 
   it('returns null for an unknown spot id', async () => {
-    expect(await getSolution({ baseSpotId: 'mp-vs-utg', street: 'preflop' })).toBeNull()
+    expect(await getSolution({ baseSpotId: 'lj-vs-hj', street: 'preflop' })).toBeNull()
   })
 
   it('returns null when board is missing/insufficient', async () => {

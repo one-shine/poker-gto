@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest'
 import { PREFLOP_SCENARIOS, scenarioKind, scenarioOpponent, scenariosOfKind } from './preflop'
 
 describe('preflop scenario helpers', () => {
-  it('classifies every scenario id into open/defense/3bet (5/11/11)', () => {
+  it('classifies every scenario id into open/defense/3bet (5/15/11)', () => {
     const counts = { open: 0, defense: 0, '3bet': 0 }
     for (const s of PREFLOP_SCENARIOS) counts[scenarioKind(s.id)]++
-    expect(counts).toEqual({ open: 5, defense: 11, '3bet': 11 })
-    expect(PREFLOP_SCENARIOS).toHaveLength(27)
+    expect(counts).toEqual({ open: 5, defense: 15, '3bet': 11 })
+    expect(PREFLOP_SCENARIOS).toHaveLength(31)
   })
 
   it('scenarioKind reads the id pattern', () => {

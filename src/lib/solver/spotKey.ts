@@ -17,9 +17,10 @@ const BB_VS_SPOT: Partial<Record<Position, string>> = {
 // 非BB防御 (単独オープンへの応答)。hero防御ポジション → { レイザーポジション: spotId }。
 // IP(BTN/CO)=cold-call+3bet / OOP(SB)=3bet-or-fold。data/ranges/preflop.ts と対応。
 const POS_VS_SPOT: Partial<Record<Position, Partial<Record<Position, string>>>> = {
-  SB: { BTN: 'sb-vs-btn', CO: 'sb-vs-co' },
+  SB: { BTN: 'sb-vs-btn', CO: 'sb-vs-co', MP: 'sb-vs-mp', UTG: 'sb-vs-utg' },
   BTN: { CO: 'btn-vs-co', UTG: 'btn-vs-utg', MP: 'btn-vs-mp' },
-  CO: { UTG: 'co-vs-utg' },
+  CO: { UTG: 'co-vs-utg', MP: 'co-vs-mp' },
+  MP: { UTG: 'mp-vs-utg' },
 }
 // opener が 3bet に直面 (4bet/call/fold)。hero=opener ポジション → { 3better ポジション: spotId }。
 const OPENER_VS_3BET_SPOT: Partial<Record<Position, Partial<Record<Position, string>>>> = {

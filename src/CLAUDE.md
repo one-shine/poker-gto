@@ -50,7 +50,7 @@ GTO評価の基準は `src/lib/solver/getSolution()` が返す `NodeSolution` (`
 ### components/layout/ · onboarding/ · pages/
 - `AppShell.tsx` ✅ — `<AppShell active onNavigate>{children}`。`PageId`型 / `NAV_ITEMS` export。desktopサイドバー+mobileボトムタブ、6タブ、aria-current+アイコン+ラベル(色非依存)。
 - `OnboardingFlow.tsx` ✅ — `<OnboardingFlow onComplete?>`。5画面(ようこそ/ポジション/グリッド凡例R·C·M/モード/開始)、戻る·次へ·スキップ、完了で `completeOnboarding()`。
-- `pages/GamePage.tsx` ✅ — PokerTable + ActionPanel(study はアクション後に LiveStrategyPanel で答え合わせ・U8) + GameFooter統合。起動時initGame、source解決→Footer、ショーダウン結果、Space=New Hand。CoachPanel(study)/CoachToast(play critical)。BetLine(アクション履歴)は sm 以上のみ表示(U7)。
+- `pages/GamePage.tsx` ✅ — PokerTable + ActionPanel(study はアクション後に LiveStrategyPanel で答え合わせ・U8) + GameFooter統合。起動時initGame、source解決→Footer、ショーダウン結果、Space=New Hand。CoachPanel(study)/CoachToast(play critical)。アクション履歴(BetLine)は卓の各シートが直近アクションを出すため冗長 + 場所を取るので廃止(U7)。
 - `App.tsx` ✅ — PageId状態でページ切替。onboardingComplete=false時 OnboardingFlow最前面。未実装ページはComingSoonプレースホルダー。
 
 ### ビルド/テスト設定 (Step 13で整備)
