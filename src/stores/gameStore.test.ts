@@ -48,6 +48,10 @@ describe('gameStore', () => {
     expect(acted).toBe(true)
     // 答え合わせを読めるよう一時停止している (AI 送出は保留)。
     expect(store.getState().isPaused).toBe(true)
+    // 打った決定が保持され、SpotPanel(review)の答え合わせに使える (U8)。
+    const decision = store.getState().lastHeroDecision
+    expect(decision).not.toBeNull()
+    expect(decision!.action).toBe('fold')
     // 「次へ」で再開。
     store.getState().dismissFeedback()
     expect(store.getState().isPaused).toBe(false)
