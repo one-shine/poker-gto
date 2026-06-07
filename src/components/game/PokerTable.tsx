@@ -46,12 +46,23 @@ function betPos(seat: number, posMap: Record<number, Pos>) {
 
 const formatBB = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
 
+const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n))
+
 export function PokerTable({ state, winnerIds }: PokerTableProps) {
   const isMobile = useIsMobile()
   // 卓を利用可能な幅×高さの両制約でフィットさせる (歪まず縮む)。モバイルは縦長 (5/6)・デスクトップは横長 (16/9)。
   // モバイルも高さ制約を効かせることで、卓+アクション+フッターが1画面に収まる (スクロール不要・U10)。
   const { ref: fitRef, size } = useContainSize(isMobile ? 5 / 6 : 16 / 9, isMobile ? Infinity : DESKTOP_MAX_W)
   const SEAT_POS = isMobile ? SEAT_POS_MOBILE : SEAT_POS_DESKTOP
+
+  // 席/ポット/チップは固定サイズ、配置だけ %。卓が縮む (答え合わせ等で高さが奪われる) と中身が相対的に巨大化し重なる。
+  // 卓の描画幅に比例して中身を一括縮小し、% アンカーは保ったまま重なりを構造的に防ぐ (U26)。
+  // REF_W = 等倍になる基準幅 (席サイズはこの幅で調整済・U10)。desktop は席が大きいので基準も大きく。
+  // scale = width/REF_W は構造的に「常に収まる」(重なり0)。下限は極小卓での暴走防止の安全弁のみ。
+  // 極小画面(短い縦+背高パネル)では卓も小さくなる = ユーザー選択「スクロールせず縮小」の素直な帰結。
+  const REF_W = isMobile ? 360 : 760
+  const seatScale = size ? clamp(size.w / REF_W, 0.35, 1) : 1
+  const scaleStyle = seatScale !== 1 ? { transform: `scale(${seatScale})` } : undefined
   const showdown = state.street === 'showdown' || state.isHandComplete
   const winners = new Set(winnerIds ?? [])
 
@@ -85,9 +96,10 @@ export function PokerTable({ state, winnerIds }: PokerTableProps) {
 
       {/* 中央: ポット (チップ + ラベル) + ボード */}
       <div
-        className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2"
+        className="absolute -translate-x-1/2 -translate-y-1/2"
         style={{ left: '50%', top: isMobile ? '40%' : '42%' }}
       >
+      <div className="flex flex-col items-center gap-2" style={scaleStyle}>
         {totalPot > 0 && (
           // R10 B4: 確定ポットの変動 (= ストリート遷移でチップ吸収) を pulse で示す。
           // key 変更で animate を再走 → mainPotBB が変わるたびに短い拡縮。
@@ -127,6 +139,7 @@ export function PokerTable({ state, winnerIds }: PokerTableProps) {
           ))}
         </div>
       </div>
+      </div>
 
       {/* ベットチップ層: 各プレイヤーの現ベット額を felt 上に表示 (誰がいくら賭けたか一目で)
           R10 B4: ストリート遷移 (currentBetBB → 0) で AnimatePresence の exit が発火し、
@@ -139,8 +152,8 @@ export function PokerTable({ state, winnerIds }: PokerTableProps) {
           return (
             <motion.div
               key={`bet-${p.id}`}
-              initial={{ opacity: 0, scale: 0.6, left: bp.left, top: bp.top }}
-              animate={{ opacity: 1, scale: 1, left: bp.left, top: bp.top }}
+              initial={{ opacity: 0, scale: 0.6 * seatScale, left: bp.left, top: bp.top }}
+              animate={{ opacity: 1, scale: seatScale, left: bp.left, top: bp.top }}
               exit={{ opacity: 0, scale: 0.4, left: '50%', top: potTop }}
               transition={{ duration: 0.32, ease: 'easeOut' }}
               className="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-brass-500/40"
@@ -170,23 +183,25 @@ export function PokerTable({ state, winnerIds }: PokerTableProps) {
             className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
           >
-            <PlayerSeat
-              player={p}
-              isActing={state.currentActorId === p.id && !state.isHandComplete}
-              revealCards={showdown}
-              lastAction={lastAction}
-              isWinner={showdown && winners.has(p.id)}
-              compact={isMobile}
-              dealKey={state.handId}
-            />
-            {p.seatIndex === state.buttonSeatIndex && (
-              <span
-                className="absolute -top-2 -right-2 w-6 h-6 rounded-full brass font-display text-[11px] font-extrabold flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.5)] ring-1 ring-brass-600"
-                aria-label="ディーラーボタン"
-              >
-                D
-              </span>
-            )}
+            <div className="relative" style={scaleStyle}>
+              <PlayerSeat
+                player={p}
+                isActing={state.currentActorId === p.id && !state.isHandComplete}
+                revealCards={showdown}
+                lastAction={lastAction}
+                isWinner={showdown && winners.has(p.id)}
+                compact={isMobile}
+                dealKey={state.handId}
+              />
+              {p.seatIndex === state.buttonSeatIndex && (
+                <span
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full brass font-display text-[11px] font-extrabold flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.5)] ring-1 ring-brass-600"
+                  aria-label="ディーラーボタン"
+                >
+                  D
+                </span>
+              )}
+            </div>
           </div>
         )
       })}
