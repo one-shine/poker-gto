@@ -1,5 +1,4 @@
 import type { EquityUnavailableReason } from '../../lib/equity/opponentRange'
-import { TermChips, ConceptLink } from '../common/TermChips'
 
 // equity=null の理由を1行で説明 (透明性: 「壊れている」ではなく「出せない局面」と伝える)。
 const EQUITY_REASON_JP: Record<EquityUnavailableReason, string> = {
@@ -71,11 +70,7 @@ export function OddsGuide({ callAmount, reqEquity, equity, eqLoading, effPot, re
           <span aria-hidden="true">ℹ️ </span>{reasonText}
         </p>
       )}
-      {/* オッズ学習への導線: pot-odds 理論 + 用語チップ */}
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <ConceptLink conceptId="pot-odds" label="オッズの理論 ▶" />
-        <TermChips terms={['ポットオッズ', '必要勝率', 'エクイティ']} />
-      </div>
+      {/* 理論/用語リンクは持たない: SpotPanel の「関連理論・用語」に集約 (重複・散在を避ける)。 */}
     </div>
   )
 }

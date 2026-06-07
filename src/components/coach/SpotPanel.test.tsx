@@ -92,9 +92,16 @@ describe('SpotPanel', () => {
     await screen.findByText(/AKs @ btn-open/)
     expect(screen.getAllByText(/オッズ目安/)).toHaveLength(1) // 1パネル内に1回だけ
     expect(screen.getAllByText(/ポットオッズ/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/必要勝率/).length).toBeGreaterThan(0)
+    // 必要勝率はオッズ数値として1回だけ(用語チップは「関連理論・用語」に集約=既定折りたたみ)
+    expect(screen.getAllByText(/必要勝率/).length).toBe(1)
     expect(screen.getByText(/: 1/)).toBeInTheDocument()
-    expect(screen.getByText(/オッズの理論/)).toBeInTheDocument()
+  })
+
+  it('review: 打った後も「考え方(観点)」を折りたたみで見れる', () => {
+    render(<SpotPanel pending={pending()} phase="review" actedAction="raise" />)
+    expect(screen.queryByText('ハンド')).toBeNull() // 既定は折りたたみ(答え主体)
+    fireEvent.click(screen.getByRole('button', { name: /この局面の考え方/ }))
+    expect(screen.getByText('ハンド')).toBeInTheDocument() // 開くと観点が振り返れる
   })
 
   it('review: レンジ外の手は「フォールド100%」表示で対象外にしない', async () => {

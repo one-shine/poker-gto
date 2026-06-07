@@ -38,6 +38,7 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
   const [open, setOpen] = useState(review)
   const [revealed, setRevealed] = useState(review)
   const [theoryOpen, setTheoryOpen] = useState(false) // 関連理論・用語は既定折りたたみ(場所を取りすぎる)
+  const [thinkOpen, setThinkOpen] = useState(false)   // review での「考え方(観点)」折りたたみ
   const markHinted = useSessionStore(s => s.markHinted)
   const studyShowStrategy = useSettingsStore(s => s.studyShowStrategy)
 
@@ -62,10 +63,13 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
     () => buildDecisionGuidance(pending.state, HERO_ID, { callAmount, reqEquity, equity, reference, equityReason: reason }),
     [pending.state, callAmount, reqEquity, equity, reference, reason],
   )
-  const conceptLinks = guidance.conceptIds
+  // 理論/用語は「関連理論・用語」に集約: 観点由来 + オッズ由来(pot-odds・用語)を1箇所に。
+  const allConceptIds = [...new Set([...guidance.conceptIds, 'pot-odds'])]
+  const conceptLinks = allConceptIds
     .map(id => ({ id, title: conceptById(id)?.title }))
     .filter((c): c is { id: string; title: string } => !!c.title)
-    .slice(0, 3)
+    .slice(0, 4)
+  const allTerms = [...new Set([...guidance.terms, 'ポットオッズ', '必要勝率', 'エクイティ'])]
 
   // decision で答えを開いた手は精度測定から除外(review は既に打ったので不要)。
   function reveal() {
@@ -136,7 +140,7 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
   }
 
   // 関連理論・用語は既定で畳む(大ボタン+チップで縦に伸び、卓を圧迫し場所を取りすぎるため)。
-  const theory = (conceptLinks.length > 0 || guidance.terms.length > 0) ? (
+  const theory = (conceptLinks.length > 0 || allTerms.length > 0) ? (
     <div className="border-t border-white/5 pt-1.5">
       <button
         type="button"
@@ -150,31 +154,51 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
       {theoryOpen && (
         <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
           {conceptLinks.map(c => <ConceptLink key={c.id} conceptId={c.id} label={`${c.title} ▶`} />)}
-          <TermChips terms={guidance.terms} />
+          <TermChips terms={allTerms} />
         </div>
       )}
     </div>
   ) : null
 
-  // 本文(共有): decision は観点を出す / review は答え主体で観点は省略。オッズは常に1回。
+  // 考え方(観点): 状況 + 観点リスト。decision は常時 / review は折りたたみで「見れる」。
+  const considerationsBlock = (
+    <>
+      <p className="text-[11px] text-zinc-400">{guidance.situation}</p>
+      <ul className="space-y-1.5">
+        {guidance.considerations.map((c, i) => (
+          <li key={i} className="text-xs text-zinc-300 leading-snug flex gap-2">
+            <span className="shrink-0 text-sky-300/90 font-bold min-w-[3.5rem]">{c.label}</span>
+            <span>
+              {c.value && <span className="font-data text-zinc-100">{c.value}</span>}
+              {c.value && c.note && <span className="text-zinc-500"> — </span>}
+              {c.note && <span className="text-zinc-400">{c.note}</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
+  )
+
+  // 本文(共有)。オッズは常に1回。
+  // decision: 観点を常時表示(このシート自体が「考え方」)。
+  // review: 観点を折りたたみで提供(打った後も振り返れる・既定は答え主体でコンパクト)。
   const bodyInner = (
     <div className="space-y-2">
-      {!review && (
-        <>
-          <p className="text-[11px] text-zinc-400">{guidance.situation}</p>
-          <ul className="space-y-1.5">
-            {guidance.considerations.map((c, i) => (
-              <li key={i} className="text-xs text-zinc-300 leading-snug flex gap-2">
-                <span className="shrink-0 text-sky-300/90 font-bold min-w-[3.5rem]">{c.label}</span>
-                <span>
-                  {c.value && <span className="font-data text-zinc-100">{c.value}</span>}
-                  {c.value && c.note && <span className="text-zinc-500"> — </span>}
-                  {c.note && <span className="text-zinc-400">{c.note}</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </>
+      {!review && considerationsBlock}
+      {review && (
+        <div className="rounded-lg border border-sky-500/20 bg-sky-950/10">
+          <button
+            type="button"
+            onClick={() => setThinkOpen(o => !o)}
+            aria-expanded={thinkOpen}
+            className="w-full flex items-center justify-between gap-2 px-2 py-1.5 text-left
+              focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-300"
+          >
+            <span className="text-[11px] font-bold text-sky-300"><span aria-hidden="true">💡</span> この局面の考え方(観点)</span>
+            <span className="text-zinc-400 text-xs" aria-hidden="true">{thinkOpen ? '▲' : '▾'}</span>
+          </button>
+          {thinkOpen && <div className="px-2 pb-2 space-y-1.5">{considerationsBlock}</div>}
+        </div>
       )}
       {odds}
       {answer}
