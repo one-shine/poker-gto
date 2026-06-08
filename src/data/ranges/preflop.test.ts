@@ -69,13 +69,13 @@ describe('PREFLOP_SCENARIOS', () => {
     const EXPECTED: Record<string, number> = {
       'btn-open': 0.368, 'co-open': 0.247, 'mp-open': 0.176, 'utg-open': 0.134, 'sb-open': 0.497,
       'bb-vs-btn': 0.430, 'bb-vs-sb': 0.250, 'bb-vs-utg': 0.168, 'bb-vs-mp': 0.219, 'bb-vs-co': 0.268,
-      'sb-vs-btn': 0.069, 'btn-vs-co': 0.167, 'sb-vs-co': 0.057, 'btn-vs-utg': 0.113,
+      'sb-vs-btn': 0.070, 'btn-vs-co': 0.167, 'sb-vs-co': 0.059, 'btn-vs-utg': 0.113,
       'btn-vs-mp': 0.148, 'co-vs-utg': 0.091,
-      'mp-vs-utg': 0.076, 'co-vs-mp': 0.119, 'sb-vs-utg': 0.044, 'sb-vs-mp': 0.052,
-      'btn-vs-sb-3bet': 0.066, 'btn-vs-bb-3bet': 0.077, 'co-vs-sb-3bet': 0.056,
-      'co-vs-bb-3bet': 0.064, 'co-vs-btn-3bet': 0.047,
-      'utg-vs-bb-3bet': 0.117, 'utg-vs-btn-3bet': 0.108, 'utg-vs-co-3bet': 0.110,
-      'mp-vs-bb-3bet': 0.069, 'mp-vs-btn-3bet': 0.045, 'sb-vs-bb-3bet': 0.083,
+      'mp-vs-utg': 0.076, 'co-vs-mp': 0.119, 'sb-vs-utg': 0.046, 'sb-vs-mp': 0.054,
+      'btn-vs-sb-3bet': 0.068, 'btn-vs-bb-3bet': 0.079, 'co-vs-sb-3bet': 0.057,
+      'co-vs-bb-3bet': 0.065, 'co-vs-btn-3bet': 0.048,
+      'utg-vs-bb-3bet': 0.121, 'utg-vs-btn-3bet': 0.110, 'utg-vs-co-3bet': 0.112,
+      'mp-vs-bb-3bet': 0.070, 'mp-vs-btn-3bet': 0.046, 'sb-vs-bb-3bet': 0.085,
     }
     for (const sc of PREFLOP_SCENARIOS) {
       const want = EXPECTED[sc.id]
@@ -89,13 +89,11 @@ describe('PREFLOP_SCENARIOS', () => {
   // (固定ハイランク × suited/offsuit) で、より弱いキッカーが continue しているのに自身が
   // continue=0 のセルがあれば飛び石 = fail。raise/call の内訳は問わない (ホイールの 3bet
   // バンプを誤検出しないため総 continue で判定)。最下端の fold は走の外なので flag しない。
-  // allowlist: ポラライズで中抜けが意図的なスポット (SB の 3bet-or-fold 防御・全 *-3bet)。
+  // U28: ポラライズ系(SB 3bet-or-fold・*-3bet)の A6s-A9s も視覚連続化で低頻度充填済のため
+  // 全スポット・全走を検査する(allowlist なし)。中抜けを作り直したら必ず落ちる。
   it('no fold-hole inside a continuing kicker run (飛び石ガード)', () => {
-    const POLARIZED = new Set(['sb-vs-btn', 'sb-vs-co', 'sb-vs-utg', 'sb-vs-mp'])
-    const isAllowed = (id: string) => id.endsWith('-3bet') || POLARIZED.has(id)
     const holes: string[] = []
     for (const sc of PREFLOP_SCENARIOS) {
-      if (isAllowed(sc.id)) continue
       for (let h = 0; h < RANKS.length; h++) {
         for (const suit of ['s', 'o'] as const) {
           const run = RANKS.slice(h + 1).map(low => RANKS[h] + low + suit)

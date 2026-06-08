@@ -191,6 +191,42 @@
         "ev": -2.5
       }
     ],
+    "A8s": [
+      {
+        "action": "call",
+        "frequency": 0.06,
+        "ev": -7.735
+      },
+      {
+        "action": "fold",
+        "frequency": 0.94,
+        "ev": -2.5
+      }
+    ],
+    "A7s": [
+      {
+        "action": "call",
+        "frequency": 0.05,
+        "ev": -8.335
+      },
+      {
+        "action": "fold",
+        "frequency": 0.95,
+        "ev": -2.5
+      }
+    ],
+    "A6s": [
+      {
+        "action": "call",
+        "frequency": 0.04,
+        "ev": -8.07
+      },
+      {
+        "action": "fold",
+        "frequency": 0.96,
+        "ev": -2.5
+      }
+    ],
     "A5s": [
       {
         "action": "raise",

@@ -83,7 +83,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 6.823
+        "ev": 6.832
       }
     ],
     "KK": [
@@ -91,7 +91,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 4.862
+        "ev": 4.867
       }
     ],
     "QQ": [
@@ -99,7 +99,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.65,
-        "ev": 2.983
+        "ev": 2.989
       },
       {
         "action": "call",
@@ -112,7 +112,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.3,
-        "ev": 2.108
+        "ev": 2.114
       },
       {
         "action": "call",
@@ -125,7 +125,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.15,
-        "ev": 1.619
+        "ev": 1.624
       },
       {
         "action": "call",
@@ -138,7 +138,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.55,
-        "ev": 2.956
+        "ev": 2.963
       },
       {
         "action": "call",
@@ -151,7 +151,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.65,
-        "ev": 2.694
+        "ev": 2.7
       },
       {
         "action": "call",
@@ -164,7 +164,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.2,
-        "ev": 2.121
+        "ev": 2.127
       },
       {
         "action": "call",
@@ -177,7 +177,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.1,
-        "ev": 1.672
+        "ev": 1.678
       },
       {
         "action": "call",
@@ -245,7 +245,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.35,
-        "ev": 1.327
+        "ev": 1.317
       },
       {
         "action": "call",
@@ -263,7 +263,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.25,
-        "ev": 1.278
+        "ev": 1.268
       },
       {
         "action": "call",
@@ -281,7 +281,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.15,
-        "ev": 1.289
+        "ev": 1.28
       },
       {
         "action": "call",
@@ -299,7 +299,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.15,
-        "ev": 1.612
+        "ev": 1.602
       },
       {
         "action": "call",
