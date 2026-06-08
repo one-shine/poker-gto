@@ -396,18 +396,6 @@
         "ev": -2.5
       }
     ],
-    "54s": [
-      {
-        "action": "call",
-        "frequency": 0.2,
-        "ev": -8.458
-      },
-      {
-        "action": "fold",
-        "frequency": 0.8,
-        "ev": -2.5
-      }
-    ],
     "KQo": [
       {
         "action": "call",

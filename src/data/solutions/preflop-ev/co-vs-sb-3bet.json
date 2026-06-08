@@ -276,30 +276,6 @@
         "ev": -2.5
       }
     ],
-    "76s": [
-      {
-        "action": "call",
-        "frequency": 0.2,
-        "ev": -8.068
-      },
-      {
-        "action": "fold",
-        "frequency": 0.8,
-        "ev": -2.5
-      }
-    ],
-    "65s": [
-      {
-        "action": "call",
-        "frequency": 0.15,
-        "ev": -7.801
-      },
-      {
-        "action": "fold",
-        "frequency": 0.85,
-        "ev": -2.5
-      }
-    ],
     "KQo": [
       {
         "action": "call",

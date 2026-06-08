@@ -6,7 +6,7 @@
       {
         "action": "call",
         "frequency": 0.2,
-        "ev": -3.917
+        "ev": -4.352
       },
       {
         "action": "fold",
@@ -18,7 +18,7 @@
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": -3.751
+        "ev": -4.266
       },
       {
         "action": "fold",
@@ -30,7 +30,7 @@
       {
         "action": "call",
         "frequency": 0.45,
-        "ev": -3.286
+        "ev": -3.787
       },
       {
         "action": "fold",
@@ -43,7 +43,7 @@
         "action": "raise",
         "sizeBB": 24,
         "frequency": 1,
-        "ev": 15.867
+        "ev": 15.936
       }
     ],
     "KK": [
@@ -51,12 +51,12 @@
         "action": "raise",
         "sizeBB": 24,
         "frequency": 0.85,
-        "ev": 12.014
+        "ev": 11.934
       },
       {
         "action": "call",
         "frequency": 0.15,
-        "ev": 9.023
+        "ev": 8.89
       }
     ],
     "QQ": [
@@ -64,12 +64,12 @@
         "action": "raise",
         "sizeBB": 24,
         "frequency": 0.35,
-        "ev": 9.134
+        "ev": 8.944
       },
       {
         "action": "call",
         "frequency": 0.55,
-        "ev": 4.223
+        "ev": 3.906
       },
       {
         "action": "fold",
@@ -82,12 +82,12 @@
         "action": "raise",
         "sizeBB": 24,
         "frequency": 0.1,
-        "ev": 6.997
+        "ev": 6.755
       },
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": 0.661
+        "ev": 0.258
       },
       {
         "action": "fold",
@@ -99,7 +99,7 @@
       {
         "action": "call",
         "frequency": 0.6,
-        "ev": -2.019
+        "ev": -2.497
       },
       {
         "action": "fold",
@@ -112,12 +112,12 @@
         "action": "raise",
         "sizeBB": 24,
         "frequency": 0.45,
-        "ev": 8.339
+        "ev": 8.285
       },
       {
         "action": "call",
         "frequency": 0.55,
-        "ev": 2.898
+        "ev": 2.809
       }
     ],
     "AKo": [
@@ -125,12 +125,12 @@
         "action": "raise",
         "sizeBB": 24,
         "frequency": 0.55,
-        "ev": 7.693
+        "ev": 7.643
       },
       {
         "action": "call",
         "frequency": 0.35,
-        "ev": 1.821
+        "ev": 1.738
       },
       {
         "action": "fold",
@@ -143,12 +143,12 @@
         "action": "raise",
         "sizeBB": 24,
         "frequency": 0.1,
-        "ev": 5.749
+        "ev": 5.596
       },
       {
         "action": "call",
         "frequency": 0.75,
-        "ev": -1.418
+        "ev": -1.674
       },
       {
         "action": "fold",
@@ -160,7 +160,7 @@
       {
         "action": "call",
         "frequency": 0.45,
-        "ev": -2.726
+        "ev": -3
       },
       {
         "action": "fold",
@@ -172,7 +172,7 @@
       {
         "action": "call",
         "frequency": 0.65,
-        "ev": -4.273
+        "ev": -4.641
       },
       {
         "action": "fold",
@@ -184,7 +184,7 @@
       {
         "action": "call",
         "frequency": 0.5,
-        "ev": -5.569
+        "ev": -5.954
       },
       {
         "action": "fold",
@@ -196,7 +196,7 @@
       {
         "action": "call",
         "frequency": 0.25,
-        "ev": -6.262
+        "ev": -6.677
       },
       {
         "action": "fold",
@@ -208,7 +208,7 @@
       {
         "action": "call",
         "frequency": 0.65,
-        "ev": -5.553
+        "ev": -5.965
       },
       {
         "action": "fold",
@@ -220,7 +220,7 @@
       {
         "action": "call",
         "frequency": 0.45,
-        "ev": -6.402
+        "ev": -6.828
       },
       {
         "action": "fold",
@@ -232,7 +232,7 @@
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": -6.662
+        "ev": -7.088
       },
       {
         "action": "fold",
@@ -244,7 +244,7 @@
       {
         "action": "call",
         "frequency": 0.15,
-        "ev": -7.802
+        "ev": -8.224
       },
       {
         "action": "fold",
@@ -256,7 +256,7 @@
       {
         "action": "call",
         "frequency": 0.45,
-        "ev": -7.316
+        "ev": -7.783
       },
       {
         "action": "fold",
@@ -268,7 +268,7 @@
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": -7.665
+        "ev": -8.122
       },
       {
         "action": "fold",
@@ -280,7 +280,7 @@
       {
         "action": "call",
         "frequency": 0.45,
-        "ev": -7.287
+        "ev": -7.733
       },
       {
         "action": "fold",
@@ -292,7 +292,7 @@
       {
         "action": "call",
         "frequency": 0.2,
-        "ev": -7.85
+        "ev": -8.287
       },
       {
         "action": "fold",
@@ -304,7 +304,7 @@
       {
         "action": "call",
         "frequency": 0.35,
-        "ev": -7.432
+        "ev": -7.86
       },
       {
         "action": "fold",
@@ -316,7 +316,7 @@
       {
         "action": "call",
         "frequency": 0.25,
-        "ev": -7.746
+        "ev": -8.162
       },
       {
         "action": "fold",
@@ -328,7 +328,7 @@
       {
         "action": "call",
         "frequency": 0.2,
-        "ev": -7.243
+        "ev": -7.616
       },
       {
         "action": "fold",
@@ -340,7 +340,7 @@
       {
         "action": "call",
         "frequency": 0.25,
-        "ev": -7.464
+        "ev": -7.75
       },
       {
         "action": "fold",
@@ -348,35 +348,11 @@
         "ev": -2.5
       }
     ],
-    "65s": [
-      {
-        "action": "call",
-        "frequency": 0.2,
-        "ev": -7.358
-      },
-      {
-        "action": "fold",
-        "frequency": 0.8,
-        "ev": -2.5
-      }
-    ],
-    "54s": [
-      {
-        "action": "call",
-        "frequency": 0.15,
-        "ev": -7.532
-      },
-      {
-        "action": "fold",
-        "frequency": 0.85,
-        "ev": -2.5
-      }
-    ],
     "KQo": [
       {
         "action": "call",
         "frequency": 0.25,
-        "ev": -6.901
+        "ev": -7.317
       },
       {
         "action": "fold",
@@ -388,7 +364,7 @@
       {
         "action": "call",
         "frequency": 0.2,
-        "ev": -5.821
+        "ev": -6.201
       },
       {
         "action": "fold",

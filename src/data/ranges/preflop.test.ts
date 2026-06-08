@@ -69,11 +69,11 @@ describe('PREFLOP_SCENARIOS', () => {
     const EXPECTED: Record<string, number> = {
       'btn-open': 0.368, 'co-open': 0.247, 'mp-open': 0.176, 'utg-open': 0.134, 'sb-open': 0.497,
       'bb-vs-btn': 0.430, 'bb-vs-sb': 0.250, 'bb-vs-utg': 0.168, 'bb-vs-mp': 0.219, 'bb-vs-co': 0.268,
-      'sb-vs-btn': 0.063, 'btn-vs-co': 0.167, 'sb-vs-co': 0.053, 'btn-vs-utg': 0.113,
+      'sb-vs-btn': 0.061, 'btn-vs-co': 0.167, 'sb-vs-co': 0.053, 'btn-vs-utg': 0.113,
       'btn-vs-mp': 0.148, 'co-vs-utg': 0.091,
       'mp-vs-utg': 0.076, 'co-vs-mp': 0.119, 'sb-vs-utg': 0.041, 'sb-vs-mp': 0.049,
-      'btn-vs-sb-3bet': 0.063, 'btn-vs-bb-3bet': 0.073, 'co-vs-sb-3bet': 0.054,
-      'co-vs-bb-3bet': 0.060, 'co-vs-btn-3bet': 0.044,
+      'btn-vs-sb-3bet': 0.062, 'btn-vs-bb-3bet': 0.072, 'co-vs-sb-3bet': 0.052,
+      'co-vs-bb-3bet': 0.059, 'co-vs-btn-3bet': 0.044,
       'utg-vs-bb-3bet': 0.115, 'utg-vs-btn-3bet': 0.106, 'utg-vs-co-3bet': 0.108,
       'mp-vs-bb-3bet': 0.066, 'mp-vs-btn-3bet': 0.043, 'sb-vs-bb-3bet': 0.078,
     }
