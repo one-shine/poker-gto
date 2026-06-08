@@ -205,6 +205,30 @@
         "ev": -1
       }
     ],
+    "A7s": [
+      {
+        "action": "call",
+        "frequency": 0.55,
+        "ev": -0.677
+      },
+      {
+        "action": "fold",
+        "frequency": 0.45,
+        "ev": -1
+      }
+    ],
+    "A6s": [
+      {
+        "action": "call",
+        "frequency": 0.5,
+        "ev": -0.873
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": -1
+      }
+    ],
     "A5s": [
       {
         "action": "raise",

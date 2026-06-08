@@ -68,10 +68,10 @@ describe('PREFLOP_SCENARIOS', () => {
   it('combo-weighted width matches the documented per-spot comments (drift guard)', () => {
     const EXPECTED: Record<string, number> = {
       'btn-open': 0.368, 'co-open': 0.247, 'mp-open': 0.176, 'utg-open': 0.134, 'sb-open': 0.497,
-      'bb-vs-btn': 0.430, 'bb-vs-sb': 0.250, 'bb-vs-utg': 0.166, 'bb-vs-mp': 0.219, 'bb-vs-co': 0.268,
-      'sb-vs-btn': 0.069, 'btn-vs-co': 0.164, 'sb-vs-co': 0.057, 'btn-vs-utg': 0.110,
-      'btn-vs-mp': 0.146, 'co-vs-utg': 0.087,
-      'mp-vs-utg': 0.073, 'co-vs-mp': 0.118, 'sb-vs-utg': 0.044, 'sb-vs-mp': 0.052,
+      'bb-vs-btn': 0.430, 'bb-vs-sb': 0.250, 'bb-vs-utg': 0.168, 'bb-vs-mp': 0.219, 'bb-vs-co': 0.268,
+      'sb-vs-btn': 0.069, 'btn-vs-co': 0.167, 'sb-vs-co': 0.057, 'btn-vs-utg': 0.113,
+      'btn-vs-mp': 0.148, 'co-vs-utg': 0.091,
+      'mp-vs-utg': 0.076, 'co-vs-mp': 0.119, 'sb-vs-utg': 0.044, 'sb-vs-mp': 0.052,
       'btn-vs-sb-3bet': 0.066, 'btn-vs-bb-3bet': 0.077, 'co-vs-sb-3bet': 0.056,
       'co-vs-bb-3bet': 0.064, 'co-vs-btn-3bet': 0.047,
       'utg-vs-bb-3bet': 0.117, 'utg-vs-btn-3bet': 0.108, 'utg-vs-co-3bet': 0.110,
@@ -83,6 +83,35 @@ describe('PREFLOP_SCENARIOS', () => {
       const got = rangeStats(sc).widthPct
       expect(Math.abs(got - want), `${sc.id} combo比=${(got * 100).toFixed(1)}% が文書値 ${(want * 100).toFixed(1)}% と乖離`).toBeLessThan(0.025)
     }
+  })
+
+  // 飛び石ガード: continue 列 (raise+call>0) の「中抜け」を検出する。各キッカー走
+  // (固定ハイランク × suited/offsuit) で、より弱いキッカーが continue しているのに自身が
+  // continue=0 のセルがあれば飛び石 = fail。raise/call の内訳は問わない (ホイールの 3bet
+  // バンプを誤検出しないため総 continue で判定)。最下端の fold は走の外なので flag しない。
+  // allowlist: ポラライズで中抜けが意図的なスポット (SB の 3bet-or-fold 防御・全 *-3bet)。
+  it('no fold-hole inside a continuing kicker run (飛び石ガード)', () => {
+    const POLARIZED = new Set(['sb-vs-btn', 'sb-vs-co', 'sb-vs-utg', 'sb-vs-mp'])
+    const isAllowed = (id: string) => id.endsWith('-3bet') || POLARIZED.has(id)
+    const holes: string[] = []
+    for (const sc of PREFLOP_SCENARIOS) {
+      if (isAllowed(sc.id)) continue
+      for (let h = 0; h < RANKS.length; h++) {
+        for (const suit of ['s', 'o'] as const) {
+          const run = RANKS.slice(h + 1).map(low => RANKS[h] + low + suit)
+          const cont = run.map(hand => {
+            const c = sc.cells[hand]
+            return c ? c.raise + c.call : 0
+          })
+          let last = -1
+          for (let i = 0; i < cont.length; i++) if (cont[i] > 0) last = i
+          for (let i = 0; i < last; i++) {
+            if (cont[i] === 0) holes.push(`${sc.id}/${run[i]} (弱い ${run[last]} は continue)`)
+          }
+        }
+      }
+    }
+    expect(holes, `continue 列の中抜け (飛び石):\n${holes.join('\n')}`).toEqual([])
   })
 
   it('facing-3bet spots: AA always 4bets, mix call+4bet, and raiseSize reflects the 3bet', () => {

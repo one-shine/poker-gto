@@ -6,7 +6,7 @@
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": -3.805
+        "ev": -3.695
       },
       {
         "action": "fold",
@@ -18,7 +18,7 @@
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": -3.381
+        "ev": -3.265
       },
       {
         "action": "fold",
@@ -30,7 +30,7 @@
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": -2.719
+        "ev": -2.628
       },
       {
         "action": "fold",
@@ -42,7 +42,7 @@
       {
         "action": "call",
         "frequency": 0.4,
-        "ev": -2.151
+        "ev": -2.055
       },
       {
         "action": "fold",
@@ -54,7 +54,7 @@
       {
         "action": "call",
         "frequency": 0.5,
-        "ev": -1.296
+        "ev": -1.219
       },
       {
         "action": "fold",
@@ -66,7 +66,7 @@
       {
         "action": "call",
         "frequency": 0.6,
-        "ev": -0.553
+        "ev": -0.449
       },
       {
         "action": "fold",
@@ -78,7 +78,7 @@
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": 0.316
+        "ev": 0.438
       },
       {
         "action": "fold",
@@ -90,7 +90,7 @@
       {
         "action": "call",
         "frequency": 0.8,
-        "ev": 1.349
+        "ev": 1.476
       },
       {
         "action": "fold",
@@ -103,7 +103,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 13.117
+        "ev": 12.952
       }
     ],
     "KK": [
@@ -111,7 +111,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 9.753
+        "ev": 9.557
       }
     ],
     "QQ": [
@@ -119,12 +119,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.7,
-        "ev": 6.515
+        "ev": 6.429
       },
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": 5.741
+        "ev": 5.732
       }
     ],
     "JJ": [
@@ -132,12 +132,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.3,
-        "ev": 4.041
+        "ev": 4.039
       },
       {
         "action": "call",
         "frequency": 0.6,
-        "ev": 4.065
+        "ev": 4.111
       },
       {
         "action": "fold",
@@ -150,12 +150,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.15,
-        "ev": 2.257
+        "ev": 2.312
       },
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": 2.621
+        "ev": 2.706
       },
       {
         "action": "fold",
@@ -168,12 +168,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.6,
-        "ev": 2.168
+        "ev": 2.216
       },
       {
         "action": "call",
         "frequency": 0.4,
-        "ev": 2.334
+        "ev": 2.442
       }
     ],
     "AKo": [
@@ -181,12 +181,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.7,
-        "ev": 1.123
+        "ev": 1.199
       },
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": 1.632
+        "ev": 1.749
       }
     ],
     "AQs": [
@@ -194,12 +194,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.2,
-        "ev": -0.087
+        "ev": 0.02
       },
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": 0.853
+        "ev": 0.991
       },
       {
         "action": "fold",
@@ -212,12 +212,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.1,
-        "ev": -0.887
+        "ev": -0.762
       },
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": -0.309
+        "ev": -0.144
       },
       {
         "action": "fold",
@@ -229,11 +229,59 @@
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": -0.969
+        "ev": -0.798
       },
       {
         "action": "fold",
         "frequency": 0.3,
+        "ev": -1
+      }
+    ],
+    "A9s": [
+      {
+        "action": "call",
+        "frequency": 0.5,
+        "ev": -1.559
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": -1
+      }
+    ],
+    "A8s": [
+      {
+        "action": "call",
+        "frequency": 0.4,
+        "ev": -1.96
+      },
+      {
+        "action": "fold",
+        "frequency": 0.6,
+        "ev": -1
+      }
+    ],
+    "A7s": [
+      {
+        "action": "call",
+        "frequency": 0.3,
+        "ev": -2.304
+      },
+      {
+        "action": "fold",
+        "frequency": 0.7,
+        "ev": -1
+      }
+    ],
+    "A6s": [
+      {
+        "action": "call",
+        "frequency": 0.25,
+        "ev": -2.513
+      },
+      {
+        "action": "fold",
+        "frequency": 0.75,
         "ev": -1
       }
     ],
@@ -242,12 +290,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.3,
-        "ev": -3.402
+        "ev": -3.218
       },
       {
         "action": "call",
         "frequency": 0.2,
-        "ev": -2.436
+        "ev": -2.456
       },
       {
         "action": "fold",
@@ -260,12 +308,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.2,
-        "ev": -3.731
+        "ev": -3.541
       },
       {
         "action": "call",
         "frequency": 0.15,
-        "ev": -2.739
+        "ev": -2.75
       },
       {
         "action": "fold",
@@ -278,12 +326,12 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.15,
-        "ev": -1.383
+        "ev": -1.199
       },
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": -1.214
+        "ev": -1.248
       },
       {
         "action": "fold",
@@ -295,7 +343,7 @@
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": -1.874
+        "ev": -1.88
       },
       {
         "action": "fold",
@@ -307,7 +355,7 @@
       {
         "action": "call",
         "frequency": 0.5,
-        "ev": -2.153
+        "ev": -2.15
       },
       {
         "action": "fold",
@@ -319,7 +367,7 @@
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": -2.349
+        "ev": -2.327
       },
       {
         "action": "fold",
@@ -331,7 +379,7 @@
       {
         "action": "call",
         "frequency": 0.4,
-        "ev": -2.694
+        "ev": -2.674
       },
       {
         "action": "fold",
@@ -343,7 +391,7 @@
       {
         "action": "call",
         "frequency": 0.6,
-        "ev": -2.766
+        "ev": -2.714
       },
       {
         "action": "fold",
@@ -355,7 +403,7 @@
       {
         "action": "call",
         "frequency": 0.4,
-        "ev": -3.292
+        "ev": -3.233
       },
       {
         "action": "fold",
@@ -367,7 +415,7 @@
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": -3.774
+        "ev": -3.751
       },
       {
         "action": "fold",
@@ -379,7 +427,7 @@
       {
         "action": "call",
         "frequency": 0.6,
-        "ev": 0.238
+        "ev": 0.387
       },
       {
         "action": "fold",
@@ -391,7 +439,7 @@
       {
         "action": "call",
         "frequency": 0.3,
-        "ev": -1.167
+        "ev": -0.996
       },
       {
         "action": "fold",
@@ -403,7 +451,7 @@
       {
         "action": "call",
         "frequency": 0.5,
-        "ev": -2
+        "ev": -2.028
       },
       {
         "action": "fold",
