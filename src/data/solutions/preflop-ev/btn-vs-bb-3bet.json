@@ -216,6 +216,78 @@
         "ev": -2.5
       }
     ],
+    "A5s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.35,
+        "ev": 1.741
+      },
+      {
+        "action": "call",
+        "frequency": 0.2,
+        "ev": -7.64
+      },
+      {
+        "action": "fold",
+        "frequency": 0.45,
+        "ev": -2.5
+      }
+    ],
+    "A4s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.3,
+        "ev": 1.356
+      },
+      {
+        "action": "call",
+        "frequency": 0.15,
+        "ev": -8.282
+      },
+      {
+        "action": "fold",
+        "frequency": 0.55,
+        "ev": -2.5
+      }
+    ],
+    "A3s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.2,
+        "ev": 1.347
+      },
+      {
+        "action": "call",
+        "frequency": 0.1,
+        "ev": -8.297
+      },
+      {
+        "action": "fold",
+        "frequency": 0.7,
+        "ev": -2.5
+      }
+    ],
+    "A2s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.15,
+        "ev": 1.354
+      },
+      {
+        "action": "call",
+        "frequency": 0.05,
+        "ev": -8.285
+      },
+      {
+        "action": "fold",
+        "frequency": 0.8,
+        "ev": -2.5
+      }
+    ],
     "KQs": [
       {
         "action": "call",
@@ -393,6 +465,18 @@
       {
         "action": "fold",
         "frequency": 0.75,
+        "ev": -2.5
+      }
+    ],
+    "54s": [
+      {
+        "action": "call",
+        "frequency": 0.2,
+        "ev": -8.458
+      },
+      {
+        "action": "fold",
+        "frequency": 0.8,
         "ev": -2.5
       }
     ],

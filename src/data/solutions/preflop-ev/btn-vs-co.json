@@ -78,7 +78,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 5.999
+        "ev": 6.062
       }
     ],
     "KK": [
@@ -86,7 +86,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 4.633
+        "ev": 4.67
       }
     ],
     "QQ": [
@@ -94,7 +94,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.7,
-        "ev": 3.282
+        "ev": 3.329
       },
       {
         "action": "call",
@@ -107,7 +107,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.3,
-        "ev": 2.626
+        "ev": 2.617
       },
       {
         "action": "call",
@@ -120,7 +120,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.1,
-        "ev": 2.217
+        "ev": 2.144
       },
       {
         "action": "call",
@@ -133,7 +133,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.6,
-        "ev": 3.213
+        "ev": 3.26
       },
       {
         "action": "call",
@@ -146,7 +146,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.7,
-        "ev": 3.044
+        "ev": 3.05
       },
       {
         "action": "call",
@@ -159,7 +159,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.2,
-        "ev": 2.664
+        "ev": 2.599
       },
       {
         "action": "call",
@@ -234,7 +234,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.4,
-        "ev": 2.064
+        "ev": 1.997
       },
       {
         "action": "call",
@@ -252,7 +252,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.3,
-        "ev": 2.04
+        "ev": 1.971
       },
       {
         "action": "call",
@@ -301,7 +301,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 0.2,
-        "ev": 2.103
+        "ev": 2.007
       },
       {
         "action": "call",

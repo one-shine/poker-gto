@@ -150,6 +150,42 @@
         "ev": -2.5
       }
     ],
+    "A5s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.32,
+        "ev": 2.135
+      },
+      {
+        "action": "call",
+        "frequency": 0.08,
+        "ev": -7.9
+      },
+      {
+        "action": "fold",
+        "frequency": 0.6,
+        "ev": -2.5
+      }
+    ],
+    "A4s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.22,
+        "ev": 1.753
+      },
+      {
+        "action": "call",
+        "frequency": 0.03,
+        "ev": -8.536
+      },
+      {
+        "action": "fold",
+        "frequency": 0.75,
+        "ev": -2.5
+      }
+    ],
     "AKo": [
       {
         "action": "raise",

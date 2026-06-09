@@ -63,7 +63,7 @@
         "action": "raise",
         "sizeBB": 3,
         "frequency": 1,
-        "ev": 5.383
+        "ev": 5.482
       }
     ],
     "KK": [
@@ -71,7 +71,7 @@
         "action": "raise",
         "sizeBB": 3,
         "frequency": 1,
-        "ev": 4.513
+        "ev": 4.575
       }
     ],
     "QQ": [
@@ -79,7 +79,7 @@
         "action": "raise",
         "sizeBB": 3,
         "frequency": 1,
-        "ev": 3.658
+        "ev": 3.748
       }
     ],
     "JJ": [
@@ -87,7 +87,7 @@
         "action": "raise",
         "sizeBB": 3,
         "frequency": 0.3,
-        "ev": 3.036
+        "ev": 3.067
       },
       {
         "action": "call",
@@ -100,7 +100,7 @@
         "action": "raise",
         "sizeBB": 3,
         "frequency": 1,
-        "ev": 3.316
+        "ev": 3.405
       }
     ],
     "AQs": [
@@ -108,7 +108,7 @@
         "action": "raise",
         "sizeBB": 3,
         "frequency": 0.2,
-        "ev": 2.871
+        "ev": 2.839
       },
       {
         "action": "call",
@@ -121,7 +121,7 @@
         "action": "raise",
         "sizeBB": 3,
         "frequency": 0.2,
-        "ev": 2.098
+        "ev": 2.028
       },
       {
         "action": "call",
@@ -134,7 +134,7 @@
         "action": "raise",
         "sizeBB": 3,
         "frequency": 1,
-        "ev": 3.13
+        "ev": 3.185
       }
     ],
     "TT": [

@@ -191,6 +191,60 @@
         "ev": -2.5
       }
     ],
+    "A5s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.25,
+        "ev": 2.3
+      },
+      {
+        "action": "call",
+        "frequency": 0.15,
+        "ev": -7.624
+      },
+      {
+        "action": "fold",
+        "frequency": 0.6,
+        "ev": -2.5
+      }
+    ],
+    "A4s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.15,
+        "ev": 1.904
+      },
+      {
+        "action": "call",
+        "frequency": 0.1,
+        "ev": -8.284
+      },
+      {
+        "action": "fold",
+        "frequency": 0.75,
+        "ev": -2.5
+      }
+    ],
+    "A3s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.08,
+        "ev": 1.843
+      },
+      {
+        "action": "call",
+        "frequency": 0.05,
+        "ev": -8.387
+      },
+      {
+        "action": "fold",
+        "frequency": 0.87,
+        "ev": -2.5
+      }
+    ],
     "KQs": [
       {
         "action": "call",

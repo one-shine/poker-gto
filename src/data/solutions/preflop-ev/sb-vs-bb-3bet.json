@@ -205,6 +205,78 @@
         "ev": -2.5
       }
     ],
+    "A5s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.3,
+        "ev": 1.279
+      },
+      {
+        "action": "call",
+        "frequency": 0.35,
+        "ev": -8.41
+      },
+      {
+        "action": "fold",
+        "frequency": 0.35,
+        "ev": -2.5
+      }
+    ],
+    "A4s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.25,
+        "ev": 0.903
+      },
+      {
+        "action": "call",
+        "frequency": 0.25,
+        "ev": -9.036
+      },
+      {
+        "action": "fold",
+        "frequency": 0.5,
+        "ev": -2.5
+      }
+    ],
+    "A3s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.2,
+        "ev": 0.914
+      },
+      {
+        "action": "call",
+        "frequency": 0.15,
+        "ev": -9.018
+      },
+      {
+        "action": "fold",
+        "frequency": 0.65,
+        "ev": -2.5
+      }
+    ],
+    "A2s": [
+      {
+        "action": "raise",
+        "sizeBB": 24,
+        "frequency": 0.15,
+        "ev": 0.945
+      },
+      {
+        "action": "call",
+        "frequency": 0.1,
+        "ev": -8.967
+      },
+      {
+        "action": "fold",
+        "frequency": 0.75,
+        "ev": -2.5
+      }
+    ],
     "KQs": [
       {
         "action": "raise",
