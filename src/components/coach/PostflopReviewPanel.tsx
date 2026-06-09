@@ -4,6 +4,7 @@ import { HERO_ID } from '../../stores/gameStore'
 import { evaluateHeroDecision } from '../../engine/agents/CoachAgent'
 import { evaluateBestHand } from '../../engine/cards/HandEvaluator'
 import { boardTexture, postflopPrinciple, conceptIdForCategory } from '../../lib/coach/coachConcepts'
+import { recommendedSolution } from '../../lib/coach/recommendation'
 import type { CoachFeedback } from '../../types/coach'
 import type { GameState, PlayerAction, Street } from '../../types/game'
 import { StrategyDetail } from './StrategyDetail'
@@ -21,13 +22,6 @@ const ACTION_JP: Record<PlayerAction, string> = {
 
 interface ReviewResult { decision: HeroDecision; feedback: CoachFeedback | null }
 
-// 解の戦略から最頻アクション (= GTO推奨) を取り出す。
-function recommendedAction(feedback: CoachFeedback): PlayerAction {
-  let best = feedback.strategy[0]
-  for (const s of feedback.strategy) if (s.frequency > (best?.frequency ?? -1)) best = s
-  return best?.action ?? feedback.chosen
-}
-
 // hero のホールカード + ボードから現状の役を評価する (一般原則を述べるため)。
 function heroMadeRank(state: GameState) {
   const hero = state.players.find(p => p.id === HERO_ID)
@@ -43,7 +37,8 @@ function DecisionInsight({ result }: { result: ReviewResult }) {
 
   const texture = boardTexture(result.decision.state.board)
   const rank = heroMadeRank(result.decision.state)
-  const principle = rank ? postflopPrinciple(rank, recommendedAction(fb)) : null
+  const rec = recommendedSolution(fb.strategy)
+  const principle = rank && rec ? postflopPrinciple(rank, rec.action) : null
   const conceptId = fb.category ? conceptIdForCategory(fb.category) : null
 
   return (

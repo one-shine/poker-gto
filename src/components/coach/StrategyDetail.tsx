@@ -58,6 +58,7 @@ export function StrategyDetail({ feedback }: { feedback: CoachFeedback }) {
         showEv={feedback.showEv}
         chosen={feedback.chosen}
         approxEv={feedback.source === 'approximate_with_ev'}
+        showRecommended
       />
     </div>
   )

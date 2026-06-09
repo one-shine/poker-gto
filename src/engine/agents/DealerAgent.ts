@@ -35,6 +35,12 @@ export class DealerAgent {
     bus.on('NEW_HAND_REQUEST', () => this.startNewHand())
   }
 
+  // B7: 次ハンドの席スタックを差し替える(cash 持ち越し)。意味論(reset/cash)は呼び出し側が持ち、
+  // engine は与えられた configs を使うだけ(設定非依存を維持)。次の startNewHand から反映される。
+  setConfigs(configs: PlayerConfig[]): void {
+    this.configs = configs
+  }
+
   startNewHand(): void {
     this.handNumber++
     this.deck = createShuffledDeck()

@@ -11,6 +11,7 @@ import {
 } from '../../lib/drill/postflopDrill'
 import type { SolutionSource } from '../../types/solver'
 import { TermChips, ConceptLink } from '../common/TermChips'
+import { BookIcon } from '../icons/ActionIcons'
 
 const XP_CORRECT = 8
 const XP_WRONG = 3
@@ -200,7 +201,7 @@ export function PostflopDrillPanel() {
           {question.representative && (
             <div className="space-y-1">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border bg-emerald-950/40 border-emerald-500/40 text-emerald-200">
-                <span aria-hidden="true">📚</span> 代表ボード: {question.representative.label}
+                <BookIcon className="w-3.5 h-3.5" /> 代表ボード: {question.representative.label}
               </span>
               <p className="text-[11px] text-zinc-400">{question.representative.note}</p>
             </div>

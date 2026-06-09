@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useSettingsStore, type AppMode, type OpponentMode, type AiSpeed } from '../stores/settingsStore'
+import { useSettingsStore, type AppMode, type OpponentMode, type AiSpeed, type StackMode } from '../stores/settingsStore'
 import { useProgressStore } from '../stores/progressStore'
 import { useGameStore } from '../stores/gameStore'
 import { useSessionStore } from '../stores/sessionStore'
@@ -91,7 +91,8 @@ export function SettingsPage() {
   const setAppMode = (m: AppMode) => s.setAppMode(m)
   // 対戦相手/スタックはエンジン再初期化が必要
   const setOpponent = (m: OpponentMode) => { s.setOpponentMode(m); resetGame() }
-  const setStack = (n: number) => { s.setStackBB(n); resetGame() }
+  const setStackMode = (m: StackMode) => { s.setStackMode(m); resetGame() }
+  const setStack = (n: number) => { s.setBuyInBB(n); resetGame() }
 
   // U11: データ書き出し/読み込み (完全ローカル・外部送信なし)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -165,16 +166,24 @@ export function SettingsPage() {
           />
         </Section>
 
-        <Section title="スタック深さ">
-          <div className="flex gap-2">
+        <Section title="スタック方式">
+          <Segmented<StackMode>
+            value={s.stackMode}
+            onChange={setStackMode}
+            options={[
+              { value: 'reset', label: 'リセット', desc: '各ハンド開始時に全員バイインに戻す。毎ハンド独立=GTO評価が最もクリーン(既定)。' },
+              { value: 'cash', label: 'キャッシュ繰り越し', desc: '前ハンドの終了スタックを次に持ち越し、バストで自動リバイ。実戦的だが実効スタックが100BBから外れると精度が下がる。' },
+            ]}
+          />
+          <div className="mt-2 flex gap-2">
             {[50, 100, 200].map(bb => (
               <button
                 key={bb}
                 type="button"
                 onClick={() => setStack(bb)}
-                aria-pressed={s.stackBB === bb}
+                aria-pressed={s.buyInBB === bb}
                 className={`flex-1 min-h-11 rounded-xl border font-data font-bold transition-all ${
-                  s.stackBB === bb
+                  s.buyInBB === bb
                     ? 'border-brass-400 bg-brass-400/10 text-brass-200'
                     : 'border-white/10 bg-base-800/60 text-zinc-300 hover:border-brass-500/40'
                 }`}
@@ -183,7 +192,9 @@ export function SettingsPage() {
               </button>
             ))}
           </div>
-          <p className="text-[11px] text-zinc-500">※ 解は 100BB 前提。他の深さは近似精度が下がります。</p>
+          <p className="text-[11px] text-zinc-500">
+            {s.stackMode === 'cash' ? '※ バイイン額。' : '※ 各ハンドの開始スタック。'}解は 100BB 前提。他の深さは近似精度が下がります。
+          </p>
         </Section>
 
         <Section title="スタディ: アクション後の答え合わせ">

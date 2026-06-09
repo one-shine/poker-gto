@@ -24,9 +24,19 @@ let heroDecisionCtx: { handId: string; street: Street; position: Position } | nu
 // state) を捕捉し、ハンド後に on-demand で live solve して復習表示する (求解が重いので都度でなく後で)。
 let pendingHeroState: GameState | null = null
 let handDecisions: HeroDecision[] = []
-// U5: hero 純損益の算出用。配当は stack に戻されない(終了stackは拠出後)ため、開始stackを保持して
-// 「拠出 = 開始 − 終了」を求める。initGame の stackBB を覚える。
-let startStackBB = 100
+// U5/B7: hero 純損益の算出用。配当は stack に戻されない(終了stackは拠出後)ため、当ハンドの hero
+// 開始スタック(pre-blind)を保持して「拠出 = 開始 − 終了」を求める。cash モードでは毎ハンド変わる。
+let heroHandStartStackBB = 100
+// B7 cash: 前ハンド終了時の各席スタック(持ち越し)。reset モードや未開始では null。
+let carryStacks: Record<string, number> | null = null
+// B7: DealerAgent と現在の卓 configs への参照(cash で毎ハンド席スタックを差し替えるため)。
+let dealer: DealerAgent | null = null
+let baseConfigs: PlayerConfig[] = []
+// cash: BB を払えない(<1BB)席はバスト扱いで buyInBB に自動リバイ(ゲーム運用ルール・GTOではない)。
+const MIN_PLAYABLE_BB = 1
+function rebuy(stack: number | undefined, buyInBB: number): number {
+  return stack == null || stack < MIN_PLAYABLE_BB ? buyInBB : Math.round(stack * 100) / 100
+}
 
 // U17: hero がフォールド済みのハンドでは、残りの相手同士の決着を遅延0で瞬時に進める
 // (自分は結果に影響しないので観戦不要)。submitHeroAction(fold) で立て、HAND_START でリセット。
@@ -99,8 +109,10 @@ interface GameStore {
   handReview: HeroDecision[] | null               // play モードの直近ハンドの postflop 決定 (復習用)
   handCount: number
   initialized: boolean
+  effectiveStackBB: number                         // B7: 当ハンドの hero 開始スタック(cash 持ち越しの可視化・精度注記用)
+  tableRebought: boolean                           // B7: 当ハンド開始時にいずれかの席がリバイした
 
-  initGame: (stackBB?: number) => void
+  initGame: () => void
   startNewHand: () => void
   submitHeroAction: (action: PlayerAction, amount?: number) => void
   dismissFeedback: () => void
@@ -117,10 +129,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   handReview: null,
   handCount: 0,
   initialized: false,
+  effectiveStackBB: 100,
+  tableRebought: false,
 
-  initGame: (stackBB = 100) => {
+  initGame: () => {
     if (get().initialized) return // 二重初期化防止
-    startStackBB = stackBB
+    // B7: スタックは settings が単一の真実源 (buyInBB)。cash の持ち越しは startNewHand で差し替える。
+    const buyInBB = useSettingsStore.getState().buyInBB
+    heroHandStartStackBB = buyInBB
+    carryStacks = null
 
     bus = new AgentBus()
 
@@ -128,14 +145,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const opponentMode = useSettingsStore.getState().opponentMode
     const opponentType = opponentMode === 'trainer' ? ('gto_ai' as const) : ('fish_ai' as const)
     const configs: PlayerConfig[] = [
-      { id: HERO_ID, agentType: 'human', stackBB, isHero: true },
+      { id: HERO_ID, agentType: 'human', stackBB: buyInBB, isHero: true },
       ...Array.from({ length: SEAT_COUNT - 1 }, (_, i) => ({
         id: `villain${i + 1}`,
         agentType: opponentType,
-        stackBB,
+        stackBB: buyInBB,
         isHero: false,
       })),
     ]
+    baseConfigs = configs
 
     // Hero 以外に AI を割り当て。スケジューラはゲート経由 (study一時停止に対応)。
     for (const cfg of configs) {
@@ -193,16 +211,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     bus.on('HAND_COMPLETE', ({ state, results }) => {
       const handActions = state.actionHistory
-      // U5: hero の勝敗/純損益を算出してハンド結果サマリを残す。
-      // netBB = グロス受取(自分が勝者の結果の amountWonBB 合計) − 拠出(開始stack − 終了stack)。
-      // 配当は stack に戻されない実装のため、stack 差分がそのまま拠出になる。
+      // 各席の受取額。determineWinners は勝者ごとに1結果(winnerId=その席・amountWonBB=その取り分)を
+      // 返すので winnerId で集計する(winnerIds.includes だと split で co-winner 分を二重計上する)。
+      const wonByPlayer = (id: string) =>
+        results.filter(r => r.winnerId === id).reduce((acc, r) => acc + r.amountWonBB, 0)
+      // U5: netBB = グロス受取 − 拠出(当ハンド開始stack − 終了stack)。配当は stack に戻されない実装。
       const hero = state.players.find(p => p.id === HERO_ID)
-      const invested = startStackBB - (hero?.stackBB ?? startStackBB)
-      const grossWon = results.filter(r => r.winnerIds.includes(HERO_ID)).reduce((acc, r) => acc + r.amountWonBB, 0)
+      const invested = heroHandStartStackBB - (hero?.stackBB ?? heroHandStartStackBB)
+      const grossWon = wonByPlayer(HERO_ID)
+      // B7 cash: 全席の真の終了スタック(終了stack + 受取)を次ハンドへ持ち越す。
+      if (useSettingsStore.getState().stackMode === 'cash') {
+        carryStacks = Object.fromEntries(
+          state.players.map(p => [p.id, Math.round((p.stackBB + wonByPlayer(p.id)) * 100) / 100]),
+        )
+      }
       const summary: HandSummary = {
         handId: state.handId,
         heroPosition: hero?.position ?? 'BTN',
-        won: results.some(r => r.winnerIds.includes(HERO_ID)),
+        won: results.some(r => r.winnerId === HERO_ID),
         netBB: grossWon - invested,
         showdown: state.street === 'showdown',
         timestamp: Date.now(),
@@ -223,13 +249,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }))
     })
 
-    new DealerAgent(bus, configs, 0)
-    set({ initialized: true })
+    dealer = new DealerAgent(bus, configs, 0)
+    set({ initialized: true, effectiveStackBB: buyInBB, tableRebought: false })
   },
 
   startNewHand: () => {
     if (!get().initialized) get().initGame()
     setPaused(false) // 念のため: 前ハンドの一時停止を解除してから開始
+    // B7: 次ハンドの席スタックを確定する。cash=持ち越し(<1BBはリバイ)/ reset=毎ハンド buyInBB。
+    const { stackMode, buyInBB } = useSettingsStore.getState()
+    let rebought = false
+    if (dealer) {
+      const cash = stackMode === 'cash' && carryStacks != null
+      const next = baseConfigs.map(c => {
+        if (!cash) return { ...c, stackBB: buyInBB }
+        const carried = carryStacks![c.id]
+        if (carried != null && carried < MIN_PLAYABLE_BB) rebought = true
+        return { ...c, stackBB: rebuy(carried, buyInBB) }
+      })
+      baseConfigs = next
+      dealer.setConfigs(next)
+      heroHandStartStackBB = next.find(c => c.id === HERO_ID)?.stackBB ?? buyInBB
+    } else {
+      heroHandStartStackBB = buyInBB
+    }
+    set({ effectiveStackBB: heroHandStartStackBB, tableRebought: rebought })
     bus!.emit('NEW_HAND_REQUEST', {})
   },
 
@@ -262,6 +306,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // 設定変更時: バス/エージェントを破棄し未初期化に戻す。GamePage が再マウント時に新設定で initGame。
   resetGame: () => {
     bus = null
+    dealer = null
+    baseConfigs = []
+    carryStacks = null
+    heroHandStartStackBB = useSettingsStore.getState().buyInBB
     heroDecisionCtx = null
     pendingHeroState = null
     handDecisions = []
@@ -271,6 +319,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       gameState: null, pendingHeroAction: null, lastResults: null,
       lastFeedback: null, lastHeroDecision: null, handReview: null, handCount: 0, initialized: false,
+      effectiveStackBB: useSettingsStore.getState().buyInBB, tableRebought: false,
     })
   },
 }))

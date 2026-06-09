@@ -5,6 +5,7 @@ import { HERO_ID } from '../../stores/gameStore'
 import { useNavStore } from '../../stores/navStore'
 import { CATEGORY_JP } from '../../data/mistakeLabels'
 import { conceptsForMistake } from '../../data/theory/concepts'
+import { BookIcon } from '../icons/ActionIcons'
 
 const STREET_JP: Record<Street, string> = {
   preflop: 'プリフロップ', flop: 'フロップ', turn: 'ターン', river: 'リバー', showdown: 'ショーダウン',
@@ -73,7 +74,7 @@ export function HandReplay({ actions, summary, mistakes }: Props) {
                     onClick={() => goTo('theory', { theoryConceptId: concept.id })}
                     className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-base-800 border border-white/10 text-zinc-200 hover:border-brass-400 hover:text-brass-200"
                   >
-                    <span aria-hidden="true">📖</span>理論
+                    <BookIcon className="w-3 h-3" />理論
                   </button>
                 )}
                 <button

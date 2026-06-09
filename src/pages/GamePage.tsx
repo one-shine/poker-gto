@@ -21,7 +21,8 @@ export function GamePage() {
   const { gameState, pendingHeroAction, lastResults, lastFeedback, lastHeroDecision, isPaused, handReview, initialized, initGame, startNewHand, submitHeroAction, dismissFeedback } =
     useGameStore()
   const appMode = useSettingsStore(s => s.appMode)
-  const stackBB = useSettingsStore(s => s.stackBB)
+  const buyInBB = useSettingsStore(s => s.buyInBB)
+  const stackMode = useSettingsStore(s => s.stackMode)
   const autoAdvanceSeconds = useSettingsStore(s => s.autoAdvanceSeconds)
   const studyShowStrategy = useSettingsStore(s => s.studyShowStrategy)
   const showReasoningGuide = useSettingsStore(s => s.showReasoningGuide)
@@ -58,8 +59,9 @@ export function GamePage() {
 
   // 起動時に1度だけ初期化
   useEffect(() => {
-    if (!initialized) initGame(stackBB)
-  }, [initialized, initGame, stackBB])
+    // initGame は settings(stackMode/buyInBB)を内部で読む。設定変更は resetGame→initialized=false で再初期化。
+    if (!initialized) initGame()
+  }, [initialized, initGame, buyInBB, stackMode])
 
   // Space で次のハンドへ (ヒーローの手番でないときのみ)
   useEffect(() => {

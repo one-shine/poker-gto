@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { SolutionSource } from '../../types/solver'
 import { useSettingsStore } from '../../stores/settingsStore'
+import { useGameStore } from '../../stores/gameStore'
 
 interface GameFooterProps {
   // 現在表示中スポットの解の出典。null = 解未取得 (データ準備中)
@@ -16,9 +17,14 @@ const SOURCE_INFO: Record<SolutionSource, { icon: string; label: string; cls: st
 }
 
 export function GameFooter({ source }: GameFooterProps) {
-  const stackBB = useSettingsStore(s => s.stackBB)
+  const stackMode = useSettingsStore(s => s.stackMode)
+  const buyInBB = useSettingsStore(s => s.buyInBB)
   const opponentMode = useSettingsStore(s => s.opponentMode)
+  const effectiveStackBB = useGameStore(s => s.effectiveStackBB)
   const [open, setOpen] = useState(false)
+  // 実効スタック。解は100BB前提なので、ここから外れると精度が下がる旨を正直に出す (honest-display)。
+  const effective = stackMode === 'cash' ? effectiveStackBB : buyInBB
+  const stackDrift = effective < 90 || effective > 110
 
   // Escape で詳細モーダルを閉じる
   useEffect(() => {
@@ -41,7 +47,19 @@ export function GameFooter({ source }: GameFooterProps) {
         className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border-t border-zinc-800 tabular-nums"
       >
         <span aria-hidden="true">ⓘ</span>
-        <span>6-max キャッシュゲーム · 各ハンド{stackBB}BBスタート · ノーレーク · ICM非考慮</span>
+        <span>
+          {stackMode === 'cash'
+            ? `6-max キャッシュ · 持ち越し · 実効 ${effective}BB · ノーレーク`
+            : `6-max キャッシュゲーム · 各ハンド${buyInBB}BBスタート · ノーレーク · ICM非考慮`}
+        </span>
+        {stackDrift && (
+          <>
+            <span className="text-zinc-600" aria-hidden="true">·</span>
+            <span className="text-amber-300" title="本アプリの解は100BB前提。実効スタックが100BBから外れるとSPRが変わりGTO評価がずれます。">
+              <span aria-hidden="true">△ </span>実効{effective}BB(精度低下)
+            </span>
+          </>
+        )}
         {src && (
           <>
             <span className="text-zinc-600" aria-hidden="true">·</span>
@@ -86,12 +104,19 @@ export function GameFooter({ source }: GameFooterProps) {
               <Item term="ゲーム形式">
                 6-max ノーリミットホールデム · キャッシュゲーム
               </Item>
-              <Item term="スタック深さ">
-                {stackBB}BB 固定。可変深さは将来対応 (取込解もこの深さ前提)。
-              </Item>
-              <Item term="スタックのリセット">
-                各ハンド開始時に全員 {stackBB}BB に戻ります。GTO解はこの深さで計算されるため、
-                スタックを繰り越すと SPR が変わり評価がずれます (GTO Wizard 等と同じ方式)。
+              <Item term="スタック方式">
+                {stackMode === 'cash' ? (
+                  <>
+                    キャッシュ繰り越し: バイイン {buyInBB}BB。前ハンドの終了スタックを次に持ち越し、バストで自動リバイ。
+                    <span className="text-amber-300"> 実効スタックが100BBから外れるとSPRが変わりGTO評価がずれます</span>
+                    (本アプリの解は100BB前提)。
+                  </>
+                ) : (
+                  <>
+                    リセット: 各ハンド開始時に全員 {buyInBB}BB に戻ります (GTO評価が最もクリーン)。
+                    {buyInBB !== 100 && <span className="text-amber-300"> 100BB以外は取込解の前提から外れ精度が下がります。</span>}
+                  </>
+                )}
               </Item>
               <Item term="レーキ">
                 0% (ノーレーク) として求解。実戦のレーキは未考慮。

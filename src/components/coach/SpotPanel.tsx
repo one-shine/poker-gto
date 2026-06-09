@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ActionRequiredPayload } from '../../engine/agents/AgentBus'
 import { getTotalPot } from '../../engine/game/BettingEngine'
 import { handCategory } from '../../engine/cards/handCategory'
@@ -12,6 +12,8 @@ import { conceptById } from '../../data/theory/concepts'
 import { StrategyBars } from './StrategyBars'
 import { OddsGuide } from './OddsGuide'
 import { TermChips, ConceptLink } from '../common/TermChips'
+import { BookIcon } from '../icons/ActionIcons'
+import { recommendedSolution, actionSizeLabel, recommendLabel } from '../../lib/coach/recommendation'
 import type { PlayerAction } from '../../types/game'
 import type { ActionSolution } from '../../types/solver'
 
@@ -42,6 +44,14 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
   const markHinted = useSessionStore(s => s.markHinted)
   const studyShowStrategy = useSettingsStore(s => s.studyShowStrategy)
 
+  // decision モーダルは Escape で閉じる(review はインライン表示なので対象外)。
+  useEffect(() => {
+    if (review || !open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [review, open])
+
   // allowLiveSolve は revealed に連動: 答えを見るまで postflop の live solve を走らせない。
   const { node, loading } = useSolution(pending.state, HERO_ID, revealed, true)
   const { equity, loading: eqLoading, reference, reason } = useEquity(pending.state, HERO_ID, true)
@@ -53,6 +63,7 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
   const foldOut = !rawStrategy && !!node && node.street === 'preflop' &&
     (node.source === 'approximate' || node.source === 'approximate_with_ev')
   const strategy = rawStrategy ?? (foldOut ? FOLD_ONLY : null)
+  const recommended = strategy ? recommendedSolution(strategy) : null
   const activeCount = pending.state.players.filter(p => !p.isFolded).length
 
   const callAmount = pending.callAmount
@@ -128,6 +139,7 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
           source={node.source}
           showEv={!foldOut && !node.multiwayReference && node.source !== 'approximate'}
           approxEv={!foldOut && !node.multiwayReference && node.source === 'approximate_with_ev'}
+          showRecommended={revealed}
         />
         {node.multiwayReference && (
           <p className="text-[11px] text-amber-300/80 leading-snug">
@@ -149,7 +161,7 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
         className="text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors
           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-300"
       >
-        <span aria-hidden="true">📚</span> 関連理論・用語 <span aria-hidden="true">{theoryOpen ? '▲' : '▾'}</span>
+        <BookIcon className="inline w-3.5 h-3.5" /> 関連理論・用語 <span aria-hidden="true">{theoryOpen ? '▲' : '▾'}</span>
       </button>
       {theoryOpen && (
         <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -219,6 +231,12 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
               あなた: <span className="font-bold text-zinc-100">{ACTION_JP[actedAction]}</span>
             </span>
           )}
+          {recommended && node && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-brass-500/15 text-brass-200 border border-brass-400/30 inline-flex items-center gap-1">
+              <span aria-hidden="true">★</span>
+              {recommendLabel(node.source)}: <span className="font-bold">{actionSizeLabel(recommended)}</span>
+            </span>
+          )}
         </div>
         {bodyInner}
       </div>
@@ -245,14 +263,17 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
         </button>
       </div>
       {open && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} aria-hidden="true" />
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4"
+          onClick={() => setOpen(false)}
+        >
           <div
             role="dialog"
             aria-modal="true"
             aria-label="この局面の考え方"
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-auto rounded-t-2xl border-t border-sky-500/30
-              bg-base-900/98 backdrop-blur-md p-3 pb-6 shadow-[0_-8px_30px_rgba(0,0,0,0.7)]"
+            onClick={e => e.stopPropagation()}
+            className="w-[92vw] max-w-md max-h-[70vh] overflow-auto rounded-2xl border border-sky-500/30
+              bg-base-900/98 backdrop-blur-md p-3 shadow-[0_8px_30px_rgba(0,0,0,0.7)]"
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-[12px] font-bold text-sky-300"><span aria-hidden="true">💡</span> この局面の考え方</span>
@@ -267,7 +288,7 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
             </div>
             {bodyInner}
           </div>
-        </>
+        </div>
       )}
     </div>
   )
