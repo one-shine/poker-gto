@@ -5,6 +5,15 @@ date: 2026-05-30
 ---
 # poker-gto 開発ログ
 
+### 2026-06-10 ハンド相談ツール(RangesPage 新タブ)— B9
+- **経緯**: 「続きのタスク」= B8(13x13ソルバータブ)だったが、設計ワークフロー+敵対的レビューで **既存事前計算が cap/narrow 縮約済=13x13 の7〜9割が空セル**になり「レンジ全体」を正直に出せないと判明。ユーザーに確認したところ、本当に欲しかったのは **「盤面+手札+状況を自由に設定 → その1ハンドのおすすめ」=1ハンド相談ツール**(レンジ全体ではない)。B8 とは別物として B9 を新規実装。
+- **設計**(2回目のワークフロー: 既存経路精査→設計→3観点の敵対的レビュー)。1回目は設計エージェントが巨大スキーマ出力で無限リトライ(40分空回り)→ TaskStop→ 設計をテキスト出力化して resume で復旧(キャッシュ済み精査3件を再利用)。
+- **核心**: `resolveSpotKey` は GameState 依存で再利用不可 → `manualSpot.ts` の `buildManualSpotKey` がフォーム入力から **SpotKey を直接構築**し `getSolution(spot,{allowLiveSolve:true})` を駆動。位置マップは spotKey.ts/opponentRange.ts と同方針で内側に複製(共有分類モジュール化は別タスク)。
+- **レビューで潰した穴**: ①**SB の SRP postflop** は `baseHeroIsOOP('bb-vs-sb')`=true で通ってしまう → `POSTFLOP_OPENERS`(UTG/MP/CO/BTN)で明示的に弾く(`sb_srp`)。②「precomputed と live が一致」前提は誤り(cap/iters 差)→ 代表盤=precomputed・任意盤=live と分離。③共有 solver 定数(live turn cap)は変更しない(Coach/drill 波及回避)。④任意ベット額は live が当該サイズを実際に解く=「pot-odds 参考落とし」より良い。⑤flop は ✓ソルバー解バッジが誤誘導 → **flop は GTO 頻度を出さず勝率/ポットオッズのみ**(賭け未考慮を明示)。
+- **正直表示**: preflop=`handCategory`/postflop=`comboKey` でキー切替(SpotPanel は全街 handCategory で postflop は実は引けていない疑い=別件)。source ラベルは既存規約準拠・"GTO最適" 不使用。equity は potSpec 由来の相手レンジ(=ソルバーが使う側と一致)で `computeEquityAsync`。
+- **実装**: `lib/solver/manualSpot.ts`(+test 22件)・`lib/equity/manualEquity.ts`・`lib/solver/riverRanges.ts`(`villainRangeSpec` 追加)・`hooks/useManualAdvice.ts`・`components/ranges/ManualAdvisorPanel.tsx`・`pages/RangesPage.tsx`(タブ追加+見出し中立化)。
+- **検証**: 型0・lint0・**全488テスト緑(+22)**・build緑・license/version OK。Playwright 実機で preflop(GTO近似+概算EV)/ river-lead(solver_live・レイズ89%)/ river-vsbet(コール89%+ポットオッズ2.5:1→✓コール有利)/ flop(頻度非表示+勝率のみ)の4経路を確認。SB が SRP の位置選択肢から除外されることも確認。console 2 errors は既知の dev 限定 `%BASE_URL%` 二重展開(本番正常・U27)。
+
 ### 2026-06-06 ポット二重計上修正 + 全方位レビュー
 - **ポット二重計上(U20・commit 608420d)**: ユーザーの「なぜ開始ポットが3BBか」から発覚。`GameState` がブラインドを `mainPotBB:1.5` と `currentBetBB` の両方に入れていた=チップ保存則破れ(600→601.5)。表示2倍に加え `collectBetsIntoPot` が膨らんだ mainPot へ加算しポストフロップ確定ポット・配当・spotKey の求解ポットまで +1.5 過大(毎ハンドリセットで累積はしないが表示/解は誤り)。→ `mainPotBB:0`(ブラインドは currentBetBB のみ・pot は collect で単一経路集約)+ `record.potBB`=実ポット(getTotalPot+現ベット)。`potAccounting.test.ts` で保存則を回帰化。
 - **全方位レビュー(workflow・64エージェント)**: 10次元(engine会計/GTO正直さ/評価ルール/multiway勝率/事前計算/a11y/security/データライセンス/テスト網羅/UX)を find→**敵対的verify**→synthesis。確証42件(high21)。

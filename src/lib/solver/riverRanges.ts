@@ -134,6 +134,13 @@ export function heroRangeSpec(baseSpotId: string): RangeRef | null {
   return spec.heroIsOOP ? spec.oop : spec.ip
 }
 
+// villain 側のレンジ参照 (相談ツールの勝率算出で hero の相手レンジに使う・heroRangeSpec の対)。
+export function villainRangeSpec(baseSpotId: string): RangeRef | null {
+  const spec = potSpec(baseSpotId)
+  if (!spec) return null
+  return spec.heroIsOOP ? spec.ip : spec.oop
+}
+
 // base が表す hero の OOP/IP (求解と整合する権威値)。未対応 base は null。
 // ライブ配線が seat ベース判定とのクロスチェックに使う (不整合スポットを除外)。
 export function baseHeroIsOOP(baseSpotId: string): boolean | null {

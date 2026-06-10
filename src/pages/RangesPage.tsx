@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { RangeGrid, type HeatmapMode } from '../components/ranges/RangeGrid'
 import { RangeVsRange } from '../components/ranges/RangeVsRange'
+import { ManualAdvisorPanel } from '../components/ranges/ManualAdvisorPanel'
 import { PREFLOP_SCENARIOS, scenariosOfKind, SCENARIO_KIND_LABEL, type ScenarioKind } from '../data/ranges/preflop'
 
 const KINDS: ScenarioKind[] = ['open', 'defense', '3bet']
@@ -153,16 +154,19 @@ function SingleRange() {
 }
 
 export function RangesPage() {
-  const [tab, setTab] = useState<'single' | 'compare'>('single')
+  const [tab, setTab] = useState<'single' | 'compare' | 'advisor'>('single')
   return (
     <div className="h-full overflow-auto p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-5">
-        <h1 className="text-2xl font-extrabold text-zinc-50">GTOプリフロップレンジ</h1>
-        <div className="flex gap-2">
+        <h1 className="text-2xl font-extrabold text-zinc-50">GTOレンジ / ソルバー</h1>
+        <div className="flex gap-2 flex-wrap">
           <Tab active={tab === 'single'} onClick={() => setTab('single')}>レンジ表</Tab>
           <Tab active={tab === 'compare'} onClick={() => setTab('compare')}>レンジ比較</Tab>
+          <Tab active={tab === 'advisor'} onClick={() => setTab('advisor')}>ソルバー</Tab>
         </div>
-        {tab === 'single' ? <SingleRange /> : <RangeVsRange />}
+        {tab === 'single' && <SingleRange />}
+        {tab === 'compare' && <RangeVsRange />}
+        {tab === 'advisor' && <ManualAdvisorPanel />}
       </div>
     </div>
   )
