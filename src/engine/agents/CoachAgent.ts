@@ -140,10 +140,14 @@ function categoryFor(
   return isBBDefense ? 'blind_defense_wide' : 'preflop_too_wide'
 }
 
-function recommendText(sols: ActionSolution[]): string {
+// sizeBB は EV 計算上の生の float。表示はバー(toFixed(1))に合わせ小数1桁へ丸め、
+// 7.8100000000000005 のような浮動小数点アーティファクトを潰す。末尾0は省く (3→"3", 7.81→"7.8")。
+const fmtBB = (n: number) => String(Math.round(n * 10) / 10)
+
+export function recommendText(sols: ActionSolution[]): string {
   return sols
     .filter(s => s.frequency >= MIXED_THRESHOLD)
-    .map(s => `${ACTION_JP[s.action]}${s.sizeBB ? ` ${s.sizeBB}BB` : ''} ${Math.round(s.frequency * 100)}%`)
+    .map(s => `${ACTION_JP[s.action]}${s.sizeBB ? ` ${fmtBB(s.sizeBB)}BB` : ''} ${Math.round(s.frequency * 100)}%`)
     .join(' / ')
 }
 

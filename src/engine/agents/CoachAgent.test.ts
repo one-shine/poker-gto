@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { evaluateAction } from './CoachAgent'
+import { evaluateAction, recommendText } from './CoachAgent'
+import type { ActionSolution } from '../../types/solver'
 import { fromRangeScenario } from '../../lib/solver/fromRangeScenario'
 import { PREFLOP_SCENARIOS } from '../../data/ranges/preflop'
 
@@ -74,5 +75,20 @@ describe('CoachAgent.evaluateAction (approximate / 頻度ベース)', () => {
     expect(mixed?.kind).toBe('mixed')
     expect(mixed?.message).toContain(' — ') // 推奨 + 原則
     expect(mixed?.message).toContain('スーテッドエース')
+  })
+
+  // 表示丸め: sizeBB の float アーティファクト (7.8100000000000005) を出さず、バーと同じ小数1桁にする。
+  it('rounds bet sizes to 1 decimal for display without floating-point artifacts', () => {
+    const sols: ActionSolution[] = [
+      { action: 'raise', sizeBB: 7.8100000000000005, frequency: 0.52, ev: 0 },
+      { action: 'call', sizeBB: 1.03, frequency: 0.47, ev: 0 },
+    ]
+    const text = recommendText(sols)
+    expect(text).toContain('レイズ 7.8BB')
+    expect(text).toContain('コール 1BB')
+    expect(text).not.toContain('7.81')
+    // 整数・1桁はそのまま (末尾0を足さない)
+    expect(recommendText([{ action: 'raise', sizeBB: 3, frequency: 1, ev: 0 }])).toContain('レイズ 3BB')
+    expect(recommendText([{ action: 'raise', sizeBB: 2.5, frequency: 1, ev: 0 }])).toContain('レイズ 2.5BB')
   })
 })
