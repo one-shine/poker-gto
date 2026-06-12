@@ -2,15 +2,17 @@ import { describe, it, expect } from 'vitest'
 import {
   REPRESENTATIVE_BOARDS, REPRESENTATIVE_SPOTS, representativeHeroCombos,
   representativeBoard, boardCode, precomputePostflopKey,
+  REP_FLOP_CAP, REP_TURN_CAP, REP_RIVER_CAP,
 } from './representativeBoards'
 import { comboKey } from './riverRanges'
 import { sameCard } from '../../engine/cards/Card'
 
 describe('REPRESENTATIVE_BOARDS', () => {
-  it('only contains honest streets (turn=4 / river=5 cards)', () => {
+  it('contains flop(3) / turn(4) / river(5) cards matching street', () => {
+    const cardCount: Record<string, number> = { flop: 3, turn: 4, river: 5 }
     for (const b of REPRESENTATIVE_BOARDS) {
-      expect(b.street === 'turn' || b.street === 'river').toBe(true)
-      expect(b.board.length).toBe(b.street === 'turn' ? 4 : 5)
+      expect(['flop', 'turn', 'river']).toContain(b.street)
+      expect(b.board.length).toBe(cardCount[b.street])
     }
   })
   it('has distinct cards within each board and unique ids', () => {
@@ -22,6 +24,9 @@ describe('REPRESENTATIVE_BOARDS', () => {
           expect(sameCard(b.board[i], b.board[j])).toBe(false)
     }
     expect(ids.size).toBe(REPRESENTATIVE_BOARDS.length)
+  })
+  it('has exactly 10 flop boards matching the precompute-flop script', () => {
+    expect(REPRESENTATIVE_BOARDS.filter(b => b.street === 'flop').length).toBe(10)
   })
 })
 
@@ -37,11 +42,13 @@ describe('representativeHeroCombos', () => {
       }
     }
   })
-  it('caps turn at 64 and river at 200', () => {
-    const turn = REPRESENTATIVE_BOARDS.find(b => b.street === 'turn')!
+  it('caps flop at REP_FLOP_CAP, turn at REP_TURN_CAP, river at REP_RIVER_CAP', () => {
+    const flop  = REPRESENTATIVE_BOARDS.find(b => b.street === 'flop')!
+    const turn  = REPRESENTATIVE_BOARDS.find(b => b.street === 'turn')!
     const river = REPRESENTATIVE_BOARDS.find(b => b.street === 'river')!
-    expect(representativeHeroCombos('bb-vs-btn', turn.board, 'turn').length).toBeLessThanOrEqual(64)
-    expect(representativeHeroCombos('bb-vs-btn', river.board, 'river').length).toBeLessThanOrEqual(200)
+    expect(representativeHeroCombos('bb-vs-btn', flop.board,  'flop').length).toBeLessThanOrEqual(REP_FLOP_CAP)
+    expect(representativeHeroCombos('bb-vs-btn', turn.board,  'turn').length).toBeLessThanOrEqual(REP_TURN_CAP)
+    expect(representativeHeroCombos('bb-vs-btn', river.board, 'river').length).toBeLessThanOrEqual(REP_RIVER_CAP)
   })
 })
 

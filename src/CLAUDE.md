@@ -62,7 +62,8 @@ GTO評価の基準は `src/lib/solver/getSolution()` が返す `NodeSolution` (`
 - `vite.config.ts` は plugins のみ。test設定は `vitest.config.ts` に分離 (rolldown-vite と vitest 同梱 vite の Plugin 型衝突回避)。
 
 ### lib/solver/ (Phase 3.5)
-- `getSolution(spot, { allowLiveSolve? }) → Promise<NodeSolution|null>` ✅ — 統一供給窓口。preflop(precomputed優先→近似)/ postflop(flop/turn/river を自前CFRで都度求解)。push/fold等 scenario外 precomputed も配給。
+- `getSolution(spot, { allowLiveSolve? }) → Promise<NodeSolution|null>` ✅ — 統一供給窓口。preflop(precomputed優先→近似)/ postflop(代表盤の precomputed 最優先 → turn/river live solve。**flop も代表10盤×10スポットは precomputed=賭け考慮済**・2026-06-13)。push/fold等 scenario外 precomputed も配給。
+- flop 事前計算基盤 ✅ (2026-06-13・`docs/SOLVER.md`) — `chanceCfr.ts` カーネル最適化(intカード/Float64Array/eq dedup・9.8倍)+`fastEval7.ts`(eq構築46倍)+`suitIsomorphism.ts`(スート同型縮約・on/off で解は厳密一致)+DCFR opt-in。`scripts/precompute-flop.ts`(worker_threads並列・再開可能・exploit>5%は書き出さないハードゲート)で 200テーブル量産済(exploit 中央値0.02%・最大0.06%)。
 - `resolveSpotKey(state, heroId) → SpotKey|null` ✅ — リンプ/単独レイザー/マルチウェイ判定でスポット解決。
 - `fromRangeScenario(scenario) → NodeSolution` ✅ — 手作り近似→解(`source:'approximate'`)橋渡し。
 - `pushFold.ts` ✅ (R4) — `solvePushFold(eq, params)`。HU プッシュ/フォールド Nash をカテゴリ別 fictitious play で求解。`CATEGORIES`(169)・`AVAIL`(blocker期待値)。**厳密GTO**(ショーダウン=オールイン勝率=真値)。

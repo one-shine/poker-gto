@@ -62,7 +62,7 @@ export function evLoss(solutions: ActionSolution[], chosen: ActionSolution): num
 // 設計ルール1: turn/river のみ (flop は厳密と称せないため対象外)。license は self-generated。
 export interface PrecomputedPostflopTable {
   spotId: string            // baseSpotId (例 'bb-vs-btn')
-  street: 'turn' | 'river'
+  street: 'flop' | 'turn' | 'river'
   board: Card[]
   phase: 'lead' | 'facing'  // hero ノード種別
   potBB: number
@@ -70,7 +70,9 @@ export interface PrecomputedPostflopTable {
   betFrac: number           // facing 節で hero が直面したベットのポット比 (lead は基準サイズ)
   source: 'solver_precomputed'
   exploitability: number
-  bettingAware: boolean     // turn=true (river ベッティング織り込み済)
+  bettingAware: boolean     // flop/turn=true (turn+river ベッティング織り込み済)
+  iters?: number            // 求解に使用した CFR 反復数 (正直表示の素材)
+  fullEnumeration?: boolean // turn/river runout を完全列挙したか (サンプリングとの区別)
   runoutN?: number
   strategy: Record<string, ActionSolution[]> // 具体コンボ "AsKs" → 戦略
   meta: SolutionMeta

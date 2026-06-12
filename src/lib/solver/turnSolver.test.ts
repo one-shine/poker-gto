@@ -208,3 +208,41 @@ describe('turnSolver — 会計 & カード除去ストレス', () => {
     expect(sol.oopRootStrategy.every(acts => acts.every(a => Number.isFinite(a.ev)))).toBe(true)
   })
 })
+
+// 収束改善オプション(cfrOpts・opt-in)。既定では従来 CFR+ と同一挙動であることも担保する。
+describe('turnSolver — cfrOpts (linearAveraging / dcfr)', () => {
+  const board: Card[] = [c('A', 'spades'), c('K', 'diamonds'), c('7', 'clubs'), c('3', 'hearts')]
+  const oop = [combo(c('A', 'hearts'), c('A', 'clubs')), combo(c('Q', 'hearts'), c('J', 'hearts'))]
+  const ip = [combo(c('9', 'diamonds'), c('9', 'clubs'))]
+  const base = {
+    board, oop, ip, potBB: 10, stackBB: 100,
+    betSizes: [0.75] as number[], raiseSizes: [0.5] as number[], iterations: 150,
+  }
+  const wellFormed = (sol: ReturnType<typeof solveTurn>) => {
+    for (const acts of sol.oopRootStrategy) {
+      expect(acts.reduce((s, a) => s + a.frequency, 0)).toBeCloseTo(1, 5)
+    }
+    expect(sol.oopRootStrategy.every(acts => acts.every(a => Number.isFinite(a.ev)))).toBe(true)
+    expect(sol.exploitability).toBeGreaterThanOrEqual(0)
+  }
+
+  it('linearAveraging: 整合した解 + 既定と同等以上の収束 (<10% pot)', () => {
+    const sol = solveTurn({ ...base, cfrOpts: { linearAveraging: true } })
+    wellFormed(sol)
+    expect(sol.exploitability).toBeLessThan(0.10)
+  })
+
+  it('dcfr(α=1.5, β=0, γ=2): 整合した解 + 収束 (<10% pot)', () => {
+    const sol = solveTurn({ ...base, cfrOpts: { dcfr: { alpha: 1.5, beta: 0, gamma: 2 } } })
+    wellFormed(sol)
+    expect(sol.exploitability).toBeLessThan(0.10)
+  })
+
+  it('既定(opts未指定)は決定的: 同一入力 → 同一の解', () => {
+    const a = solveTurn({ ...base, iterations: 60 })
+    const b = solveTurn({ ...base, iterations: 60 })
+    expect(b.exploitability).toBe(a.exploitability)
+    expect(b.oopRootStrategy).toEqual(a.oopRootStrategy)
+    expect(b.nodes).toEqual(a.nodes)
+  })
+})

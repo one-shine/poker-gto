@@ -266,6 +266,9 @@ export function ManualAdvisorPanel() {
         {street === 'turn' && (
           <p className="text-[11px] text-zinc-500">※ ターンの任意盤面はローカル求解で数秒かかることがあります。</p>
         )}
+        {street === 'flop' && (
+          <p className="text-[11px] text-zinc-500">※ フロップは代表ボードの事前計算解がある場合に頻度を表示します(それ以外は勝率のみ)。</p>
+        )}
       </div>
 
       {/* --- 結果 --- */}
@@ -287,13 +290,19 @@ export function ManualAdvisorPanel() {
             <span className="font-data text-zinc-200">手札 {spot.heroCards?.map(cardToString).join(' ')}</span>
           </div>
 
-          {/* GTO 頻度(フロップは出さない=賭け未考慮の粗い近似のため) */}
-          {street === 'flop' ? (
-            <p className="text-xs text-zinc-400 leading-snug rounded-lg border border-sky-500/20 bg-sky-950/10 p-2">
-              <span aria-hidden="true">ℹ️ </span>
-              フロップは賭け(ターン/リバー)を考慮しない粗い近似になるため、ここでは <strong className="text-zinc-200">GTO 頻度は表示しません</strong>。
-              下の勝率・ポットオッズを目安にしてください(正直表示)。
-            </p>
+          {/* GTO 頻度: flop は precomputed ヒット時のみ表示、未ヒット時は info のみ(正直表示) */}
+          {street === 'flop' && !node ? (
+            advice.loading ? (
+              <span className="text-xs text-brass-300/80 flex items-center gap-1.5">
+                <span className="inline-block w-3 h-3 rounded-full border-2 border-brass-400/40 border-t-brass-300 animate-spin" />
+                GTO 解を確認しています…
+              </span>
+            ) : (
+              <p className="text-xs text-zinc-400 leading-snug rounded-lg border border-sky-500/20 bg-sky-950/10 p-2">
+                <span aria-hidden="true">ℹ️ </span>
+                この盤面/スポットの事前計算解はありません。下の勝率・ポットオッズを目安にしてください(正直表示)。
+              </p>
+            )
           ) : advice.loading ? (
             <span className="text-xs text-brass-300/80 flex items-center gap-1.5">
               <span className="inline-block w-3 h-3 rounded-full border-2 border-brass-400/40 border-t-brass-300 animate-spin" />
@@ -324,6 +333,11 @@ export function ManualAdvisorPanel() {
                 approxEv={!foldOut && node.source === 'approximate_with_ev'}
                 showRecommended
               />
+              {node.source === 'solver_precomputed' && node.street === 'flop' && (
+                <p className="text-[10px] text-zinc-500 leading-snug">
+                  ※ フロップ事前計算解(ターン+リバーの賭けを完全列挙で織り込み済・exploitability {node.exploitability != null ? `~${(node.exploitability * 100).toFixed(2)}%` : '計算済'})。
+                </p>
+              )}
               {node.source === 'solver_live' && node.exploitability != null && (
                 <p className="text-[10px] text-zinc-500 leading-snug">
                   ※ ローカル求解(簡易)。収束度 ~{Math.round(node.exploitability * 100)}%(小さいほど精度高)。

@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import type { Card, Rank, Suit } from '../../types/game'
 import type { Combo } from './riverSolver'
-import { capRange, narrowByRiverStrength, MAX_COMBOS, MIN_WEIGHT } from './rangeNarrowing'
+import { capRange, capRangeSuitClosed, narrowByRiverStrength, MAX_COMBOS, MIN_WEIGHT } from './rangeNarrowing'
 import { comboKey } from './riverRanges'
+import { comboIndexPerm, IDENTITY_PERM, type SuitPerm } from './suitIsomorphism'
+import { parseCard } from '../../engine/cards/Card'
 
 const c = (r: Rank, s: Suit): Card => ({ rank: r, suit: s })
 
@@ -59,6 +61,58 @@ describe('capRange (R15-A)', () => {
       { cards: [c('Q', 'spades'), c('J', 'hearts')], weight: 0.4 },
     ]
     expect(capRange(combos).length).toBe(2)
+  })
+})
+
+describe('capRangeSuitClosed — 置換閉性を保つ cap', () => {
+  // two-tone (Th9h5s) 相当の群 {恒等, d↔c}
+  const DC_SWAP: SuitPerm = [0, 1, 3, 2]
+  const perms: SuitPerm[] = [IDENTITY_PERM, DC_SWAP]
+  const SUIT_CHARS = ['s', 'h', 'd', 'c'] as const
+  const pairCombos = (rank: string, weight = 1): Combo[] => {
+    const out: Combo[] = []
+    for (let i = 0; i < 4; i++) {
+      for (let j = i + 1; j < 4; j++) {
+        out.push({ cards: [parseCard(rank + SUIT_CHARS[i]), parseCard(rank + SUIT_CHARS[j])], weight })
+      }
+    }
+    return out
+  }
+  const suitedCombos = (r1: string, r2: string, weight = 1): Combo[] =>
+    SUIT_CHARS.map(s => ({ cards: [parseCard(r1 + s), parseCard(r2 + s)] as [Card, Card], weight }))
+
+  it('weight 降順で軌道を丸ごと keep し、cap は軌道境界で切る (置換閉性を保つ)', () => {
+    // AA(w1, 軌道 1+2+2+1) + AJs(w0.5, 軌道 {AsJs}{AhJh}{AdJd,AcJc})
+    const combos = [...pairCombos('A'), ...suitedCombos('A', 'J', 0.5)]
+    const kept = capRangeSuitClosed(combos, 7, perms)
+    // AA 全6 + AsJs(=軌道サイズ1) の7。AhJh は cap 超過、{AdJd,AcJc} も超過で丸ごと drop
+    expect(kept).toHaveLength(7)
+    expect(kept.filter(k => k.cards[0].rank === 'A' && k.cards[1].rank === 'A')).toHaveLength(6)
+    expect(comboIndexPerm(kept, DC_SWAP)).not.toBeNull() // 閉性 = 縮約の前提
+  })
+
+  it('丸ごと性: 保持された combo のスート像も必ず保持される', () => {
+    const combos = [...pairCombos('Q'), ...suitedCombos('K', 'Q', 0.8), ...suitedCombos('A', 'J', 0.5)]
+    for (const cap of [4, 6, 8, 10, 12]) {
+      const kept = capRangeSuitClosed(combos, cap, perms)
+      expect(kept.length).toBeLessThanOrEqual(cap)
+      expect(comboIndexPerm(kept, DC_SWAP)).not.toBeNull()
+    }
+  })
+
+  it('cap 以下なら素通し・MIN_WEIGHT 未満は落とす', () => {
+    const combos = [...pairCombos('A'), ...suitedCombos('A', 'J', 0.01)] // AJs < MIN_WEIGHT
+    const kept = capRangeSuitClosed(combos, 100, perms)
+    expect(kept).toHaveLength(6)
+    expect(kept.every(k => k.weight >= MIN_WEIGHT)).toBe(true)
+  })
+
+  it('レンジが閉じない perm は捨てて軌道を計算する (安全弁・クラッシュしない)', () => {
+    const skewed = pairCombos('A')
+    skewed[1] = { ...skewed[1], weight: 0.37 } // AsAd ≠ AsAc で d↔c に閉じない
+    const kept = capRangeSuitClosed([...skewed, ...suitedCombos('A', 'J', 0.5)], 7, perms)
+    expect(kept.length).toBeLessThanOrEqual(7)
+    expect(kept.length).toBeGreaterThan(0)
   })
 })
 

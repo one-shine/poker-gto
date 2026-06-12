@@ -12,7 +12,8 @@ import { MIXED_STRATEGY_THRESHOLD as MIXED_THRESHOLD } from '../../types/gtoRule
 
 // ポストフロップ ドリル (R23 + R16 3betポット + 代表ボード事前計算)。HU の単一レイズド/3betポットを
 // 自前 CFR で求解(代表ボードは事前計算済の厳密解、それ以外は live solve)。
-// turn は完全チャンスノード CFR(river ベッティング織り込み)/ flop は showdown をエクイティ近似 (賭け未考慮)。
+// 代表 flop は turn+river 完全チャンス CFR(3街全列挙・賭け考慮済・bettingAware:true)。
+// ランダム flop は showdown をエクイティ近似 (賭け未考慮)。turn は完全チャンス CFR (river 賭け込み)。
 // 依存方向: drill ← solver。求解は async (Worker CFR) のため UI 側でローディングを持つ。
 
 export type PostflopStreet = 'flop' | 'turn' | 'river'
@@ -206,9 +207,10 @@ export function generatePostflopQuestion(
   }
 }
 
-// 代表ボード出題: 事前計算済 (turn/river・SRP/3bet・lead/facing) の盤面から出題する。
+// 代表ボード出題: 事前計算済 (flop/turn/river・SRP/3bet・lead/facing) の盤面から出題する。
 // 盤面をこちらが選ぶのでヒット率100% = getSolution が JSON テーブルから即時・厳密解を返す
 // (live solve 不要 → モバイル/オフライン)。hero ハンドは事前計算と同一のコンボ集合から抽選し必ずヒットさせる。
+// flop: turn+river 完全チャンス CFR (3街全列挙・賭け考慮済・bettingAware:true)。
 export function generateRepresentativePostflopQuestion(
   rng: () => number = Math.random,
   potType: PotType = 'srp',

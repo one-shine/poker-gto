@@ -93,8 +93,9 @@ export async function getSolution(
 
 // 代表ボード事前計算テーブルから要求コンボの NodeSolution を組み立てる (無ければ null)。
 async function loadPrecomputedPostflop(spot: SpotKey): Promise<NodeSolution | null> {
-  // 代表ボードは turn/river のみ (flop は厳密と称せない)。被レイズ(facingRaise)は v1 対象外。
-  if ((spot.street !== 'turn' && spot.street !== 'river') || spot.facingRaise) return null
+  // 代表ボードは flop/turn/river (flop は turn+river ベッティング込み完全チャンス CFR)。
+  // 被レイズ(facingRaise)は v1 対象外。
+  if ((spot.street !== 'flop' && spot.street !== 'turn' && spot.street !== 'river') || spot.facingRaise) return null
   if (!spot.board || !spot.heroCards || spot.potBB == null) return null
 
   const facing = !!spot.riverBetBB && spot.riverBetBB > 0
@@ -118,7 +119,9 @@ async function loadPrecomputedPostflop(spot: SpotKey): Promise<NodeSolution | nu
     potBB: table.potBB,
     source: 'solver_precomputed',
     exploitability: table.exploitability,
-    bettingAware: table.bettingAware,
+    // flop precomputed は turn+river ベッティング織り込み済 → bettingAware: true に昇格。
+    // ライブ flop solve は showdown エクイティ近似(賭け未考慮)なので false のまま。
+    bettingAware: table.street === 'flop' ? true : table.bettingAware,
     runoutN: table.runoutN,
     meta: table.meta,
   }

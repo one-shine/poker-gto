@@ -1,7 +1,7 @@
 import type { Card } from '../../types/game'
 import type { RiverInput } from './riverSolver'
 import {
-  type Node, type ChanceChild, type ChanceSolution,
+  type Node, type ChanceChild, type ChanceSolution, type CfrOpts,
   buildBettingLayer, strictEquity5, allRunouts, selectRunouts, removalMasks, solveChanceTree,
 } from './chanceCfr'
 
@@ -15,6 +15,9 @@ import {
 // riverSolver.ts は別アルゴリズム(チャンス層なし)で不変=回帰安全網。
 
 export type TurnSolution = ChanceSolution
+export interface TurnInput extends RiverInput {
+  cfrOpts?: CfrOpts // 収束改善(linearAveraging / dcfr)。未指定=従来 CFR+ と同一挙動
+}
 // 既存テスト互換のため再エクスポート(turnSolver から import しているテストを維持)。
 export { strictEquity5, selectRunouts }
 export const allTurnRunouts = allRunouts
@@ -44,7 +47,7 @@ function makeRiverChance(turnCommitted: [number, number], input: RiverInput, run
   return { kind: 'chance', potAfter: potAfterTurn, committedAtChance: turnCommitted, runouts }
 }
 
-export function solveTurn(input: RiverInput): TurnSolution {
+export function solveTurn(input: TurnInput): TurnSolution {
   const { oop, ip, potBB } = input
   const iterations = input.iterations ?? 100
 
@@ -62,5 +65,5 @@ export function solveTurn(input: RiverInput): TurnSolution {
     onShowdown: (committed) => makeRiverChance(committed, input, runoutData),
   })
 
-  return solveChanceTree(root, oop, ip, potBB, iterations)
+  return solveChanceTree(root, oop, ip, potBB, iterations, input.cfrOpts)
 }

@@ -7,7 +7,7 @@ import { mulberry32 } from '../solver/preflopEquity'
 describe('generateRepresentativePostflopQuestion', () => {
   for (const potType of ['srp', '3bet'] as const) {
     const set = representativeSpotSet(potType)
-    it(`produces precomputable ${potType} questions (turn/river · lead/facing · hero in table)`, () => {
+    it(`produces precomputable ${potType} questions (flop/turn/river · lead/facing · hero in table)`, () => {
       const rng = mulberry32(42)
       for (let i = 0; i < 60; i++) {
         const q = generateRepresentativePostflopQuestion(rng, potType)
@@ -15,17 +15,16 @@ describe('generateRepresentativePostflopQuestion', () => {
         if (!q) continue
         // 事前計算の対象に厳密に収まること
         expect(q.representative).toBeTruthy()
-        expect(q.street === 'turn' || q.street === 'river').toBe(true)
+        expect(['flop', 'turn', 'river']).toContain(q.street)
         expect(set.spots).toContain(q.baseSpotId)
         expect(q.facingRaise).toBe(false)
         expect(q.potType).toBe(potType)
         expect(q.potBB).toBe(set.potBB)
         expect(q.effStackBB).toBe(set.effStackBB)
-        expect(q.street).not.toBe('flop') // 代表ボードは turn/river のみ
         // hero ハンドは事前計算と同一のコンボ集合に必ず含まれる (= JSON テーブルにヒットする)
         const heroK = comboKey(q.heroCards)
         const tableKeys = new Set(
-          representativeHeroCombos(q.baseSpotId, q.board, q.street as 'turn' | 'river').map(c => comboKey(c.cards)),
+          representativeHeroCombos(q.baseSpotId, q.board, q.street).map(c => comboKey(c.cards)),
         )
         expect(tableKeys.has(heroK)).toBe(true)
       }

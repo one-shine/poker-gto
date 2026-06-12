@@ -179,8 +179,8 @@ export function PostflopDrillPanel() {
             <Seg active={streetMode === 'mix'} onClick={() => changeStreet('mix')}>ミックス</Seg>
           </div>
         ) : (
-          // 代表ボード = 事前計算済 (ターン/リバー)。盤面が街を決めるので街選択は出さない。
-          <span className="text-[11px] text-emerald-300/80">事前計算済の代表テクスチャ(ターン/リバー)から出題 — 厳密解で即時採点。</span>
+          // 代表ボード = 事前計算済(フロップ/ターン/リバー)。盤面が街を決めるので街選択は出さない。
+          <span className="text-[11px] text-emerald-300/80">事前計算済の代表テクスチャ(フロップ/ターン/リバー)から出題 — 厳密解で即時採点。</span>
         )}
       </div>
 
@@ -312,7 +312,7 @@ export function PostflopDrillPanel() {
       <p className="text-[11px] text-zinc-500">
         正解 +{XP_CORRECT}XP / 挑戦 +{XP_WRONG}XP。基準: <SourceBadge source={solved?.source ?? null} />。
         ベット額はポット比 (リードは約2/3ポット)。3betポットはポット ≈ 22.5BB・残り ≈ 89BB。
-        フロップはショーダウンをエクイティ近似 (賭け未考慮)。ターンは river ベッティングを織り込む完全チャンスノード CFR (賭け考慮済・river 全48通り評価)。頻度10%以上の行動が正解 (ミックス対応)。
+        代表フロップは turn+river ベッティングを完全列挙で織り込んだ事前計算済解 (3街全列挙・賭け考慮済)。ランダムフロップはショーダウンをエクイティ近似 (賭け未考慮)。ターンは river ベッティングを織り込む完全チャンスノード CFR (賭け考慮済・river 全48通り評価)。頻度10%以上の行動が正解 (ミックス対応)。
       </p>
     </div>
   )
