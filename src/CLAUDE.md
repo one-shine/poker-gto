@@ -64,6 +64,7 @@ GTO評価の基準は `src/lib/solver/getSolution()` が返す `NodeSolution` (`
 ### lib/solver/ (Phase 3.5)
 - `getSolution(spot, { allowLiveSolve? }) → Promise<NodeSolution|null>` ✅ — 統一供給窓口。preflop(precomputed優先→近似)/ postflop(代表盤の precomputed 最優先 → turn/river live solve。**flop も代表10盤×10スポットは precomputed=賭け考慮済**・2026-06-13)。push/fold等 scenario外 precomputed も配給。
 - flop 事前計算基盤 ✅ (2026-06-13・`docs/SOLVER.md`) — `chanceCfr.ts` カーネル最適化(intカード/Float64Array/eq dedup・9.8倍)+`fastEval7.ts`(eq構築46倍)+`suitIsomorphism.ts`(スート同型縮約・on/off で解は厳密一致)+DCFR opt-in。`scripts/precompute-flop.ts`(worker_threads並列・再開可能・exploit>5%は書き出さないハードゲート)で 200テーブル量産済(exploit 中央値0.02%・最大0.06%)。
+- postflop EV モデル(Phase B) ✅ (2026-06-13) — `evExtraction.ts`+`attachModelEV.ts`。10 ポット構成×N=60 層化サンプルで `vOop`/`vIp`(169×169)を構築し `(equity−0.5)×F` ヒューリスティックをサブゲーム解 EV で置換。source は `approximate_with_ev`(戦略は手作りのまま)。support ゲート(< 0.5 で heuristic フォールバック)で尾手ノイズを除去。全 27 スポット相関 ≥ 0.7・569 テスト緑。
 - `resolveSpotKey(state, heroId) → SpotKey|null` ✅ — リンプ/単独レイザー/マルチウェイ判定でスポット解決。
 - `fromRangeScenario(scenario) → NodeSolution` ✅ — 手作り近似→解(`source:'approximate'`)橋渡し。
 - `pushFold.ts` ✅ (R4) — `solvePushFold(eq, params)`。HU プッシュ/フォールド Nash をカテゴリ別 fictitious play で求解。`CATEGORIES`(169)・`AVAIL`(blocker期待値)。**厳密GTO**(ショーダウン=オールイン勝率=真値)。

@@ -7,7 +7,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 0.673
+        "ev": 0.767
       }
     ],
     "33": [
@@ -15,7 +15,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 0.828
+        "ev": 0.868
       }
     ],
     "44": [
@@ -23,7 +23,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.001
+        "ev": 0.762
       }
     ],
     "55": [
@@ -31,7 +31,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.18
+        "ev": 0.897
       }
     ],
     "66": [
@@ -39,7 +39,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.367
+        "ev": 1.048
       }
     ],
     "77": [
@@ -47,7 +47,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.58
+        "ev": 1.093
       }
     ],
     "88": [
@@ -55,7 +55,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.798
+        "ev": 0.99
       }
     ],
     "99": [
@@ -63,7 +63,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 2.06
+        "ev": 1.351
       }
     ],
     "AA": [
@@ -71,7 +71,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 3.421
+        "ev": 2.147
       }
     ],
     "KK": [
@@ -79,7 +79,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 3.173
+        "ev": 1.237
       }
     ],
     "QQ": [
@@ -87,7 +87,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 2.976
+        "ev": 1.14
       }
     ],
     "JJ": [
@@ -95,7 +95,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 2.678
+        "ev": 1.071
       }
     ],
     "TT": [
@@ -643,8 +643,8 @@
   "potBB": 1.5,
   "source": "approximate_with_ev",
   "meta": {
-    "sourceName": "hand-built strategy + heuristic postflop EV (factor=30)",
+    "sourceName": "hand-built strategy + solved-flop model EV (flop-ev-matrix@1 potKey=srp-co-bb, cPre=2.5)",
     "license": "original",
-    "version": "1"
+    "version": "2"
   }
 }

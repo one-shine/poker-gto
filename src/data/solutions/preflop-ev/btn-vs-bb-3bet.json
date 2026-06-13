@@ -42,7 +42,7 @@
       {
         "action": "call",
         "frequency": 0.5,
-        "ev": -5.129
+        "ev": 1.393
       },
       {
         "action": "fold",
@@ -81,7 +81,7 @@
       {
         "action": "call",
         "frequency": 0.55,
-        "ev": -0.934
+        "ev": -2.693
       },
       {
         "action": "fold",
@@ -99,7 +99,7 @@
       {
         "action": "call",
         "frequency": 0.75,
-        "ev": -3.527
+        "ev": 7.514
       },
       {
         "action": "fold",
@@ -111,7 +111,7 @@
       {
         "action": "call",
         "frequency": 0.65,
-        "ev": -4.862
+        "ev": 1.447
       },
       {
         "action": "fold",
@@ -129,7 +129,7 @@
       {
         "action": "call",
         "frequency": 0.6,
-        "ev": -0.91
+        "ev": -1.843
       }
     ],
     "AKo": [
@@ -142,7 +142,7 @@
       {
         "action": "call",
         "frequency": 0.4,
-        "ev": -2.238
+        "ev": -1.546
       },
       {
         "action": "fold",
@@ -160,7 +160,7 @@
       {
         "action": "call",
         "frequency": 0.8,
-        "ev": -6.445
+        "ev": -8.277
       },
       {
         "action": "fold",
@@ -172,7 +172,7 @@
       {
         "action": "call",
         "frequency": 0.5,
-        "ev": -8.219
+        "ev": -9.106
       },
       {
         "action": "fold",
@@ -184,7 +184,7 @@
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": -7.561
+        "ev": -7.31
       },
       {
         "action": "fold",
@@ -196,7 +196,7 @@
       {
         "action": "call",
         "frequency": 0.55,
-        "ev": -7.613
+        "ev": -6.554
       },
       {
         "action": "fold",
@@ -292,7 +292,7 @@
       {
         "action": "call",
         "frequency": 0.7,
-        "ev": -9.343
+        "ev": -7.8
       },
       {
         "action": "fold",
@@ -304,7 +304,7 @@
       {
         "action": "call",
         "frequency": 0.5,
-        "ev": -9.244
+        "ev": -6.353
       },
       {
         "action": "fold",
@@ -340,7 +340,7 @@
       {
         "action": "call",
         "frequency": 0.5,
-        "ev": -8.748
+        "ev": -6.674
       },
       {
         "action": "fold",
@@ -376,7 +376,7 @@
       {
         "action": "call",
         "frequency": 0.5,
-        "ev": -8.4
+        "ev": -1.672
       },
       {
         "action": "fold",
@@ -532,8 +532,8 @@
   "potBB": 14,
   "source": "approximate_with_ev",
   "meta": {
-    "sourceName": "hand-built opener strategy + heuristic call/4bet EV (3bet factor=45, 4bet factor=60, fold-to-4bet=0.55 推定)",
+    "sourceName": "hand-built opener strategy + solved-flop model call EV (potKey=3bp-bb-vs-btn, cPre=11) + heuristic 4bet (F4=60, FT4=0.55)",
     "license": "original",
-    "version": "1"
+    "version": "2"
   }
 }

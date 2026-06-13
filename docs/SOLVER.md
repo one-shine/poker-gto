@@ -26,9 +26,11 @@
 | ソルバー | アーキテクチャ | 主な用途 | 精度感 |
 |----------|--------------|---------|--------|
 | PioSOLVER | ポストフロップ特化・カードアブストラクションなし・ベットサイズ離散化のみ | HU ポストフロップ解析 | exploitability 0.1〜0.5% pot 水準 |
-| GTO Wizard | サーバで事前計算した解を配信 | Web ブラウザで即時参照 | 本アプリの `solver_precomputed` と同じ思想 |
+| GTO Wizard | サーバで事前計算した解を配信・ツリー外の外挿はしない | Web ブラウザで即時参照 | 本アプリの `solver_precomputed` + Phase B EV モデルと同じ思想 |
 | MonkerSolver | カードアブストラクション + 大容量 RAM でプリフロップ / マルチウェイを求解 | GTO 研究・大規模ツリー | 大容量環境前提 |
 | PokerSnowie | ニューラルネット近似 | 学習・解析 | CFR 厳密系ではない |
+
+> **Phase B の位置づけ**: 「代表サブゲームを解いて EV モデルを保存し手作り戦略に EV を後付け」は GTO Wizard の事前計算解配信思想に近い。ただしこれは完全解ではなく**モデル**(169 カテゴリ抽象・N=60 ボード・固定ベットサイズ)であるため `source` は `approximate_with_ev` に留める(正直表示)。support ゲート(「ソルバーを十分サンプルされた範囲だけ信頼する」)は、商用ソルバーがツリー外を外挿しないのと同じ正直さを実現している。
 
 > **商標注記**: GTO Wizard / PioSOLVER / MonkerSolver / PokerSnowie は各社の商標。本プロジェクトはこれらと提携しておらず、比較は公知情報に基づく事実記述。本アプリの GTO 解データは全て自前ソルバーで生成した自社データのみ([`./DATA_LICENSE.md`](./DATA_LICENSE.md) L1)。
 
@@ -199,7 +201,68 @@ Phase 0 カーネル最適化を実装し、ベンチマークで効果を実測
 
 ---
 
-## 5. AI(Fable 5)の実力により可能となったこと
+## 5. Phase B — postflop EV モデル(2026-06-13 完了)
+
+Phase A のフロップ完全 CFR カーネルを使い、プリフロップ EV 計算のヒューリスティックをサブゲーム解で置換した。
+
+### 5-1. Before / After
+
+| 項目 | Before (Phase A まで) | After (Phase B) |
+|------|-----------------------|-----------------|
+| コール EV 計算式 | `(equity − 0.5) × F`（F≈30 SRP / 45 3bet / 60 4bet） | `E_w[V[ci][cj]] − cPre`（V = フロップサブゲームの純チップ EV・w = 到達重み） |
+| 戦略自体 | 手作り近似レンジ | 変更なし(手作りのまま) |
+| source | `approximate` | `approximate_with_ev`(戦略は手作りなので格上げしない) |
+| 4bet 枝 | ヒューリスティック | v1 モデル外・ヒューリスティック据え置き |
+
+### 5-2. V モデルの構築
+
+10 ポット構成でフロップ EV モデルを量産した:
+
+- **構成**: SRP 5 スポット(`bb-vs-{btn,co,mp,utg,sb}`) + 3bet 5 スポット(`3bp-{bb-vs-btn, btn-vs-bb, bb-vs-co, co-vs-bb, sb-vs-btn}`)
+- **各ポット**: `canonicalFlops()` から層化サンプル N=60(テクスチャ bucket 比例) / `solveFlop` cap=60 iters=120(Phase 0 カーネル) / `rootValueMatrix` + `aggregateToCategories` で 169×169 の `vOop`/`vIp` を抽出 / `composeMatrix` でボード加重平均
+- **量産規模**: 600 ジョブ・6 worker・約 5 時間・各ボード exploitability 中央値 0.0〜0.1%
+- **出力先**: `scripts/data/postflop-ev-model/{potKey}.json`(license: self-generated・コミットするが `src/` 外のためバンドルしない)
+
+**vOop/vIp の値域**: `[potBB/2 − stack, potBB/2 + stack]`(約 ±78BB)。`[0, potBB]` ではない点に注意(ポストフロップのベットによる可変性を含む)。
+
+**恒等式検証**: `vOop[i][j] + vIp[j][i] = potBB`(零和 + ポット)を実キャッシュで最大誤差 1e-14 で確認 = 内部整合の独立チェック。
+
+### 5-3. 検出・修正した 2 つのバグ
+
+**バグ 1 — id 配線バグ(敵対的レビュー workflow が検出)**
+
+3bet モデルが postflop spot id(`3bp-bb-vs-btn`)でラベルされていたが、消費側 `heroValueMatrix` はプリフロップ `RangeScenario` id で完全一致照合 → 全 3bet 枝が静かにヒューリスティックフォールバックしていた。
+
+修正: producer がモデルを `RangeScenario` id でラベル(`oopId` = 3better の defender id 例 `bb-vs-btn` / `ipId` = opener が 3bet に直面する id 例 `btn-vs-bb-3bet`)+ エントリポイントガード + 回帰テスト 2 件。solve 自体は spotId でレンジ解決していたため正しく、再求解は不要で再合成のみで対処。
+
+**バグ 2 — 尾手ノイズ(相関ゲートが検出)**
+
+`capRangeSuitClosed(cap=60)` が低頻度の尾手(98s/76s/KTs 等)を多くのボードのレンジから落とす → 尾手は 60 枚中 1〜2 枚のボードにしか残らず、合成値が ±70BB のノイズになる。facing-3bet(`vIp` 側)スポットは EV 全体が 3bet モデルに依存するためノイズが相関を破壊(co-vs-bb-3bet r=0.285)。一方 defender(`vOop` 側)は 3bet 枝が EV の小部分(大半は SRP call 枝)のためノイズが希釈され高相関 — この非対称性が診断の手がかりとなった。
+
+修正: カテゴリ別 `support`(= そのカテゴリが非 null 行を持ったボードの重み比率 0..1)を新設。core 手 = 1.000 / 尾手 ≤ 0.087。`modelCallTerm` は `support < MIN_SUPPORT(0.5)` のカテゴリで null を返しヒューリスティックにフォールバック。
+
+### 5-4. 相関ゲート結果(compare-ev-model.ts・Pearson 相関・閾値 0.7)
+
+| スポット | support ゲート前 | support ゲート後 |
+|----------|-----------------|-----------------|
+| co-vs-bb-3bet | 0.285 | 0.961 |
+| btn-vs-bb-3bet | 0.617 | 0.962 |
+| btn-vs-sb-3bet | 0.675 | 0.982 |
+| utg-open | 0.74 | 0.81 |
+| bb-vs-mp | 0.83 | 0.96 |
+| bb-vs-utg | 0.92 | 0.97 |
+
+**結果**: support ゲート後、全 27 スポット ≥ 0.7 でゲートクリア。アンカー健全性: AA open-raise EV ≈ 3.6BB(ブレンド値・大半フォールド勝ち + 被コール時の postflop EV)。
+
+### 5-5. 変更ファイル
+
+`src/lib/solver/evExtraction.ts`(+test) / `src/lib/solver/attachModelEV.ts`(+test) / `scripts/build-postflop-ev.ts` / `scripts/ev-model-worker.ts` / `scripts/compare-ev-model.ts` / `scripts/precompute-preflop-ev.ts`(`--model` フラグ追加・フラグ無しは従来と完全同一出力) / `src/data/solutions/preflop-ev/*.json`(28 ファイル再生成)。
+
+**検証**: 全 569 テスト緑・type-check 緑・lint 緑・license:check 緑(401 データファイル)。
+
+---
+
+## 6. AI(Fable 5)の実力により可能となったこと
 
 以下は事実ベースの記録。検証済みの根拠(実測値・コード根拠)が伴うもののみ追記する方針とする。
 
@@ -211,15 +274,17 @@ Phase 0 カーネル最適化を実装し、ベンチマークで効果を実測
 
 4. **第1〜2波の並列実装によるPhase 0の即日完了**: モデル使い分け(fable=カーネル最適化・同型縮約、sonnet=評価器・スクリプト・文書)により、第1波(intカード化・Float64Array化・収束 opt-in)と第2波(fastEval7・eq dedup・スート同型)の並列実装が1日未満で Phase 0 を完了させ、go/no-go ゲートを即日通過した。
 
+5. **Phase B の 2 つのバグを計画に組み込んだ安全機構が捕捉(検証済み)**: ① 敵対的レビュー workflow が id 配線バグを(5 時間の再求解を無駄にする前に)検出した。② 相関ゲートが尾手ノイズを検出した。いずれも非自明な根本原因(cap によるレンジ脱落がカテゴリ別サンプリングの非対称を生み、IP 側 facing-3bet でのみ顕在化)を、ボード出現数の分析(core 60/60 vs 尾手 1〜2/60)で診断した。coverage(villain 到達カテゴリ数)では区別できず出現数が判別子となる点は事前には自明でなかった。
+
 ---
 
-## 6. ロードマップ
+## 7. ロードマップ
 
 | Phase | 内容 | go/no-go ゲート |
 |-------|------|----------------|
 | **Phase 0** ✅ | カーネル最適化(int カード化・Float64Array・eq dedup・fastEval7)+ ベンチマーク実測 | cap≥80 全列挙で exploit ≤5%・≤30 分/求解 → 0.03%・4.7 分で通過 |
 | **Phase A** ✅ | flop 代表 10 ボードの事前計算(実測 4.6h・4-3 節) | `--max-exploit 0.05` のハードゲートを全 200 テーブルでクリア(最大 0.06%) |
-| **Phase B** | postflop EV モデルの改善((equity−0.5)×30BB ヒューリスティックを、解いたサブゲーム EV で置換。正準フロップ 1,755 から層化サンプル N=60 × 10 ポット構成) | サブゲーム EV と旧ヒューリスティックの相関 ≥0.7・主要アンカー(AA/BTN open ≈ +10BB 級)の目視レビュー |
+| **Phase B** ✅ | postflop EV モデルの改善((equity−0.5)×30BB ヒューリスティックを、解いたサブゲーム EV で置換。正準フロップ層化サンプル N=60 × 10 ポット構成・600 ジョブ約 5 時間) | 全 27 スポット相関 ≥ 0.7・AA EV ≈ 3.6BB アンカー確認 → 通過(2026-06-13) |
 | **Phase C** | プリフロップのモデル内 Nash(2人チェーンゲーム×fictitious play。真の 6-max Nash との違いを明記し新 source ティア `solver_model` で正直表示) | モデル内 exploitability ≤0.005 BB/hand・既知 GTO アンカー整合(BTN open 40-45% 等)→ 採用判断ゲート |
 
 > **Phase A/B/C の前提**: Phase 0 の eq dedup + fastEval7 が完了していること。入力レンジ品質が精度の鎖の根にあるため、カーネル最適化を先行させる。

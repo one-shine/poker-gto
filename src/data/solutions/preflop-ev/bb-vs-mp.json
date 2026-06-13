@@ -6,56 +6,56 @@
       {
         "action": "call",
         "frequency": 1,
-        "ev": -3.071
+        "ev": -1.083
       }
     ],
     "33": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": -2.463
+        "ev": -0.626
       }
     ],
     "44": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": -1.631
+        "ev": -1.125
       }
     ],
     "55": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": -0.968
+        "ev": -0.135
       }
     ],
     "66": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": -0.225
+        "ev": -0.078
       }
     ],
     "77": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 0.525
+        "ev": -0.687
       }
     ],
     "88": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 1.323
+        "ev": -1.385
       }
     ],
     "99": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 2.308
+        "ev": 0.642
       }
     ],
     "AA": [
@@ -208,35 +208,35 @@
       {
         "action": "call",
         "frequency": 1,
-        "ev": 0.865
+        "ev": -0.471
       }
     ],
     "ATs": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": -0.043
+        "ev": -0.148
       }
     ],
     "A9s": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": -0.83
+        "ev": -0.748
       }
     ],
     "A8s": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": -1.22
+        "ev": -0.482
       }
     ],
     "A7s": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": -1.546
+        "ev": 0.039
       }
     ],
     "A6s": [
@@ -267,7 +267,7 @@
       {
         "action": "call",
         "frequency": 1,
-        "ev": -0.383
+        "ev": -1.712
       }
     ],
     "KJs": [
@@ -554,8 +554,8 @@
   "potBB": 1.5,
   "source": "approximate_with_ev",
   "meta": {
-    "sourceName": "hand-built defender strategy + heuristic call+3bet EV (SRP factor=30, 3bet factor=45, opener応答=手作りレンジ推定)",
+    "sourceName": "hand-built defender strategy + solved-flop model EV [call=model(srp-mp-bb), 3bet-call=heuristic, 4bet枝=heuristic(v1モデル外)]",
     "license": "original",
-    "version": "1"
+    "version": "2"
   }
 }

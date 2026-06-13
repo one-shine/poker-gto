@@ -344,7 +344,7 @@
   "potBB": 15,
   "source": "approximate_with_ev",
   "meta": {
-    "sourceName": "hand-built opener strategy + heuristic call/4bet EV (3bet factor=45, 4bet factor=60, fold-to-4bet=0.55 推定)",
+    "sourceName": "hand-built opener strategy + heuristic call/4bet EV (3bet factor=45, 4bet factor=60, fold-to-4bet=0.55 推定) [postflop EV model 未被覆 (utg-vs-btn-3bet) → heuristic fallback]",
     "license": "original",
     "version": "1"
   }

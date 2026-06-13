@@ -6,56 +6,56 @@
       {
         "action": "call",
         "frequency": 1,
-        "ev": -0.919
+        "ev": -1.455
       }
     ],
     "33": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": -0.433
+        "ev": -0.988
       }
     ],
     "44": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 0.189
+        "ev": -1.434
       }
     ],
     "55": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 0.932
+        "ev": -0.546
       }
     ],
     "66": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 1.754
+        "ev": -0.343
       }
     ],
     "77": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 2.731
+        "ev": -0.943
       }
     ],
     "88": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 3.723
+        "ev": -1.712
       }
     ],
     "99": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 4.828
+        "ev": 0.556
       }
     ],
     "AA": [
@@ -141,35 +141,35 @@
       {
         "action": "call",
         "frequency": 1,
-        "ev": 5.829
+        "ev": 0.422
       }
     ],
     "AJs": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 3.684
+        "ev": -0.795
       }
     ],
     "ATs": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 3.278
+        "ev": -0.386
       }
     ],
     "A9s": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 2.609
+        "ev": -0.916
       }
     ],
     "A8s": [
       {
         "action": "call",
         "frequency": 1,
-        "ev": 2.024
+        "ev": -0.323
       }
     ],
     "A7s": [
@@ -675,8 +675,8 @@
   "potBB": 1.5,
   "source": "approximate_with_ev",
   "meta": {
-    "sourceName": "hand-built defender strategy + heuristic call+3bet EV (SRP factor=30, 3bet factor=45, opener応答=手作りレンジ推定)",
+    "sourceName": "hand-built defender strategy + solved-flop model EV [call=model(srp-sb-bb), 3bet-call=heuristic, 4bet枝=heuristic(v1モデル外)]",
     "license": "original",
-    "version": "1"
+    "version": "2"
   }
 }

@@ -46,7 +46,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.225
+        "ev": 1.204
       }
     ],
     "66": [
@@ -54,7 +54,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.353
+        "ev": 1.328
       }
     ],
     "77": [
@@ -62,7 +62,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.482
+        "ev": 1.344
       }
     ],
     "88": [
@@ -70,7 +70,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.621
+        "ev": 1.251
       }
     ],
     "99": [
@@ -78,7 +78,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.791
+        "ev": 1.519
       }
     ],
     "AA": [
@@ -86,7 +86,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 2.618
+        "ev": 1.703
       }
     ],
     "KK": [
@@ -94,7 +94,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 2.454
+        "ev": 1.48
       }
     ],
     "QQ": [
@@ -102,7 +102,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 2.32
+        "ev": 1.325
       }
     ],
     "JJ": [
@@ -110,7 +110,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 2.151
+        "ev": 1.392
       }
     ],
     "TT": [
@@ -118,7 +118,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.968
+        "ev": 1.666
       }
     ],
     "AKs": [
@@ -126,7 +126,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.755
+        "ev": 1.416
       }
     ],
     "AQs": [
@@ -134,7 +134,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.65
+        "ev": 1.708
       }
     ],
     "AJs": [
@@ -142,7 +142,7 @@
         "action": "raise",
         "sizeBB": 2.5,
         "frequency": 1,
-        "ev": 1.524
+        "ev": 1.581
       }
     ],
     "ATs": [
@@ -419,8 +419,8 @@
   "potBB": 1.5,
   "source": "approximate_with_ev",
   "meta": {
-    "sourceName": "hand-built strategy + heuristic postflop EV (factor=30)",
+    "sourceName": "hand-built strategy + solved-flop model EV (flop-ev-matrix@1 potKey=srp-utg-bb, cPre=2.5)",
     "license": "original",
-    "version": "1"
+    "version": "2"
   }
 }
