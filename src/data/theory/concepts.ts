@@ -1,7 +1,7 @@
 import type { SkillLevel } from '../../types/game'
 import type { MistakeCategory } from '../../types/stats'
 
-export type ConceptCategory = 'preflop' | 'postflop' | 'math' | 'mental'
+export type ConceptCategory = 'preflop' | 'postflop' | 'math' | 'mental' | 'meta'
 
 export interface TheoryConcept {
   id: string
@@ -18,11 +18,37 @@ export const CONCEPT_CATEGORY_JP: Record<ConceptCategory, string> = {
   postflop: 'ポストフロップ',
   math: 'ポーカー数学',
   mental: 'メンタル/プロセス',
+  meta: 'このアプリの精度',
 }
 
 // 学習コンテンツ。各 relatedMistakes は弱点分析(AnalysisPage)からの導線に使う。
 // 全 MistakeCategory を最低1つのコンセプトがカバーする(弱点カードが必ずリンク先を持つ)。
 export const CONCEPTS: TheoryConcept[] = [
+  {
+    id: 'gto-accuracy',
+    title: 'このアプリのGTO精度 — どこが厳密でどこが近似か',
+    category: 'meta',
+    skillLevel: 'beginner',
+    summary: '局面ごとに解の確からしさが違う。本アプリは「ソルバー解(厳密)」と「GTO近似」を正直に区別して表示します。',
+    body: `「GTO」= ゲーム理論的に最適 = 相手にどう打たれても損しない均衡解です。本アプリは局面ごとに解の確からしさをラベルで正直に表示し、「GTO最適」「絶対」のような断定はしません。
+
+【✓ 本物のソルバー解 — 厳密に「GTO」と呼べる】
+・プッシュ/フォールド(浅いスタック・25BB以下): 全員オールイン = ショーダウン勝率が真の値。厳密なナッシュ均衡です。
+・代表フロップのポストフロップ: 自前CFRで求解(exploitability 0.02% = 商用ソルバー水準)。
+これらは「2人」の局面で、一意の均衡が存在し、完全解までの距離も測れます。
+
+【△ GTO近似 — 限りなく近いが「GTO」とは言わない】
+・プリフロップ100BBのオープン/3betレンジ: 自前ソルバーで位置依存の構造を再現し、公開GTOチャートとほぼ一致する品質まで近づけています。ただし「3人以上」の局面は数学的に均衡の収束保証が無く、近さを測ることもできません。だから「GTO近似」と表示します。
+・これは誠実さの問題です。マルチウェイ(3人以上)のプリフロップは商用ソルバーでも厳密なGTOではなく高品質な近似(数十億ハンドのAI自己対戦でも「近似」)。本アプリは更に簡略な抽象なので、なおさら「GTO」とは名乗りません。
+
+【使い方】
+・✓ バッジのスポット(押し引き・代表フロップ)は信頼してよい厳密解です。
+・△ バッジのスポット(プリフロップ等)は「方向性・大枠は正しいが、頻度は目安」として学んでください。
+・卓下の ⓘ バッジを開くと、そのスポットの出典(✓/△)と前提条件を確認できます。
+
+「全局面がGTO品質」と謳うツールは多いですが、本アプリはどこが厳密でどこが近似かを隠さないことを強みにしています。`,
+    relatedMistakes: [],
+  },
   {
     id: 'position',
     title: 'ポジションの優位性',

@@ -42,6 +42,15 @@ PokerSnowie / GTO Wizard ライクな、**ローカル動作のポーカー GTO 
 - 100BB の真 Nash 解への置換は [`./BACKLOG.md`](./BACKLOG.md) A節(R4)を参照(サーバ事前計算級・in-browser 不可)。
 - フォールバック専用のヒューリスティクス関数には `// heuristic: not GTO-exact` を必ず付す。
 
+### A節 GTO 精度の総括と go-forward 方針(2026-06-13 確定)
+
+A節 GTO 精度は **honest な天井に到達し完了**とする(詳細 `docs/SOLVER.md §6`):
+
+- **「GTO」と呼べる(厳密)**: push/fold(≤25BB・near-Nash)+ 代表フロップ CFR(exploit 0.02%・商用水準)。これらは 2 人ゼロ和 = 一意 Nash + exploitability 計測可能。
+- **「GTO近似」止まり**: プリフロップ 100BB。C2 ジョイント CFR で**位置依存構造**を回復(Phase C の UTG 63.5% → 15.5%)・V3 ハンドクラス realization で **per-hand を手作り水準**へ(公開 GTO チャートと一致する品質)。**だが多人数(3 人以上)プリフロップは原理的に Nash 収束保証が無く(商用ソルバーも同じ)、exploitability も測れない** → source は `approximate`/`approximate_with_ev` 据え置き(`solver_model` は名乗らない)。**「GTOに限りなく近い近似」とは言えるが「GTO」とは言わない**。
+- **閉じた探索(やらない)**: V2 解いた postflop EV(per-hand を動かさないと実証)/ 真マルチウェイ Nash(局所不可)/ リンプ抽象(ROI 低)。solver 成果(C2/V3)は研究成果として保持し、**主表示は理論照合済の手作りレンジを維持**(配給 C-2a/C-2b は明示承認後)。
+- **方針**: ①正直ラベルを固定(プリフロップは永久に「GTO近似」・"GTO最適" 不使用)②精度の正直開示を**UI 機能化**(局面ごとに ✓ソルバー解/△近似を区別=競合への差別化)③以後はプロダクト/配信に注力。
+
 ## 学習評価のルール
 
 ### EV 損失(第一級の学習信号)

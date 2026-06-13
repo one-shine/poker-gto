@@ -15,7 +15,7 @@ const LEVEL_CLS: Record<SkillLevel, string> = {
   advanced: 'bg-amber-900/40 text-amber-300',
   pro: 'bg-rose-900/40 text-rose-300',
 }
-const CATEGORIES: ConceptCategory[] = ['preflop', 'postflop', 'math', 'mental']
+const CATEGORIES: ConceptCategory[] = ['meta', 'preflop', 'postflop', 'math', 'mental']
 
 function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
