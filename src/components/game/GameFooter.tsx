@@ -11,7 +11,8 @@ interface GameFooterProps {
 // source ごとの信頼度表記。ⓘ/✓/△ で色のみ非依存 (CLAUDE.md ルール5)
 const SOURCE_INFO: Record<SolutionSource, { icon: string; label: string; cls: string }> = {
   solver_precomputed: { icon: '✓', label: 'GTOソルバー解', cls: 'text-emerald-300' },
-  solver_live: { icon: '✓', label: 'GTOソルバー解 (ローカル求解·簡易)', cls: 'text-sky-300' },
+  // 簡易ライブ求解は厳密事前計算と別格 → △(理論コンセプト「このアプリの精度」と整合: ✓=厳密事前計算)。
+  solver_live: { icon: '△', label: 'GTOソルバー解 (ローカル求解·簡易)', cls: 'text-amber-300' },
   approximate_with_ev: { icon: '△', label: 'GTO近似レンジ + 概算EV (手作り戦略·サブゲームEV/近似)', cls: 'text-amber-300' },
   approximate: { icon: '△', label: 'GTO近似レンジ (一般理論ベースの手作り)', cls: 'text-amber-300' },
 }
@@ -134,7 +135,7 @@ export function GameFooter({ source }: GameFooterProps) {
                   <span className="text-zinc-400">このスポットはデータ準備中</span>
                 )}
                 <p className="mt-1 text-[11px] text-zinc-500 leading-relaxed">
-                  ✓ = 本物のソルバー解 / △ = GTO近似レンジ (一般理論ベースの手作り)。
+                  ✓ = 厳密ソルバー解 (事前計算·push/fold·代表ボード) / △ = 簡易ライブ求解 または GTO近似 (一般理論ベースの手作り)。
                   スポットごとに信頼度が変わります。
                 </p>
               </Item>
@@ -142,7 +143,7 @@ export function GameFooter({ source }: GameFooterProps) {
                 {opponentMode === 'trainer' ? (
                   <>
                     GTO (trainer): 相手は上記「解の出典」と同じ解を頻度サンプリングして打ちます。
-                    <span className="text-zinc-400"> 相手の精度もバッジと同じで、△ のスポットでは相手も GTO近似で打ちます</span>
+                    <span className="text-zinc-400"> 相手の精度もバッジと同じで、△ のスポットでは相手も同じ簡易求解/近似解で打ちます</span>
                     (真のGTOボットではありません)。
                   </>
                 ) : (

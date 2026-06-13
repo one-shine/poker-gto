@@ -39,6 +39,7 @@ PokerSnowie / GTO Wizard ライクな、**ローカル動作のポーカー GTO 
 
 - **本物の厳密解は push/fold(≤25BB)のみ**。100BB の open/3bet は `approximate_with_ev`(概算EV)、postflop は近似入力レンジ上の CFR(study 限定の `solver_live`)。
   → 本アプリは「**GTO 学習ツール**」であり「全局面が GTO 品質のアプリ」ではない。**正直な信頼度表示が強み**。
+- **アイコン規約(全 UI 一貫・理論「このアプリの精度」と整合)**: **✓ = 厳密ソルバー解(`solver_precomputed`=push/fold・代表ボード事前計算)** / **△ = 簡易ライブ求解(`solver_live`)または GTO近似(`approximate*`=手作り)**。`solver_live` は実解だが簡易(turn=exploit〜5% / flop=賭け未考慮のエクイティ近似)のため ✓(厳密事前計算)とは別格 = △ + 街別の caveat(「賭け考慮済」/「簡易: 賭け未考慮」)+ 収束% で正直に表示する。
 - 100BB の真 Nash 解への置換は [`./BACKLOG.md`](./BACKLOG.md) A節(R4)を参照(サーバ事前計算級・in-browser 不可)。
 - フォールバック専用のヒューリスティクス関数には `// heuristic: not GTO-exact` を必ず付す。
 

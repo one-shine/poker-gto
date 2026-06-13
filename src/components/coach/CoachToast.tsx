@@ -12,8 +12,9 @@ interface Props {
 
 // source の正直表示 (✓本物 / △近似)。色だけに頼らず記号 + 語で識別 (ルール5)。
 const SOURCE_BADGE: Record<SolutionSource, { mark: string; text: string; cls: string }> = {
-  solver_precomputed: { mark: '✓', text: 'GTOソルバー解', cls: 'bg-sky-900/50 text-sky-200' },
-  solver_live: { mark: '✓', text: 'GTOソルバー解 (ローカル求解·簡易)', cls: 'bg-sky-900/50 text-sky-200' },
+  solver_precomputed: { mark: '✓', text: 'GTOソルバー解', cls: 'bg-emerald-900/50 text-emerald-200' },
+  // 簡易ライブ求解は厳密事前計算と別格 → △(理論「このアプリの精度」と整合)。
+  solver_live: { mark: '△', text: 'GTOソルバー解 (ローカル求解·簡易)', cls: 'bg-amber-900/50 text-amber-200' },
   approximate_with_ev: { mark: '△', text: 'GTO近似 +概算EV', cls: 'bg-amber-900/50 text-amber-200' },
   approximate: { mark: '△', text: 'GTO近似', cls: 'bg-amber-900/50 text-amber-200' },
 }

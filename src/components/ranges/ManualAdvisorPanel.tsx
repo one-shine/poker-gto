@@ -318,7 +318,9 @@ export function ManualAdvisorPanel() {
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[11px] font-bold text-brass-300">GTO 戦略</span>
                 {key && <span className="text-[10px] text-zinc-400">{key} @ {node.spotId}</span>}
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300">{sourceBadge(node.source)}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${node.source === 'solver_precomputed' ? 'bg-emerald-900/40 text-emerald-300' : 'bg-amber-900/40 text-amber-300'}`}>
+                  <span aria-hidden="true">{node.source === 'solver_precomputed' ? '✓ ' : '△ '}</span>{sourceBadge(node.source)}
+                </span>
                 {recommended && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-brass-500/15 text-brass-200 border border-brass-400/30 inline-flex items-center gap-1">
                     <span aria-hidden="true">★</span>
