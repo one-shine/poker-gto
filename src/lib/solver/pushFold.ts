@@ -48,7 +48,7 @@ export const COMBO_COUNT: number[] = COMBOS_BY_CAT.map(c => c.length) // 6/4/12
 
 // availability[ci][cj] = ci の 1 コンボを引いたとき、cj に残る(衝突しない)コンボの平均数。
 // カードリムーバルを厳密に期待値化する。スタック非依存なので一度だけ構築・再利用。
-const AVAIL: Float64Array[] = (() => {
+export const AVAIL: Float64Array[] = (() => {
   const mat = CATEGORIES.map(() => new Float64Array(NCAT))
   for (let ci = 0; ci < NCAT; ci++) {
     const aCombos = COMBOS_BY_CAT[ci]
