@@ -5,6 +5,13 @@ date: 2026-05-30
 ---
 # poker-gto 開発ログ
 
+### 2026-06-13 Phase V1 per-hand 検証 — 公開 GTO とセル突合・スーテッド評価の系統弱点を特定
+- **目的**: 「本物のソルバーレベル」へ上げる solver-grade ロードマップ(`~/.claude/plans/preflop-solver-grade-roadmap.md`)の起点。「幅でなくレンジが正しいか」を公開 GTO 6-max RFI とセル単位で定量化。**公開情報調査で目標を honest に再定義**(到達可能=デスクトップソルバー水準=Simple Preflop Holdem/HRC v3=我々と同系譜・不可=GTO Wizard AI 水準=NN/クラウド)。
+- **実装**: `scripts/published-ranges.ts`(公開チャートの手リストを自前書き起こし=L1 順守・レンジ記法パーサ・展開幅が公称と Δ≤0.7% で自己検証)+ `scripts/validate-preflop.ts`(in-out 一致%/L1 距離%/偽陽性・偽陰性)。
+- **結果**: C2 in-out 一致 UTG94.6/MP91.6/CO89.7/BTN85.7%(手作り 92.5/94.7/93.5/91.1)。**C2 は per-hand も公開 GTO に近い(86–95%=ランダムでない実シグナル)が、MP/CO/BTN は手作りが上・幅が広いほど劣化 → 配給水準でない**(表示は手作り維持)。
+- **系統誤差(決定的)**: C2 偽陽性=**オフスート高カード**(A9o-A5o/K7o-K5o/Q8o/22)過大・偽陰性=**スーテッド**(A6s-A4s/スーコネ J9s-98s/飛びスーテッド)過小。→ **showdown ベース EV(N-wayエクイティ)+ 静的 realization がスーテッドの postflop 実現(フラッシュ/ストレート/ナッツ性)を報酬化できていない**。公開 GTO がスーテッドを広く開けるのは postflop で equity を実現するから。**V2(解いた postflop EV)の必要性を per-hand データで実証**。
+- 配給は据え置き(手作りが per-hand 優位=ルール1)。型0/lint0。詳細 `docs/SOLVER.md §6.6`。
+
 ### 2026-06-13 Phase C2-2 精緻化(Phase B V 配線)+ 採用ゲート — 較正済 flat の頑健性を実証
 - **実装**: ①3bet/4bet サイズを Phase B pot に整合(11/24 → srp 5.5 / 3bet 22.5 が一致)②HU seen-flop 終端を **Phase B の解いたサブゲーム V 行列**で評価(`huSeenFlopEV` 解決器・UTG/MP/CO/BTN SRP + BTN/CO 3bet・support<0.5 で flat フォールバック・未被覆=flat)。`huHeroValue` は全 cell flat なら flat 分岐と厳密一致(正規化整合)。
 - **知見(重要・C2-1 の見立てを実証的に訂正)**: Phase B V の配線は flat 実現率と差 **≤0.4pt** = 較正済 flat(IP/OOP 実現率)が解いたサブゲーム EV をよく近似し、**open 幅は seen-flop EV の精度に頑健**。BTN40.7/CO24.1 は flat でも既にアンカー命中 = 「BTN/CO 圧縮は flat-EV 律速」は誤りだった。V 配線は provenance/原理整合のため保持。
