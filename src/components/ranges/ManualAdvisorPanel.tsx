@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import type { Card, Position } from '../../types/game'
 import type { SpotKey } from '../../types/solver'
 import { parseCards, cardToString } from '../../engine/cards/Card'
+import { CardSelector } from './CardSelector'
 import { handCategory } from '../../engine/cards/handCategory'
 import { comboKey } from '../../lib/solver/riverRanges'
 import {
@@ -101,8 +102,8 @@ export function ManualAdvisorPanel() {
   const [potType, setPotType] = useState<'srp' | '3bet'>('srp')
   const [heroPos, setHeroPos] = useState<Position>('BB')
   const [villainPos, setVillainPos] = useState<Position>('BTN')
-  const [heroText, setHeroText] = useState('As Ks')
-  const [boardText, setBoardText] = useState('Ah 8d 3c 5s Qh')
+  const [heroCards, setHeroCards] = useState<Card[]>(() => parseCards('As Ks'))
+  const [boardCards, setBoardCards] = useState<Card[]>(() => parseCards('Ah 8d 3c 5s Qh'))
   const [facing, setFacing] = useState<FacingAction>('check')
   const [betText, setBetText] = useState('4')
   const [potText, setPotText] = useState('6')
@@ -131,24 +132,22 @@ export function ManualAdvisorPanel() {
 
   const advice = useManualAdvice(spot)
 
+  const boardNeed = isPreflop ? 0 : BOARD_NEED[street]
+  const inputValid = heroCards.length === 2 && boardCards.length === boardNeed
+
+  // street 変更時は盤面を必要枚数へ切り詰める(river→flop で余剰カードを残さない)。
+  const handleStreet = (s: ManualStreet) => {
+    setStreet(s)
+    if (BOARD_NEED[s] < boardCards.length) setBoardCards(prev => prev.slice(0, BOARD_NEED[s]))
+  }
+
   function onSubmit() {
     setError(null)
-    let heroCards: [Card, Card]
-    try {
-      const hc = parseCards(heroText)
-      if (hc.length !== 2) throw new Error()
-      heroCards = [hc[0], hc[1]]
-    } catch {
-      setSpot(null); setError('自分の2枚を正しく入力してください(例: As Ks)'); return
-    }
-    let board: Card[] = []
-    if (!isPreflop) {
-      try { board = parseCards(boardText) } catch {
-        setSpot(null); setError('盤面を正しく入力してください(例: Ah Kd 7s)'); return
-      }
-    }
+    if (heroCards.length !== 2) { setSpot(null); setError('自分の2枚を選んでください'); return }
+    const board = isPreflop ? [] : boardCards
+    if (board.length !== boardNeed) { setSpot(null); setError(`盤面を${boardNeed}枚選んでください`); return }
     const res = buildManualSpotKey({
-      street, heroPos: safeHero, villainPos: safeVillain, heroCards,
+      street, heroPos: safeHero, villainPos: safeVillain, heroCards: [heroCards[0], heroCards[1]],
       preflopContext, potType, board, facing,
       villainBetBB: Number(betText) || 0,
       potBB: Number(potText) || 0,
@@ -192,7 +191,7 @@ export function ManualAdvisorPanel() {
       <div className="space-y-3 rounded-xl border border-white/5 bg-base-900/40 p-3">
         <div className="space-y-1">
           <span className="text-xs text-zinc-500">ストリート</span>
-          <Seg options={STREETS} value={street} onChange={setStreet} />
+          <Seg options={STREETS} value={street} onChange={handleStreet} />
         </div>
 
         {isPreflop ? (
@@ -213,18 +212,14 @@ export function ManualAdvisorPanel() {
           <PosRow label="相手の位置" options={villainOptions} value={safeVillain} onChange={setVillainPos} />
         )}
 
+        <CardSelector
+          boardNeed={boardNeed}
+          heroCards={heroCards} boardCards={boardCards}
+          onHero={setHeroCards} onBoard={setBoardCards}
+        />
+
         {!isPreflop && (
           <>
-            <label className="block space-y-1">
-              <span className="text-xs text-zinc-500">
-                盤面(コミュニティカード・{BOARD_NEED[street]}枚 例: Ah 8d 3c)
-              </span>
-              <input
-                type="text" value={boardText} onChange={e => setBoardText(e.target.value)}
-                className="w-full rounded-lg bg-base-800 border border-white/10 px-3 py-2 text-sm font-data text-zinc-100"
-                placeholder="Ah 8d 3c 5s Qh"
-              />
-            </label>
             <div className="space-y-1">
               <span className="text-xs text-zinc-500">相手のアクション</span>
               <Seg options={[['check', 'チェックで回ってきた'], ['bet', 'ベットされた']] as [FacingAction, string][]}
@@ -252,17 +247,15 @@ export function ManualAdvisorPanel() {
           </>
         )}
 
-        <label className="block space-y-1">
-          <span className="text-xs text-zinc-500">自分の2枚(例: As Ks)</span>
-          <input type="text" value={heroText} onChange={e => setHeroText(e.target.value)}
-            className="w-full rounded-lg bg-base-800 border border-white/10 px-3 py-2 text-sm font-data text-zinc-100"
-            placeholder="As Ks" />
-        </label>
-
-        <button type="button" onClick={onSubmit}
-          className="brass min-h-11 px-5 rounded-lg text-sm font-bold">
-          おすすめを見る
+        <button type="button" onClick={onSubmit} disabled={!inputValid}
+          className="brass min-h-11 px-5 rounded-lg text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+          解析する
         </button>
+        {!inputValid && (
+          <p className="text-[11px] text-amber-300/80">
+            {heroCards.length !== 2 ? '自分の2枚を選んでください。' : `盤面を${boardNeed}枚選んでください。`}
+          </p>
+        )}
         {street === 'turn' && (
           <p className="text-[11px] text-zinc-500">※ ターンの任意盤面はローカル求解で数秒かかることがあります。</p>
         )}
