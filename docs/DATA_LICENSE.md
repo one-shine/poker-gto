@@ -27,8 +27,10 @@
 | データ | 場所 | `source` | `license` | 権利 |
 |--------|------|----------|-----------|------|
 | プリフロップ近似レンジ 12スポット | `src/data/ranges/preflop.ts` | `approximate` | `original` | 自社 (一般理論ベース手作り) |
+| プリフロップ EV (モデル置換・Phase B) | `src/data/solutions/preflop-ev/*.json` | `approximate_with_ev` | `original` | 自社 (手作り戦略 + フロップCFRモデルEV。EV値のみ model 由来・scripts/data/ 非バンドル) |
 | ライブ求解 (river/turn/flop HU) | `src/lib/solver/getSolution.ts` | `solver_live` | `self-generated` | 自社 |
 | HU プッシュ/フォールド Nash 解 | `src/data/solutions/preflop/hu-pf-*.json` | `solver_precomputed` | `self-generated` | 自社 (R4: 自前ソルバー生成) |
+| フロップ完全チャンス CFR (Phase A) | `src/data/solutions/postflop/*.json` | `solver_precomputed` | `self-generated` | 自社 (代表盤10×スポット10×phase2=160ファイル。exploit≤0.06%で商用水準) |
 | その他の事前計算解 | `src/data/solutions/**` | `solver_precomputed` | (取込時に明記) | 100BBオープン等は未取込 (R4続き) |
 | 理論記事・用語集 | `src/data/theory/` | — | `original` | 自社 (オリジナル執筆。監修要 = R19) |
 

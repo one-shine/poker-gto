@@ -4,9 +4,10 @@ import type { Card, PlayerAction, Street } from './game'
 export type SolutionSource =
   | 'solver_precomputed'   // 同梱ソルバー解 (信頼度最高)
   | 'solver_live'          // ブラウザ内WASM求解 (簡易アブストラクション)
-  | 'approximate_with_ev'  // 手作り戦略 + ヒューリスティック EV (R4-A)。
-                           // 戦略は手作り近似だが EV は (equity-0.5)×postflop_factor で算出 →
-                           // evLoss 計算は可能 (UI に「概算EV(ヒューリスティック)」と明示する)
+  | 'approximate_with_ev'  // 手作り戦略 + 概算EV (R4-A / Phase B)。戦略は手作り近似のまま。
+                           // EV は被覆スポット=フロップサブゲームモデル解 (E_w[V]−cPre)、
+                           // 未被覆/4bet枝=ヒューリスティック (equity-0.5)×F。詳細は meta.sourceName。
+                           // evLoss 計算可 (UI は「概算EV」と明示する)
   | 'approximate'          // 手作り近似 (EV 無し・未カバースポットの暫定フォールバック)
 
 export interface ActionSolution {

@@ -47,6 +47,7 @@
 | U30 | 推奨ベットサイズが分からない | 🟡 | ✅ | 2026-06-09完了(C-FIX3): StrategyBars のサイズ表記を `actionSizeLabel`(「レイズ 3.6BB」・単位付与)に置換、推奨バッジにサイズ内包。check/call/fold は素ラベル。ラベル幅 w-16→w-20。 |
 | U31 | 関連理論/代表ボード/履歴の本アイコンが絵文字(📚/📖)で既定 `BookIcon` と不一致 | 🟡 | ✅ | 2026-06-09完了(C-FIX4): 3箇所(`SpotPanel.tsx:152`・`PostflopDrillPanel.tsx:203`・`HandReplay.tsx:76`)を `<BookIcon/>` に置換。「関連理論・用語」の余分な「・」は**見間違い=対応不要**。 |
 | U32 | コーチの推奨文でベットサイズが浮動小数点アーティファクト表示(例「レイズ 7.8100000000000005BB」) | 🟡 | ✅ | 2026-06-12: 原因は `CoachAgent.ts` の `recommendText` が `sizeBB`(EV計算用の生float)を丸めず `${s.sizeBB}BB` で展開していたこと(バーは別経路 `actionSizeLabel` の `toFixed(1)` で正常だった)。表示専用ヘルパ `fmtBB = String(Math.round(n*10)/10)` を追加しバーと同じ小数1桁へ丸め(末尾0は省く: 7.8/2.5/3/コール1BB)。`recommendText` を export し回帰テスト追加(`CoachAgent.test.ts` 11件緑・型0)。他の生BB展開は無し(`GameFooter`=整数スタック・`PlayerSeat:152`=React key で表示文字列でない)。 |
+| U33 | Phase B 後も UI が概算EVを「ヒューリスティック(equity近似)」と説明=モデル解由来になった大半のスポットで不正直(ルール1違反) | 🟠 | ✅ | 2026-06-13: **Phase B 公開準備レビュー(workflow `whugvwxha`・敵対的検証付き)で検出**。`approximate_with_ev` は被覆スポット=フロップサブゲームモデル解(`E_w[V]−cPre`)/未被覆・4bet枝=ヒューリスティックの混成だが、3つのUI面が「equity近似のヒューリスティック」固定表示だった。修正: `StrategyBars.tsx:51`(EV列ツールチップ)/`StrategyDetail.tsx:19`(バッジtitle)/`GameFooter.tsx:15`(SOURCE_INFOラベル)を混成実態どおりに書換、`types/solver.ts` の型コメントも更新。source ティアは `approximate_with_ev` 据置が正しい(戦略は手作りのまま)・methodology 詳細は `meta.sourceName`。type-check/lint/コンポーネント40テスト緑。同レビューで license L1・support gate は「問題なし」確認済。 |
 
 ---
 
