@@ -16,7 +16,7 @@ export function fromRangeScenario(scenario: RangeScenario): NodeSolution {
     strategy,
     potBB: 1.5, // SB + BB (近似)
     source: 'approximate',
-    meta: { sourceName: '一般GTO理論ベースの手作り', license: 'original', version: '0' },
+    meta: { sourceName: 'GTO理論準拠の近似レンジ（一般理論ベース）', license: 'original', version: '0' },
   }
 }
 

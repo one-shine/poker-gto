@@ -34,12 +34,12 @@ PokerSnowie / GTO Wizard ライクな、**ローカル動作のポーカー GTO 
 |----------|------|---------|---------|
 | `solver_precomputed` | 同梱の厳密解(信頼度最高) | push/fold ≤25BB(7段階・exploitability 0.0003〜0.0017 BB/hand=near-Nash) | 「**GTOソルバー解**」 |
 | `solver_live` | ブラウザ内ローカル CFR 求解 | postflop(river=厳密 / turn=完全チャンスCFR・全48 runout・exploit 4〜5% / flop=エクイティ近似) | 「GTOソルバー解(ローカル求解・簡易)」。flop は「簡易: 賭け未考慮」、turn は「賭け考慮済 (runout 48)」 |
-| `approximate_with_ev` | 手作り近似レンジ + 概算 EV | プリフロップ全27スポット(open5 + BB防御5 + 非BB防御6 + facing-3bet11 系)の頻度 + 概算EV | 「GTO近似 + 概算EV」+ EV に `~` プレフィックス |
-| `approximate` | 手作り近似(EV なし) | ソルバー未取込・未カバースポット | 「GTO近似レンジ(一般理論ベースの手作り)」。postflop は「参考: GTO非準拠(ヒューリスティクス)」 |
+| `approximate_with_ev` | GTO理論準拠の近似レンジ + 概算 EV | プリフロップ全27スポット(open5 + BB防御5 + 非BB防御6 + facing-3bet11 系)の頻度 + 概算EV | 「GTO理論準拠の近似 + 概算EV」+ EV に `~` プレフィックス |
+| `approximate` | GTO理論準拠の近似(EV なし) | ソルバー未取込・未カバースポット | 「GTO理論準拠の近似レンジ」。postflop は「参考: GTO非準拠(ヒューリスティクス)」 |
 
 - **本物の厳密解は push/fold(≤25BB)のみ**。100BB の open/3bet は `approximate_with_ev`(概算EV)、postflop は近似入力レンジ上の CFR(study 限定の `solver_live`)。
   → 本アプリは「**GTO 学習ツール**」であり「全局面が GTO 品質のアプリ」ではない。**正直な信頼度表示が強み**。
-- **アイコン規約(全 UI 一貫・理論「このアプリの精度」と整合)**: **✓ = 厳密ソルバー解(`solver_precomputed`=push/fold・代表ボード事前計算)** / **△ = 簡易ライブ求解(`solver_live`)または GTO近似(`approximate*`=手作り)**。`solver_live` は実解だが簡易(turn=exploit〜5% / flop=賭け未考慮のエクイティ近似)のため ✓(厳密事前計算)とは別格 = △ + 街別の caveat(「賭け考慮済」/「簡易: 賭け未考慮」)+ 収束% で正直に表示する。
+- **アイコン規約(全 UI 一貫・理論「このアプリの精度」と整合)**: **✓ = 厳密ソルバー解(`solver_precomputed`=push/fold・代表ボード事前計算)** / **△ = 簡易ライブ求解(`solver_live`)または GTO理論準拠の近似(`approximate*`)**。`solver_live` は実解だが簡易(turn=exploit〜5% / flop=賭け未考慮のエクイティ近似)のため ✓(厳密事前計算)とは別格 = △ + 街別の caveat(「賭け考慮済」/「簡易: 賭け未考慮」)+ 収束% で正直に表示する。
 - 100BB の真 Nash 解への置換は [`./BACKLOG.md`](./BACKLOG.md) A節(R4)を参照(サーバ事前計算級・in-browser 不可)。
 - フォールバック専用のヒューリスティクス関数には `// heuristic: not GTO-exact` を必ず付す。
 

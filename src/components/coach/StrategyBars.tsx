@@ -48,7 +48,7 @@ export function StrategyBars({ strategy, showEv, chosen, approxEv, showRecommend
             </span>
             <span className="font-data w-9 text-right text-zinc-200 font-bold">{Math.round(s.frequency * 100)}%</span>
             {showEv && (
-              <span className="font-data w-14 text-right text-zinc-400" title={approxEv ? '概算EV (戦略は手作り)。被覆スポット=フロップサブゲームモデル解、未被覆/4bet枝=ヒューリスティック(equity近似)' : undefined}>
+              <span className="font-data w-14 text-right text-zinc-400" title={approxEv ? '概算EV (戦略は GTO理論準拠の近似)。被覆スポット=フロップサブゲームモデル解、未被覆/4bet枝=ヒューリスティック(equity近似)' : undefined}>
                 {approxEv ? '~' : ''}{s.ev > 0 ? '+' : ''}{s.ev.toFixed(2)}BB
               </span>
             )}

@@ -16,7 +16,7 @@ export function StrategyDetail({ feedback }: { feedback: CoachFeedback }) {
           ) : feedback.source === 'approximate_with_ev' ? (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300"
-              title="戦略は手作り近似。EV は被覆スポット=フロップサブゲームモデル解(E_w[V]−cPre)、未被覆/4bet枝=ヒューリスティック(equity−0.5)×F。"
+              title="戦略は GTO理論準拠の近似。EV は被覆スポット=フロップサブゲームモデル解(E_w[V]−cPre)、未被覆/4bet枝=ヒューリスティック(equity−0.5)×F。"
             >
               GTO近似 + 概算EV
             </span>

@@ -40,7 +40,7 @@ describe('GameFooter', () => {
   it('labels approximate spots distinctly', () => {
     useSettingsStore.setState({ stackMode: 'reset', buyInBB: 100 })
     render(<GameFooter source="approximate" />)
-    expect(screen.getByText('GTO近似レンジ (一般理論ベースの手作り)')).toBeInTheDocument()
+    expect(screen.getByText('GTO理論準拠の近似レンジ')).toBeInTheDocument()
   })
 
   it('opens and closes the assumptions modal', () => {

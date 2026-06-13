@@ -211,7 +211,7 @@ export function RangeEquityDistribution({ a, b }: { a: RangeScenario; b: RangeSc
 
       <p className="text-[11px] text-zinc-500 leading-snug border-t border-white/10 pt-3">
         ※ 横軸=相手レンジに対するエクイティ、縦棒=そのエクイティ帯に入るコンボ比率。
-        flop/turn は {ITERATIONS} 回のモンテカルロ近似 (river は厳密)。入力レンジは GTO近似 (手作り) のため参考値です。
+        flop/turn は {ITERATIONS} 回のモンテカルロ近似 (river は厳密)。入力レンジは GTO理論準拠の近似のため参考値です。
       </p>
     </div>
   )
