@@ -71,6 +71,57 @@ export function pairEquity(catA: string, catB: string, iterations: number, rng: 
   return samples === 0 ? 0.5 : won / samples
 }
 
+// ── N-way オールイン エクイティ (Phase C2) ──────────────────────────────────────
+// N 人がプリフロップでオールインしたときの各プレイヤーの「ポット取り分」(= 勝ち1.0・
+// N人タイは 1/N 分配)。Σ shares = 1。HU(N=2)は pairEquity と MC 誤差内で一致する。
+// マルチウェイの真値はペア勝率の積では出ない(hero vs フィールドは非分離)ため、N 枚同時に
+// 配って showdown=max を取る。カードリムーバルは衝突サンプルを棄却して厳密に織り込む。
+// 依存方向: engine ← solver。木の allin 終端で使う。
+export function nWayEquity(cats: string[], iterations: number, rng: () => number): number[] {
+  const n = cats.length
+  const combosByPlayer = cats.map(expandIds)
+  const shares = new Array<number>(n).fill(0)
+  const used = new Uint8Array(52)
+  const hole: number[] = new Array(2 * n)
+  const hands: Card[][] = Array.from({ length: n }, () => new Array<Card>(7))
+  let samples = 0
+  outer: for (let it = 0; it < iterations; it++) {
+    used.fill(0)
+    for (let p = 0; p < n; p++) {
+      const combos = combosByPlayer[p]
+      const c = combos[(rng() * combos.length) | 0]
+      if (used[c[0]] || used[c[1]]) continue outer // 他プレイヤーと衝突 → サンプル棄却
+      used[c[0]] = 1; used[c[1]] = 1
+      hole[2 * p] = c[0]; hole[2 * p + 1] = c[1]
+      hands[p][0] = CARD_BY_ID[c[0]]; hands[p][1] = CARD_BY_ID[c[1]]
+    }
+    for (let k = 0; k < 5; k++) {
+      let id: number
+      do { id = (rng() * 52) | 0 } while (used[id])
+      used[id] = 1
+      const card = CARD_BY_ID[id]
+      for (let p = 0; p < n; p++) hands[p][2 + k] = card
+    }
+    // 最強を求め、タイ数で 1.0 を分配。
+    let best = evaluateBestHand(hands[0])
+    let winners = 1
+    const evals = [best]
+    for (let p = 1; p < n; p++) {
+      const e = evaluateBestHand(hands[p])
+      evals.push(e)
+      const cmp = compareHands(e, best) // 負 = e が強い
+      if (cmp < 0) { best = e; winners = 1 }
+      else if (cmp === 0) winners++
+    }
+    const split = 1 / winners
+    for (let p = 0; p < n; p++) if (compareHands(evals[p], best) === 0) shares[p] += split
+    samples++
+  }
+  if (samples === 0) return new Array<number>(n).fill(1 / n)
+  for (let p = 0; p < n; p++) shares[p] /= samples
+  return shares
+}
+
 // 169×169 の勝率行列を構築。eq[i][j]+eq[j][i]=1, 対角=0.5 (上三角のみ計算)。
 export function buildEquityMatrix(
   iterations: number,

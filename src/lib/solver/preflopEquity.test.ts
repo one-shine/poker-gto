@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pairEquity, mulberry32 } from './preflopEquity'
+import { pairEquity, mulberry32, nWayEquity } from './preflopEquity'
 
 describe('preflopEquity', () => {
   it('AA dominates 72o (~0.87 all-in)', () => {
@@ -30,5 +30,37 @@ describe('preflopEquity', () => {
   it('mulberry32 is deterministic for a given seed', () => {
     const a = mulberry32(42), b = mulberry32(42)
     expect([a(), a(), a()]).toEqual([b(), b(), b()])
+  })
+
+  describe('nWayEquity (Phase C2)', () => {
+    it('N=2 matches pairEquity within MC error (AA vs KK ≈ 0.82)', () => {
+      const [aa] = nWayEquity(['AA', 'KK'], 30000, mulberry32(7))
+      expect(aa).toBeGreaterThan(0.78)
+      expect(aa).toBeLessThan(0.86)
+    })
+
+    it('shares always sum to 1 (pot is fully distributed)', () => {
+      for (const cats of [['AA', 'KK', 'QQ'], ['AKs', 'QJs', '55', 'T9o'], ['AA', 'AKs', 'QQ', 'JTs', '99', '76s']]) {
+        const sum = nWayEquity(cats, 20000, mulberry32(5)).reduce((a, b) => a + b, 0)
+        expect(sum).toBeCloseTo(1, 5)
+      }
+    })
+
+    it('3-way AA/KK/QQ is strength-ordered near 0.67/0.18/0.15', () => {
+      const [aa, kk, qq] = nWayEquity(['AA', 'KK', 'QQ'], 60000, mulberry32(1))
+      expect(aa).toBeGreaterThan(kk)
+      expect(kk).toBeGreaterThan(qq)
+      expect(aa).toBeGreaterThan(0.63)
+      expect(aa).toBeLessThan(0.71)
+    })
+
+    it('multiway re-evaluates hands: a suited connector beats a big offsuit ace 6-way', () => {
+      // 76s makes straights/flushes that win family pots; AKo is high-card-dependent.
+      const cats = ['AA', 'KK', '76s', 'AKo', 'QQ', 'JJ']
+      const e = nWayEquity(cats, 80000, mulberry32(9))
+      const sc = e[cats.indexOf('76s')]
+      const ako = e[cats.indexOf('AKo')]
+      expect(sc).toBeGreaterThan(ako)
+    })
   })
 })

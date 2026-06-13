@@ -19,6 +19,9 @@ dist-ssr
 scripts/.cache/*
 !scripts/.cache/preflop-equity-400-1.json
 
+# ソルバー オーケストレータの候補レンジ出力 (採用ゲート C-2a/C-2b 前の中間生成物・src/ 未採用)。
+scripts/out/
+
 # Playwright MCP の実機確認アーティファクト (スナップショット/ログ/スクショ)
 .playwright-mcp
 

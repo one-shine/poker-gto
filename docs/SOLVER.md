@@ -297,7 +297,45 @@ R4(100BB プリフロップ均衡)を「モデル内 Nash」で解く試み。**
 
 ### 6-4. 結論
 
-中止基準を適用し、**Nash レンジは採用しない**。`solver_model` source ティアは将来の multiway 拡張用に予約のまま(本リリースでは未使用)。A 節の成果は **Phase B の解由来 EV 改善(出荷済み)+ push/fold の厳密 Nash(短スタック)**。求解器コード(`preflopModelGame.ts` / `solve-preflop-nash.ts`)は HU 縮約が構造的に妥当な blind-battle / button-steal や、将来の multiway 化の土台として保持する。
+中止基準を適用し、**Nash レンジは採用しない**。`solver_model` source ティアは将来の multiway 拡張用に予約のまま(本リリースでは未使用)。A 節の成果は **Phase B の解由来 EV 改善(出荷済み)+ push/fold の厳密 Nash(短スタック)**。求解器コード(`preflopModelGame.ts` / `solve-preflop-nash.ts`)は HU 縮約が構造的に妥当な blind-battle / button-steal や、将来の multiway 化の土台として保持する。**→ Phase C2(§6.5)で背後プレイヤーを木に入れ構造から解決した。**
+
+---
+
+## 6.5. Phase C2 — マルチウェイ プリフロップ ジョイント CFR(2026-06-13・C2-1 完了)
+
+Phase C の構造的限界(HU 縮約 = 背後プレイヤー無視)を、**背後プレイヤーを1つのアクション順ゲーム木に入れて**解くことで構造から解決する。路線(3): プリフロップ木を解き postflop は EV 抽象(Simple Preflop Holdem / HRC v3 がデスクトップで実証)。
+
+### 6.5-1. アプローチ
+- 6-max プリフロップを1ゲーム木として CFR+ で求解(`src/lib/solver/preflopMultiwayGame.ts`)。手 = 169 カテゴリ / アクション = fold/call/raise / サイズは段ごと離散1種(open 2.5 / 3bet 9 / 4bet 21 / 5bet-allin) / **リンプ無し**(ブラインド対面の最初は fold か open-raise)。postflop は解かず終端 EV に落とす。
+- 終端 EV: **foldout** = 厳密 / **allin** = N-way 厳密エクイティ(`nWayEquity`・新規・C2-0 値と一致) / **HU・multiway seen-flop** = エクイティ × **IP/OOP 非対称実現率**(IP = postflop 最後 = ポジション優位)。multiway share は Π pairwise の粗 proxy(到達質量小・**最弱リンク**)。
+- 反実仮想値は他プレイヤーの reach 積(`prodOthers`)で**非正規化重み付け**(標準 CFR)。席間カードリムーバルは v1 で独立近似。source は `solver_model`(採用ゲート通過後のみ配線)。
+
+### 6.5-2. 木構造の検証(C2-0 スパイクと厳密一致)
+`buildPreflopTree` は決定ノード/終端を C2-0 実測と一致で再現(回帰テスト `preflopMultiwayGame.test.ts`):
+- MAX_RAISE=4(5bet-allin): 決定ノード **33,969** / info-set **5.74M** / allin 29,105 / HU seen-flop 1,697 / multiway seen-flop 3,162。
+- MAX_RAISE=3(4bet 上限): info-set 0.82M / allin 0。
+
+### 6.5-3. C2-1 結果 = 位置依存オープン幅の回復(600 反復・R_ip=1.05/R_oop=0.82・MAX_RAISE=3)
+
+| 席 | 求解 open% | アンカー | 手作り幅 | 主な対応(対オープン先頭防御) |
+|----|-----------|---------|---------|------------------------------|
+| UTG | **15.7** ✓ | 13-18 | 13.4 | MP fold91/call2.5/3bet6.1 |
+| MP | **19.1** ✓ | 15-22 | 17.6 | CO fold88/call4.8/3bet7.6 |
+| CO | **25.0** ✓ | 22-30 | 24.7 | BTN fold81/call4.9/3bet14.1 |
+| BTN | **41.7** ✓ | 40-50 | 36.8 | SB fold78/call13/3bet8.4 |
+| SB | 29.2 ⚠ | 35-58 | 49.7 | BB fold0.9/call82/3bet16.7 |
+
+- **Phase C の構造的失敗(UTG 63.5%)→ 15.7%**。位置依存オープン幅(UTG<MP<CO<BTN)を構造から回復し、**4/5 席がアンカー命中**。手ごとの戦略も妥当(UTG: AA/AKs=1.0・A5s=0.27 ミックス・72o≈0)。
+- **安定性**: open% は 300↔600 反復で **Δ≤0.4** = 収束(多人数 CFR は収束保証無いが平均戦略は安定 → 計画どおり安定性+アンカーで品質判定)。
+- **SB のみアンカー外**(29.2 vs 35-58): SB は BB に postflop OOP で OOP 実現率(0.82)が BvB オープンを締める + no-limp 抽象(GTO の SB はリンプ多用)の緊張。BvB は実務でも最難スポット。
+
+### 6.5-4. 残課題(C2-2)
+- **SB/BvB の精緻化**(リンプ抽象 or BvB 専用実現率)。
+- **HU seen-flop を Phase B V 行列へ**(現在は flat 実現率近似 = BTN/CO 圧縮の一因)。ただし Phase B は opener-vs-BB 対のみ被覆 → cold-caller 対は被覆ギャップ(要追加生成)。
+- **5bet-allin(MAX_RAISE=4)本求解**(allin 29K 終端 = N-way 厳密・計算重・一晩)。
+- 採用ゲート **C-2a**(解 JSON 配給)/ **C-2b**(フル置換)。中止基準: アンカー大逸脱が抽象で残る → `solver_model` 出荷せず据え置き。候補レンジは `scripts/out/preflop-multiway/`(src/ 未採用・gitignore)。
+
+求解器: `preflopMultiwayGame.ts`(木 + CFR+ + 終端 EV) / `preflopEquity.ts`(`nWayEquity` 追加) / `scripts/solve-preflop-multiway.ts`(全席求解 + アンカー差分レポート)。
 
 ---
 
