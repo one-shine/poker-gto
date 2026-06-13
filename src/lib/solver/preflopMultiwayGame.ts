@@ -196,6 +196,32 @@ const PRIOR: Float64Array = (() => {
   return p
 })()
 
+// ハンドクラス別の実現率乗数(V3・seen-flop 終端の equity×pot×R 項に hero カテゴリで掛ける)。
+// heuristic: not GTO-exact — showdown 勝率ベースの終端 EV は **スーテッドのポストフロップ実現**
+// (フラッシュ/ストレート/ナッツ性)を取りこぼし、公開 GTO 比でスーテッドを過小・オフスート高カードを
+// 過大にオープンする系統誤差を生む(V1 で実測・docs/SOLVER.md §6.6)。確立した GTO 理論「スーテッド/
+// 連結/ナッツ性の高い手は equity を多く実現する」を乗数で近似(magnitude は公開 RFI に較正・V3-0 実験)。
+// allin showdown(R=1)と foldout には掛けない(真値・カード非依存)。
+const RANK_I = new Map(['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'].map((r, i) => [r, i]))
+const classMult: Float64Array = (() => {
+  const m = new Float64Array(NCAT)
+  for (let c = 0; c < NCAT; c++) {
+    const cat = CATEGORIES[c]
+    if (cat.length === 2) { m[c] = 1.00; continue }   // ペア
+    if (cat[2] !== 's') { m[c] = 0.90; continue }      // オフスート非ペア = 実現率低
+    const hi = RANK_I.get(cat[0])!, lo = RANK_I.get(cat[1])!
+    const gap = hi - lo
+    const wheelAce = cat[0] === 'A' && lo <= 3          // A2s–A5s(ウィール + ナッツフラッシュ)
+    const broadway = hi >= 8 && lo >= 8                 // 両 ≥ T(JTs/QJs/KQs/QTs/KJs/KTs)
+    const nutFlush = cat[0] === 'A' || cat[0] === 'K'   // A/K ハイ = ナッツ寄りフラッシュ
+    if (gap <= 1 || wheelAce || broadway) m[c] = 1.20  // 強: 連結 / ウィール / スーテッドブロードウェイ
+    else if (gap <= 3 || nutFlush) m[c] = 1.13         // 良: 1–2ギャップ or ナッツフラッシュ性
+    else if (lo <= 4) m[c] = 1.05                       // 弱: disconnected かつ低カード(T2s 等の trash)
+    else m[c] = 1.10                                    // 中: disconnected だが中カード
+  }
+  return m
+})()
+
 // postflop アクション順(SB→BB→UTG→MP→CO→BTN)の席→順位。IP = active 中で最大順位 = 最後に
 // 行動 = ポジション優位。seen-flop の実現率に IP/OOP 非対称を入れて後ろ位置のオープンを正当化。
 const PF_RANK = [2, 3, 4, 5, 0, 1] // index = seat(UTG..BB)
@@ -285,8 +311,8 @@ export function solvePreflopMultiway(opts: MultiwaySolveOptions): MultiwaySolveR
         const w = rbOpp[cj]
         if (w === 0) continue
         let cell: number
-        if (vrow) { const v = vrow[cj]; cell = v != null && Number.isFinite(v) ? v - invHero : erow[cj] * pot * Rh - invHero }
-        else cell = erow[cj] * pot * Rh - invHero
+        if (vrow) { const v = vrow[cj]; cell = v != null && Number.isFinite(v) ? v - invHero : erow[cj] * pot * Rh * classMult[c] - invHero }
+        else cell = erow[cj] * pot * Rh * classMult[c] - invHero
         s += w * cell
       }
       out[c] = (rsOpp > 0 ? s / rsOpp : 0) * prodH
@@ -328,8 +354,9 @@ export function solvePreflopMultiway(opts: MultiwaySolveOptions): MultiwaySolveR
       matvec(reach[b], reachSum[b], uScratch[0]) // a が b レンジに勝つ率
       matvec(reach[a], reachSum[a], uScratch[1]) // b が a レンジに勝つ率
       for (let c = 0; c < NCAT; c++) {
-        value[a][c] = (uScratch[0][c] * pot * ra - t.invested[a]) * prodOthers[a]
-        value[b][c] = (uScratch[1][c] * pot * rb - t.invested[b]) * prodOthers[b]
+        const mc = allin ? 1 : classMult[c]
+        value[a][c] = (uScratch[0][c] * pot * ra * mc - t.invested[a]) * prodOthers[a]
+        value[b][c] = (uScratch[1][c] * pot * rb * mc - t.invested[b]) * prodOthers[b]
       }
       return
     }
@@ -342,7 +369,7 @@ export function solvePreflopMultiway(opts: MultiwaySolveOptions): MultiwaySolveR
         const p = active[i]
         const ui = u[i][c]
         const strength = ui > 1e-9 ? prod / ui : 0
-        value[p][c] = (strength * pot * rOf(p) - t.invested[p]) * prodOthers[p]
+        value[p][c] = (strength * pot * rOf(p) * (allin ? 1 : classMult[c]) - t.invested[p]) * prodOthers[p]
       }
     }
   }
@@ -457,4 +484,4 @@ export function solvePreflopMultiway(opts: MultiwaySolveOptions): MultiwaySolveR
   return { tree, avgStrategy, openPctBySeat, rfiNodeBySeat, iters: opts.iters }
 }
 
-export { CATEGORIES, COMBO_COUNT, AVAIL, NCAT, PRIOR }
+export { CATEGORIES, COMBO_COUNT, AVAIL, NCAT, PRIOR, classMult }

@@ -392,7 +392,35 @@ V2 = 静的 realization → 解いた postflop EV(全対 × pot)で V1 のスー
 → **スーテッド過小評価は postflop EV の精度問題ではなく構造問題**: モデルが行動を showdown 主体の 4bet pot に funnel し SRP を過小に出す(no-limp / 固定サイズ / realization が flat-call を抑制 / 169 カテゴリの showdown 等価)。
 
 ### 6.7-3. 結論
-**V2 中止**(中止基準 G2 適用)。solved postflop EV を増やしても系統誤差は直らない。根本原因は**抽象の構造(行動 funnel)**で、修正には V3 級(複数サイズ / リンプ / flat-call モデル)の深い改修が要り payoff 不確実。**solver-grade の per-hand 到達は現抽象の天井**。表示は per-hand で優位な手作りレンジ(理論照合済)を維持(ルール1)。solver は **構造(位置依存幅)/ provenance の研究成果**として確定。workflow + 安価診断が 7.5h の futile compute を着手前に回避した(「収束 ≠ 正しい」を再現)。
+**V2 中止**(中止基準 G2 適用)。solved postflop EV を増やしても系統誤差は直らない。根本原因は**抽象の構造(行動 funnel)**で、修正には V3 級(複数サイズ / リンプ / flat-call モデル)の深い改修が要り payoff 不確実。**solver-grade(解値由来)の per-hand 到達は現抽象の天井**。表示は per-hand で優位な手作りレンジ(理論照合済)を維持(ルール1)。solver は **構造(位置依存幅)/ provenance の研究成果**として確定。workflow + 安価診断が 7.5h の futile compute を着手前に回避した(「収束 ≠ 正しい」を再現)。→ ただし V3(ヒューリスティック実現補正)で per-hand を手作り水準まで上げられることが判明(§6.8)。
+
+---
+
+## 6.8. Phase V3-1 — ハンドクラス別 realization で per-hand 忠実度を手作り水準へ(2026-06-13)
+
+V2 中止を受けユーザー②選択で V3(抽象オーバーホール)へ。V2 の教訓に従い**安価レバー実験ファースト**で go/no-go を取った(workflow・worktree 並列)。計画: `~/.claude/plans/v3-abstraction-overhaul.md`。
+
+### V3-0 安価レバー実験(workflow)
+| レバー | 内容 | 結果 |
+|--------|------|------|
+| A | ハンドクラス別 realization(スーテッド報酬化) | **GO** — per-hand +2.7pt 平均(CO/BTN +4.5〜4.9) |
+| B | 3bet サイズ縮小(funnel 是正) | NO — 安い 3bet は flat でなく **3bet を増やし** SRP を希薄化(仮説の逆) |
+
+レバー B の反証 =「funnel はサイズ1本では flat 寄りに付け替えられない」(V2 診断と整合)。レバー A(実現の報酬化)が勝ち。
+
+### V3-1 本実装(realization 理論に基づく `classMult`)
+seen-flop 終端の equity×pot×realization 項に hero カテゴリ別乗数 `classMult` を掛ける。確立した GTO 理論「スーテッド/連結/ナッツ性の高い手は equity を多く実現する」を tier 化(連結/ウィール/スーテッドブロードウェイ=1.20 / 1–2ギャップ・ナッツフラッシュ性=1.13 / disconnected 中=1.10 / disconnected 低[T2s 等 trash]=1.05 / オフスート非ペア=0.90 / ペア=1.00)。disconnected 低スーテッドのテーパーで BTN の trash 過大開きを是正。allin/foldout には非適用。
+
+| 席 | baseline(flat) | **V3-1** | 手作り |
+|----|---------------|---------|-------|
+| UTG | 94.6 | **95.0** | 92.5 |
+| MP | 91.9 | **93.2** | 94.7 |
+| CO | 89.7 | **95.2** | 93.5 |
+| BTN | 86.0 | **91.7** | 91.1 |
+
+- **per-hand 一致が UTG/CO/BTN で手作りを上回り MP も僅差** = 初めて solver の候補レンジが手作り水準に到達。スーテッド偽陰性はほぼ解消・BTN trash 偽陽性も縮小(78→58)。幅はアンカー維持・構造(UTG<MP<CO<BTN)不変。577 テスト緑(`classMult` 回帰 +3)・型0・lint0。
+- **正直な位置づけ(最重要)**: `classMult` は **realization 理論に基づくヒューリスティック**(magnitude は公開 RFI に較正)で**解いた均衡ではない**。source ティアは `approximate`/heuristic 据え置き(`solver_model` ではない)。V2 で「真の solved postflop は per-hand を動かさない」と確認済 = **solver-grade(解値由来)は現抽象の天井のまま**。V3-1 は「CFR 由来の位置構造 + 理論的実現補正」で手作り水準の per-hand を達成したが、それは手作り同様に**理論較正の産物**であり真の solve ではない(over-claim しない)。
+- **採用判断(C-2a/C-2b)**: solver 候補レンジが per-hand で手作り同等以上になり配給は以前より正当化されるが、本番表示の変更 = product/正直表示の commitment(明示承認後)。手作りは既に十分で利得は provenance(CFR 由来)が主。
 
 ---
 

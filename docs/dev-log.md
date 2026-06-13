@@ -5,6 +5,13 @@ date: 2026-05-30
 ---
 # poker-gto 開発ログ
 
+### 2026-06-13 Phase V3 — ハンドクラス realization で per-hand を手作り水準へ(workflow 安価レバー → 本実装)
+- **進め方(ユーザー②選択・auto/workflow)**: V2 の教訓(全体前提は安価に反証され得る)に従い**安価レバー実験ファースト**。3 エージェント workflow(**worktree 並列**)で A=ハンドクラス realization / B=3bet 縮小 / A+B を再求解→per-hand 検証。
+- **V3-0 結果**: **A=GO**(per-hand +2.7pt 平均・CO/BTN +4.5〜4.9・スーテッド偽陰性ほぼ一掃)/ **B=NO**(安い 3bet は flat でなく **3bet を増やし** SRP を希薄化=仮説の逆=V2 診断と整合)。
+- **V3-1 本実装**: realization 理論に基づく `classMult`(連結/ウィール/スーテッドブロードウェイ=1.20 / ナッツフラッシュ性=1.13 / disconnected 低 trash=1.05 でテーパー / オフスート=0.90 / ペア=1.00)を seen-flop 終端 EV に配線(allin/foldout 非適用)。BTN trash 過大開きをテーパーで是正(偽陽性 78→58)。
+- **結果**: per-hand 一致 UTG95.0/MP93.2/CO95.2/BTN91.7(手作り 92.5/94.7/93.5/91.1)= **UTG/CO/BTN で手作りを上回り、初めて solver の候補レンジが手作り水準に到達**。幅アンカー維持・構造(UTG<MP<CO<BTN)不変。577 テスト緑(`classMult` 回帰+3)・型0・lint0。
+- **正直な位置づけ**: `classMult` は realization 理論ヒューリスティック(magnitude は公開 RFI に較正)で**解いた均衡でない** → source は `approximate` 据え置き(`solver_model` でない)。V2 で真 solved postflop は per-hand を動かさないと確認済 = **solver-grade(解値由来)は現抽象の天井のまま**。V3-1 は手作り水準を理論較正で達成(over-claim しない)。詳細 `docs/SOLVER.md §6.8`。
+
 ### 2026-06-13 Phase V2 中止判定 — solved postflop EV は per-hand 系統誤差を直さない(workflow スパイク + 安価診断)
 - **進め方**: 「v2 を workflow で」→ **4 エージェント workflow**(flop CFR 再利用マップ / 終端タクソノミー / アーキ ブループリント / 実現性スパイク)で go/no-go + 設計を取得。GO(HU 45×N=20=一晩7.5h)だが、ブループリント自身が **R1/G2(flat≈解値なら V2 は無効)を最重要中止基準**に挙げた。
 - **構造的警告(workflow 発見)**: 終端 reach mass の **85.8% が 4bet pot(浅SPR=スーテッド≈オフスート)に集中・SRP 7%**。スーテッド実現が効く場所は質量が薄い(C2-2「flat≈解値」の根本原因)。

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildPreflopTree, solvePreflopMultiway, DEFAULT_TREE_CONFIG } from './preflopMultiwayGame'
+import { buildPreflopTree, solvePreflopMultiway, DEFAULT_TREE_CONFIG, classMult, CATEGORIES } from './preflopMultiwayGame'
 
 // 合成エクイティ行列(即時・決定的)。CATEGORIES は強→弱でほぼ整列(index 小 = 強)。
 // 位置依存オープン幅は木構造(背後人数)とフォールドエクイティが主因なので、単調な代理
@@ -38,6 +38,23 @@ describe('preflopMultiwayGame: tree', () => {
       expect(root.raiseLevel).toBe(0)
       expect(root.actions).toEqual([0, 2])     // FOLD, RAISE (no CALL/limp)
     }
+  })
+})
+
+describe('preflopMultiwayGame: classMult (V3 hand-class realization)', () => {
+  const mc = (cat: string) => classMult[CATEGORIES.indexOf(cat)]
+  it('rewards suited > offsuit, pairs neutral', () => {
+    expect(mc('AA')).toBe(1.00)
+    expect(mc('AKo')).toBe(0.90)        // offsuit non-pair penalized
+    expect(mc('76s')).toBeGreaterThan(mc('76o'))
+  })
+  it('strong realizers (connected / wheel-ace / suited broadway) get the top tier', () => {
+    for (const h of ['76s', '98s', 'JTs', 'KQs', 'A5s', 'A2s']) expect(mc(h)).toBe(1.20)
+  })
+  it('tapers disconnected low suited trash below good suited', () => {
+    expect(mc('T2s')).toBeLessThan(mc('Q9s'))   // T2s trash < Q9s good
+    expect(mc('J2s')).toBe(1.05)
+    expect(mc('A7s')).toBe(1.13)                 // nut-flush potential
   })
 })
 
