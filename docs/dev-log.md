@@ -5,6 +5,12 @@ date: 2026-05-30
 ---
 # poker-gto 開発ログ
 
+### 2026-06-13 Phase V2 中止判定 — solved postflop EV は per-hand 系統誤差を直さない(workflow スパイク + 安価診断)
+- **進め方**: 「v2 を workflow で」→ **4 エージェント workflow**(flop CFR 再利用マップ / 終端タクソノミー / アーキ ブループリント / 実現性スパイク)で go/no-go + 設計を取得。GO(HU 45×N=20=一晩7.5h)だが、ブループリント自身が **R1/G2(flat≈解値なら V2 は無効)を最重要中止基準**に挙げた。
+- **構造的警告(workflow 発見)**: 終端 reach mass の **85.8% が 4bet pot(浅SPR=スーテッド≈オフスート)に集中・SRP 7%**。スーテッド実現が効く場所は質量が薄い(C2-2「flat≈解値」の根本原因)。
+- **決定的診断(3証拠で 7.5h 本走を回避)**: ①**flat のみ vs Phase B V の per-hand 一致が同一**(UTG94.6/94.6・MP91.9/91.6・CO89.7/89.7・BTN86.0/85.7・差≤0.3pt・スーテッド偽陰性 A6s/A5s/A4s/スーコネも同一)②reach が浅SPR 4bet に funnel ③解いたモデルは**狭い継続(プレミアム)レンジしか値を持たず** RFI 限界手(A5s/スーコネ)を含まない(`heroValueMatrix` 大半 null)。
+- **結論**: **V2 中止**。スーテッド過小は postflop EV 精度でなく**抽象の構造問題(行動 funnel)**。修正は V3 級(複数サイズ/リンプ/flat-call モデル)で payoff 不確実 → solver-grade の per-hand 到達は現抽象の天井。表示は per-hand 優位の手作り維持(ルール1)。solver は構造(位置依存幅)/provenance の研究成果として確定。workflow + 安価診断が futile compute を着手前に回避(「収束≠正しい」を再現)。型0/lint0。詳細 `docs/SOLVER.md §6.7`。
+
 ### 2026-06-13 Phase V1 per-hand 検証 — 公開 GTO とセル突合・スーテッド評価の系統弱点を特定
 - **目的**: 「本物のソルバーレベル」へ上げる solver-grade ロードマップ(`~/.claude/plans/preflop-solver-grade-roadmap.md`)の起点。「幅でなくレンジが正しいか」を公開 GTO 6-max RFI とセル単位で定量化。**公開情報調査で目標を honest に再定義**(到達可能=デスクトップソルバー水準=Simple Preflop Holdem/HRC v3=我々と同系譜・不可=GTO Wizard AI 水準=NN/クラウド)。
 - **実装**: `scripts/published-ranges.ts`(公開チャートの手リストを自前書き起こし=L1 順守・レンジ記法パーサ・展開幅が公称と Δ≤0.7% で自己検証)+ `scripts/validate-preflop.ts`(in-out 一致%/L1 距離%/偽陽性・偽陰性)。

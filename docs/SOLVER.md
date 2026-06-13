@@ -371,7 +371,28 @@ C2 候補レンジ・手作りレンジを**公開 GTO 6-max RFI**(`scripts/publ
 - **系統誤差(解釈可能)**: C2 偽陽性 = **オフスート高カード**(A9o–A5o / K7o–K5o / Q8o / 22)を過大オープン / 偽陰性 = **スーテッド**(A6s–A4s / スーコネ J9s–98s / 飛びスーテッド)を過小オープン。
 - **診断**: showdown ベース EV(N-way エクイティ)+ 静的 realization が **スーテッドのポストフロップ実現(フラッシュ/ストレート/ナッツ性)を報酬化できていない**。公開 GTO がスーテッドを広く開けるのは postflop で equity を実現するから。→ **V2(解いた postflop EV)の必要性を per-hand データで実証**(suited を正しく評価すれば偽陰性/陽性とも解消見込み)。
 
-**結論**: C2 は構造的に正しく per-hand も近いが、**スーテッド評価に系統的弱点 → V2(全対 × pot の解いた postflop EV)が次の本丸**。配給は据え置き(手作りが per-hand で優位)。
+**結論**: C2 は構造的に正しく per-hand も近いが、**スーテッド評価に系統的弱点 → V2(全対 × pot の解いた postflop EV)が次の本丸**(と当初は見立てた・§6.7 で反証)。配給は据え置き(手作りが per-hand で優位)。
+
+---
+
+## 6.7. Phase V2 — 中止判定(2026-06-13): solved postflop EV は per-hand 系統誤差を直さない
+
+V2 = 静的 realization → 解いた postflop EV(全対 × pot)で V1 のスーテッド過小評価を直す、が当初仮説。**実現性スパイク(4 エージェント workflow)+ 安価な決定的診断で、仮説を着手前に反証**した(7.5h の本走を回避)。
+
+### 6.7-1. workflow スパイクの結論
+- **再利用マップ**: Phase B のパイプライン(`solveFlop → rootValueMatrix → aggregateToCategories`)がそのまま使える。実装差分は終端到達レンジ抽出 + 動的 resolver のみ。
+- **計算量**: HU 45 スポット × N=20 ボード = 一晩 7.5h で GO(multiway はフック未実装 + reach 分散で V3 送り)。
+- **構造的警告(最重要)**: 終端 reach mass の **85.8% が 4bet pot に集中・SRP は 7%**。スーテッド実現が効く SRP 終端は質量が薄く、質量の厚い 4bet pot は浅 SPR(ショーダウン主体 = スーテッド ≈ オフスート)。→ solved EV が flat と差を生む場所(SRP)は均衡をほぼ動かさない(C2-2「flat ≈ 解値」の根本原因)。
+
+### 6.7-2. 決定的診断(3つの収束する証拠)
+1. **直接実験**: flat のみ vs Phase B V の per-hand 一致は同一(UTG 94.6/94.6・MP 91.9/91.6・CO 89.7/89.7・BTN 86.0/85.7・差 ≤0.3pt)。スーテッド偽陰性(A6s/A5s/A4s/スーコネ)も両者**同一** → **解いた EV は RFI レンジを動かさない**。
+2. **reach 構造**: 行動が浅 SPR 4bet pot(スーテッド ≈ オフスート)に集中し、SRP(スーテッドが実現)は希薄。
+3. **被覆ミスマッチ**: 解いた postflop モデルは**狭い継続(プレミアム)レンジしか値を持たず**、RFI の限界手(A5s・スーコネ等)を含まない(`heroValueMatrix` が大半 null)。
+
+→ **スーテッド過小評価は postflop EV の精度問題ではなく構造問題**: モデルが行動を showdown 主体の 4bet pot に funnel し SRP を過小に出す(no-limp / 固定サイズ / realization が flat-call を抑制 / 169 カテゴリの showdown 等価)。
+
+### 6.7-3. 結論
+**V2 中止**(中止基準 G2 適用)。solved postflop EV を増やしても系統誤差は直らない。根本原因は**抽象の構造(行動 funnel)**で、修正には V3 級(複数サイズ / リンプ / flat-call モデル)の深い改修が要り payoff 不確実。**solver-grade の per-hand 到達は現抽象の天井**。表示は per-hand で優位な手作りレンジ(理論照合済)を維持(ルール1)。solver は **構造(位置依存幅)/ provenance の研究成果**として確定。workflow + 安価診断が 7.5h の futile compute を着手前に回避した(「収束 ≠ 正しい」を再現)。
 
 ---
 
