@@ -5,6 +5,13 @@ date: 2026-05-30
 ---
 # poker-gto 開発ログ
 
+### 2026-06-13 Phase C2-2 精緻化(Phase B V 配線)+ 採用ゲート — 較正済 flat の頑健性を実証
+- **実装**: ①3bet/4bet サイズを Phase B pot に整合(11/24 → srp 5.5 / 3bet 22.5 が一致)②HU seen-flop 終端を **Phase B の解いたサブゲーム V 行列**で評価(`huSeenFlopEV` 解決器・UTG/MP/CO/BTN SRP + BTN/CO 3bet・support<0.5 で flat フォールバック・未被覆=flat)。`huHeroValue` は全 cell flat なら flat 分岐と厳密一致(正規化整合)。
+- **知見(重要・C2-1 の見立てを実証的に訂正)**: Phase B V の配線は flat 実現率と差 **≤0.4pt** = 較正済 flat(IP/OOP 実現率)が解いたサブゲーム EV をよく近似し、**open 幅は seen-flop EV の精度に頑健**。BTN40.7/CO24.1 は flat でも既にアンカー命中 = 「BTN/CO 圧縮は flat-EV 律速」は誤りだった。V 配線は provenance/原理整合のため保持。
+- **SB の限界を確定**: 29.1(vs 35-58)= **no-limp 抽象**(raise-or-fold は GTO の SB リンプ多用を表現不能)+ OOP 実現率の構造的境界。`srp-sb-bb` は open 2.5≠モデルの 3.0 / IP-OOP ラベルの緊張で**未配線**(ミスマッチモデルで無理にアンカーへ寄せない=正直表示)。SB の本丸はリンプ抽象(木拡張=別タスク)。
+- **結果(600 反復・Phase B V)**: UTG15.5/MP18.3/CO24.1/BTN40.7 = **4/5 アンカー命中**・安定性 Δ(300↔600)≤0.6。候補レンジ妥当(BTN: AA-AKs/AJo/55=1.0・98s=0.50 ミックス・72o≈0)。
+- **採用ゲート**: 候補レンジ(`scripts/out/`・gitignore・src/ 未採用)は UTG/MP/CO/BTN 妥当だが SB 据え置き。**C-2a(解 JSON 配給)/ C-2b(フル置換)は product/正直表示の判断 = 明示承認後**(手作りレンジは理論照合済=ROI 注記)。型0/lint0/全テスト緑。詳細 `docs/SOLVER.md §6.5-4/5`。
+
 ### 2026-06-13 Phase C2-1 マルチウェイ プリフロップ ジョイント CFR — Phase C の構造的限界を解決
 - **経緯**: 「続きを進めて」を当初「A節は天井到達=残課題クローズ」と誤判断したが、ユーザー指摘(「backlog は見たか / phase c の検討は」)で**承認済み計画 Phase C2**(`~/.claude/plans/backlog-a-gto-mac-delegated-candy.md`・C2-0 スパイク GO 済)を再発見。Phase C 中止(HU 縮約=背後プレイヤー無視で UTG 63.5%)を、6-max プリフロップ木を1つのジョイント CFR で解いて**構造から**解決する路線(postflop は EV 抽象=Simple Preflop Holdem/HRC v3)。
 - **一次実測で中止判断を再確認**: キャッシュ済み Phase B モデル(10件)+ エクイティ(2500iters)が残存 → `solve-preflop-nash.ts` を再実行し round-0(UTG 63.5% 等)を完全再現。**open 超過量が「無視する中間席数」に単調**(UTG+47pt→CO+13pt)= 構造的欠落の指紋。被覆では直らないことを一次確認。

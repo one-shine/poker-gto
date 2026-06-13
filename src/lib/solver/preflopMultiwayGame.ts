@@ -38,8 +38,9 @@ export interface TreeConfig {
 }
 
 export const DEFAULT_TREE_CONFIG: TreeConfig = {
+  // 3bet 11 / 4bet 24 は Phase B モデルの pot(srp 5.5 / 3bet 22.5)に整合させ V 行列配線を可能に。
   maxRaise: 4,
-  sizes: [1.0, 2.5, 9, 21, 100], // [blind, open, 3bet, 4bet, 5bet-allin]
+  sizes: [1.0, 2.5, 11, 24, 100], // [blind, open, 3bet, 4bet, 5bet-allin]
   stack: 100,
   smallBlind: 0.5,
   bigBlind: 1.0,
@@ -199,6 +200,16 @@ const PRIOR: Float64Array = (() => {
 // 行動 = ポジション優位。seen-flop の実現率に IP/OOP 非対称を入れて後ろ位置のオープンを正当化。
 const PF_RANK = [2, 3, 4, 5, 0, 1] // index = seat(UTG..BB)
 
+// HU seen-flop 終端を Phase B の解いたサブゲーム V 行列で評価する解決器の返り値。
+// v[i]/support[i] は active[i] 視点(契約フレーム・V=stack value・恒等式 vOop+vIp^T=potBB)。
+// 被覆スポット(opener-vs-BB の SRP/3bet 等)のみ非null・未被覆は呼び出し側が null を返し flat 近似へ。
+export interface HuTerminalEV {
+  v: ((number | null)[][] | null)[]   // [active0 の V, active1 の V]
+  support: (number[] | null)[]        // [active0 の support, active1 の support]
+}
+export type HuSeenFlopResolver = (activeSeats: number[], invested: Float64Array) => HuTerminalEV | null
+const MIN_SUPPORT_HU = 0.5
+
 export interface MultiwaySolveOptions {
   eq: number[][]            // 169×169 オールイン勝率(HU showdown 厳密 + multiway proxy の素)
   iters: number
@@ -206,6 +217,7 @@ export interface MultiwaySolveOptions {
   realization?: number      // 指定時は IP/OOP 共通の実現率(後方互換)。allin は常に R=1。
   ipRealization?: number    // seen-flop で IP(postflop 最後)のエクイティ実現率(既定 1.0)
   oopRealization?: number   // seen-flop で OOP のエクイティ実現率(既定 0.86)
+  huSeenFlopEV?: HuSeenFlopResolver  // 被覆 HU seen-flop を Phase B V 行列で評価(未被覆は flat)
   linearAveraging?: boolean // CFR+ 線形平均(既定 true)
 }
 
@@ -236,6 +248,11 @@ export function solvePreflopMultiway(opts: MultiwaySolveOptions): MultiwaySolveR
   const linear = opts.linearAveraging ?? true
   const { nodes } = tree
 
+  // HU seen-flop 終端ごとに Phase B V 行列を1回だけ解決(被覆スポットのみ非null)。
+  const huEV: (HuTerminalEV | null)[] = nodes.map(n =>
+    (n.kind === 'terminal' && n.terminal === 'hu_flop' && opts.huSeenFlopEV)
+      ? opts.huSeenFlopEV(n.active, n.invested) : null)
+
   // 決定ノードごとに regret / strategy-sum を確保。
   const regretSum: (Float64Array | null)[] = nodes.map(n => (n.kind === 'decision' ? new Float64Array(NCAT * n.actions.length) : null))
   const stratSum: (Float64Array | null)[] = nodes.map(n => (n.kind === 'decision' ? new Float64Array(NCAT * n.actions.length) : null))
@@ -249,6 +266,30 @@ export function solvePreflopMultiway(opts: MultiwaySolveOptions): MultiwaySolveR
       let s = 0
       for (let cp = 0; cp < NCAT; cp++) s += row[cp] * w[cp]
       out[c] = s / wSum
+    }
+  }
+
+  // 被覆 HU seen-flop: hero 各カテゴリ value = (Σ_cj reachNorm_opp[cj] cellVal) × prodOthers。
+  // cellVal = support[c]≥0.5 かつ V[c][cj] 非null なら V[c][cj]−invHero(Phase B 解値)、さもなくば
+  // flat(eq×pot×R−invHero)。全 cell flat なら flat 分岐と厳密一致(正規化整合)。
+  const huHeroValue = (
+    rbOpp: Float64Array, rsOpp: number, V: (number | null)[][] | null, sup: number[] | null,
+    pot: number, Rh: number, invHero: number, prodH: number, out: Float64Array,
+  ): void => {
+    const gatedAll = V != null && sup != null
+    for (let c = 0; c < NCAT; c++) {
+      const vrow = gatedAll && sup![c] >= MIN_SUPPORT_HU ? V![c] : null
+      const erow = eq[c]
+      let s = 0
+      for (let cj = 0; cj < NCAT; cj++) {
+        const w = rbOpp[cj]
+        if (w === 0) continue
+        let cell: number
+        if (vrow) { const v = vrow[cj]; cell = v != null && Number.isFinite(v) ? v - invHero : erow[cj] * pot * Rh - invHero }
+        else cell = erow[cj] * pot * Rh - invHero
+        s += w * cell
+      }
+      out[c] = (rsOpp > 0 ? s / rsOpp : 0) * prodH
     }
   }
 
@@ -277,9 +318,15 @@ export function solvePreflopMultiway(opts: MultiwaySolveOptions): MultiwaySolveR
     const rOf = (p: number): number => (allin ? 1 : p === ip ? R_IP : R_OOP)
     if (active.length === 2) {
       const a = active[0], b = active[1]
+      const ra = rOf(a), rb = rOf(b)
+      const hu = allin ? null : huEV[t.id]
+      if (hu) {
+        huHeroValue(reach[b], reachSum[b], hu.v[0], hu.support[0], pot, ra, t.invested[a], prodOthers[a], value[a])
+        huHeroValue(reach[a], reachSum[a], hu.v[1], hu.support[1], pot, rb, t.invested[b], prodOthers[b], value[b])
+        return
+      }
       matvec(reach[b], reachSum[b], uScratch[0]) // a が b レンジに勝つ率
       matvec(reach[a], reachSum[a], uScratch[1]) // b が a レンジに勝つ率
-      const ra = rOf(a), rb = rOf(b)
       for (let c = 0; c < NCAT; c++) {
         value[a][c] = (uScratch[0][c] * pot * ra - t.invested[a]) * prodOthers[a]
         value[b][c] = (uScratch[1][c] * pot * rb - t.invested[b]) * prodOthers[b]
