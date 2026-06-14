@@ -87,6 +87,12 @@
 - **B8 ポストフロップ13x13ソルバータブ(GTO Wizard風)** ⬜ 🤖 — RangesPage に新**タブ**「ソルバー解析」(6ページ固定遵守)。スポット+ボード指定で**レンジ全体の戦略を13x13表示**。実装: `lib/solver/fullBoardStrategy.ts`(全コンボ抽出→handClass集約・専用キャッシュ)・`BoardSolverPanel`+`BoardPicker`。**着手前に確定**: **H1**(集約ウェイト=`expandRange` で comboKey→weight 再構成・precomputed/live で表示一致・cap で0コンボのクラスは「抽出外」)/**H2**(lead は check/bet 専用レンダラ・facing は `RangeGrid` 再利用)。**M4**(v1スコープ): 代表/precomputed ボード=即時 + river-live、任意ボード live と turn-live は明示ボタン裏、**flop はブロック**。honest-display: live=「簡易アブストラクション」明示・"GTO最適" 不使用。<br>⚠ **設計レビューで判明(2026-06-10)**: 既存事前計算テーブルは cap/narrow で縮約済=13x13 の大半(turn ~16/169・river ~45/169)が空セル → 「レンジ全体」をそのまま謳えない。着手するなら ①正直リスコープ(被覆率明示・空=抽出外≠fold)か ②cap撤廃テーブル再生成(スコープ拡大)を先に選ぶ。**ユーザーは B8 ではなく下記 B9(1ハンド相談)を優先採用**。
 - **B9 ソルバー(RangesPage「ソルバー」タブ・旧称ハンド相談)** ✅ 🤖 (2026-06-10 完了・488テスト緑) — B8(レンジ全体13x13)とは**別物・併存**。盤面+自分の2枚+状況(位置/ストリート/相手アクション/ポット/スタック)を手動設定 → **その1ハンドのおすすめプレイ(頻度)+ 勝率 + ポットオッズ**を表示。ゲームの「場面→おすすめ+正直 source」経路を流用。実装: `lib/solver/manualSpot.ts`(`buildManualSpotKey`=GameState非依存で SpotKey 構築・有効ペア列挙・**SB の SRP は `POSTFLOP_OPENERS` で明示的に弾く**=`baseHeroIsOOP` では通る穴を塞ぐ)・`lib/equity/manualEquity.ts`(potSpec 由来の相手レンジで `computeEquityAsync`・`villainRangeSpec` を riverRanges に追加)・`hooks/useManualAdvice.ts`(`getSolution` 直叩き/レース防止)・`components/ranges/ManualAdvisorPanel.tsx`。**正直表示(ルール1)**: preflop=GTO近似(+概算EV)/ river=ソルバー解(代表盤=厳密・任意盤=live簡易)/ turn=live(明示・数秒)/ **flop=GTO頻度を出さず勝率・ポットオッズのみ**(賭け未考慮の明示)/ 任意ベット額=当該サイズで live 求解/ 未対応(SB-SRP・3betペア外・マルチウェイ)=理由付き「対象外」。キーは preflop=`handCategory`・postflop=`comboKey` で切替。Playwright で preflop/river-lead/river-vsbet/flop の4経路を実機検証。**共有基盤(`getSolution`・`BoardPicker`)は B8 と再利用可**。
 
+### 新規ロードマップ(2026-06-14 計画 — プラン `iphone-backlog-replicated-moler`・対応順 ①戦略学習→②収益化→③iPhone)
+
+> **開発フロー原則**: PWA(web)で実装・検証してから iPhone 包装(`CLAUDE.md` / メモリ `feedback-pwa-first-flow`)。①②は PWA で完結。
+
+- **B10 戦略学習の拡張(ベット使い分け+ブロッカー・Tier1)** ✅ 🤖 (2026-06-14 完了・590テスト緑[blockerDrill +5]・型/lint/build 緑・Playwright 実機検証済・**①最優先**) — レンジベット/ポラライズ/オーバーベットの**使い分け**と**ブロッカー**を学べるように。Tier1=**理論+実戦ヒント+ブロッカードリル**。実装: ①理論概念(`data/theory/concepts.ts` に `blockers`/`overbet` 追加・既存 `bet-sizing`/`polarization`/`range-advantage` へリンク=重複させない)+用語(`glossary.ts`: アンブロック 等)②実戦の観点ヒント(`lib/coach/decisionGuidance.ts` postflop: **サイズ観点**=レンジ優位→小/マージ・ナッツ優位→大/ポラライズ、**ブロッカー観点**=ナッツ級を握るか)③**ブロッカードリル**(`lib/drill/blockerDrill.ts`+`components/drill/BlockerDrillPanel.tsx`・`DrillKind` に `'blocker'`・**カードリムーバル数学で採点=事実ベース**)。<br>**正直性(ルール1)**: 現ソルバーは**単一サイズ 0.66pot のみ求解**(`chanceCfr.ts`)→ベット使い分けの優劣は「GTO が証明」と言わず**理論/ヒューリスティック観点**として提示(GTO頻度と別物を明示)。ブロッカーは実リムーバル=事実なのでドリル採点も正直。新 `MistakeCategory` は増やさず既存(`bluff_frequency`/`value_bet_missed`)へリンクし変更面を最小化。<br>**実装済(2026-06-14)**: ①概念 `blockers`/`overbet` 追加(`bet-sizing-selection` は既存 `bet-sizing` と重複のため作らず流用)+用語 アンブロック/レンジベット 追加 ②`decisionGuidance` postflop に サイズ使い分け観点(→`bet-sizing`/`polarization`)+ブロッカー観点(フラッシュ/ボードペア/A 保持の事実判定)③`blockerDrill.ts`+`BlockerDrillPanel.tsx`(`DrillKind`+'blocker'・カードリムーバルで採点=`blocks=Σ(各カードを含む相手バリューcoombo数)`・seeded 再現可能・blockerDrill.test +5)。Playwright 実機: ブロッカータブ→3スペードボードで K♠保持の K6o=20通りブロックが正解・概念記事↔ドリル導線・正直注記(GTO頻度でない)を確認。<br>**🧊 icebox(Tier2・~2-4週)**: 複数サイズ・ソルバー裏付け = 代表ボードを `[0.33/0.5/0.66/1.0]` で再事前計算→`solver_precomputed` でサイズ選択提示。`scripts/precompute-flop.ts` を `--bet-sizes` 対応にする将来案(silent に落とさない記録)。
+
 ---
 
 ## C. 公開準備(商用B・主にユーザー判断/実務)
@@ -102,8 +108,9 @@
 | 静的ホスティング(HTTPS)へデプロイ | ✅ | 🤖 | **GitHub Pages 稼働中(2026-06-06)** <https://one-shine.github.io/poker-gto/>。下記「Web アプリ化 = GitHub Pages 公開」参照。 |
 | PRIVACY_POLICY の確定 + 公開 URL 化 | 🔄 | 👤 | 事業者名・連絡先・施行日を確定([`./PRIVACY_POLICY.md`](./PRIVACY_POLICY.md) はドラフト)。 |
 | 本番 Sentry DSN 配線 | ⬜ | 👤 任意 | エラー境界+クラッシュレポート基盤は実装済み(既定 OFF・`VITE_SENTRY_DSN` 設定時のみ)。 |
-| Capacitor で店舗配信 | ⬜ | 👤 任意・後日 | 同じ `dist/` を WebView でラップ(~3-5日)。Apple Developer($99/年)+ Google Play($25)。年齢区分申告(Apple 17+ / Google Teen)+ ストア素材。手順は [`./RELEASE.md`](./RELEASE.md) §1/§2/§5。 |
+| Capacitor iOS で App Store 配信 | 🔄 | 🤖+👤 | **2026-06-14 再開**(App Store 一般公開が目標・2026-05-31 見送りを撤回)。無料の**工程A**(Capacitor 統合〜実機サイドロード=🤖)+ **$99 ゲートの工程B**(審査提出=👤)に2分割。Apple Developer($99/年)は提出時のみ必須。詳細・タスク内訳は D節「Capacitor iOS 実装」。 |
 | 国際化(英語化) | ⬜ | 👤 任意 | 現状 UI は日本語のみ。市場拡大用。 |
+| 収益化方針の決定(無料/広告/課金) | 🔄 | 🤖(整理)+👤(決定) | **2026-06-14 整理着手(ロードマップ②)**。完全無料 / 無料+広告 / freemium(Apple IAP) / 買い切り / サブスク / コンテンツ販売 を比較。横断制約: IAP 手数料15-30%・**PWA(GitHub Pages)は ToS で商用主体不可**→収益化なら Cloudflare Pages 移行(`vite base` を `'/'` の1行)・ギャンブル隣接広告の制約(CMP/ATT・17+で在庫減)。推奨案=まず完全無料→反応見て freemium(買い切りIAP)→広告は最後。**②で `RELEASE.md` に収益化オプション節を新設**(現状 §0 D3)。決定は 👤。 |
 
 > 収益化(広告)を入れる場合は同意管理(CMP/ATT)・子ども向け除外・ギャンブル隣接の配信制限が発生する。当面は無償・広告なしが店舗摩擦最小([`./RELEASE.md`](./RELEASE.md) D3 推奨)。
 
@@ -133,11 +140,11 @@
 
 ## D. 配布(Mac ローカル / iPhone / Windows)
 
-> **✅ 現行配信は C節のとおり PWA一本化で GitHub Pages 公開済(2026-06-06)** <https://one-shine.github.io/poker-gto/>。本節の Tauri デスクトップ/Capacitor は**歴史的経緯・将来オプション**として保持(現行の配布対象ではない)。Mac/Win ネイティブは見送り(`src-tauri/` はコードのみ温存)。
+> **✅ 現行配信は C節のとおり PWA で GitHub Pages 公開済(2026-06-06)** <https://one-shine.github.io/poker-gto/>。**🔄 2026-06-14: App Store 一般公開を目標に Capacitor iOS を再開**(下記「Capacitor iOS 実装」)。PWA はライブ配信として継続(Capacitor は置換でなく並走)。本節の **Tauri デスクトップ**は**歴史的経緯・将来オプション**として保持(現行の配布対象ではない・Mac/Win ネイティブは見送り・`src-tauri/` はコードのみ温存)。
 >
 > 現状はクライアント完結の Vite SPA(PWA 足場・manifest・sw.js・アイコン・自前ソルバー・オフライン可)。
 > `dist/` を共通成果物として「包み方」を変えるだけ。
-> **方針(2026-05-31 決定)**: **iPhone は PWA で行く**(Safari「ホーム画面に追加」)。ネイティブ iOS(Capacitor / Tauri iOS = App Store)は当面**見送り**。公開は iPhone 個人確認後。
+> **方針(2026-05-31 → 2026-06-14 更新)**: iPhone は PWA(Safari「ホーム画面に追加」)を**継続**しつつ、**App Store 一般公開を目標に Capacitor iOS を再開**(2026-05-31 の「ネイティブ iOS 見送り」を意図的に撤回)。実装方式 = **Capacitor**。無料の工程A → $99 ゲートの工程B に2分割(下記「Capacitor iOS 実装」)。
 > iPhone PWA に必要なのは **HTTPS 配信**のみ: 個人確認 = `cloudflared` 等の HTTPS トンネル経由で Safari → ホーム画面に追加 / 恒久 = 静的ホスティング(E② / C節)。共通土台(フォント/オフライン/screenshots)は完了済み。
 
 ### 共通土台(PWA を実質完成)— ✅ 完了(2026-05-31・dynamic workflow + Playwright 検証)
@@ -154,7 +161,7 @@
 |------|------|------------|--------|--------|
 | **① PWA**(最有力・個人/ローカル) | Mac/Win=Edge/Chrome「インストール」, iPhone=Safari「ホーム画面に追加」 | 不要・$0 | 不要 | HTTPS 配信 or localhost。共通土台で実質完成 |
 | **② Tauri デスクトップ** ✅Mac | Mac(.dmg/.app)=**実装済** / Windows(.msi)=未 | 署名時 Apple ID $99 / Win 証明書(任意) | **Win は要 Windows/CI** | `src-tauri/` 追加済・`npm run tauri:build`。下記「実装」参照 |
-| ③ Capacitor / Tauri iOS(ネイティブ)🧊 見送り | iPhone(App Store) | **Apple $99 必須** | **要 Mac + Xcode** | **当面見送り(2026-05-31)= iPhone は PWA 方針**。将来 App Store 配布が必要になれば: wrapper + 署名 + 審査(simulated gambling=17+ 申告)。手順は [`./RELEASE.md`](./RELEASE.md) §1/§2/§5。`capacitor://`/`tauri://` で sw.js 無効化要。 |
+| ③ Capacitor iOS(ネイティブ)🔄 再開(2026-06-14) | iPhone(App Store) | **Apple $99 必須**(提出時のみ) | **要 Mac + Xcode + CocoaPods** | **App Store 一般公開を目標に再開**(2026-05-31 見送りを撤回)。無料の工程A(統合〜実機サイドロード)→ $99 ゲートの工程B(審査提出)に2分割。詳細は下記「Capacitor iOS 実装」+ [`./RELEASE.md`](./RELEASE.md) §1/§2/§5。`capacitor://` で sw.js 無効化要。**SAB/WASM 非依存で WKWebView 難所なし**。 |
 
 > Electron は Tauri の代替(楽だが ~100MB+)。Android は Capacitor で iOS と同時に出せる(Google Play $25・要 screenshots)。
 
@@ -165,6 +172,35 @@
 - `src/main.tsx`: Tauri 配下(`__TAURI_INTERNALS__` 検出)では SW を登録しない(資産バイナリ同梱で不要・stale 回避)。**Web/PWA 経路は不変**(ブラウザでは従来どおり SW 登録)。
 - 前提: Rust(rustup)導入済・Xcode あり・Apple Silicon。`src-tauri/target` `gen` は gitignore。検証: 338テスト緑・lint0・build緑・bundle 生成確認。
 - 残(任意): **Apple Developer ID 署名 + notarize**(未署名は初回起動で「未確認の開発元」警告 → 右クリック→開く で回避)/ **Windows ビルド**(要 Windows マシン or CI・同手順)/ CSP 厳格化。
+
+### Capacitor iOS 実装(App Store 目標・2026-06-14 再開)
+
+> **方針転換(2026-06-14)**: 2026-05-31 の「ネイティブ iOS 見送り」を**意図的に撤回**し、**App Store 一般公開**を目標に Capacitor iOS を再開。PWA(GitHub Pages)は本番ライブ配信として**継続**(Capacitor は置換でなく並走)。Tauri scaffold(`src-tauri/`)はデスクトップ将来オプションとして不変・触らない。
+>
+> **⚠️ 正直な制約(最重要)**: 「App Store 公開」と「無料」は**最後の1ステップだけ両立しない**。**App Store 提出には Apple Developer Program($99/年)が必須**(Apple のルール・回避不可)。無料 Apple ID では自分の実機へのサイドロードのみ(プロビジョニング 7日で失効)。→ 工程を2分割し、**無料でできる全工事(工程A)を先に完了**、$99 が要る審査提出(工程B)だけをゲートにする。これで「無料で実機で使う」も「将来 App Store 公開」も1本のロードマップで満たす。
+>
+> **技術的追い風**: **SharedArrayBuffer / WASM / COOP-COEP 非依存**(自前 TS ソルバー = `src/workers/*.worker.ts`)→ iOS WKWebView 最大の難所が**そもそも無い**。全データ自社生成(`./DATA_LICENSE.md`)= ストアのライセンス障害ゼロ。前提: Mac(確認済)+ Xcode + CocoaPods。Capacitor 7 = 最小 iOS 14。App ID は `com.gtolab.app`(Tauri と共通・App Store 登録時に一意性確認)。
+
+#### 工程A: 無料エンジニアリング(今すぐ実装可・$0)
+| ID | タスク | 状態 | 担当 | メモ |
+|----|--------|------|------|------|
+| iOS-A1 | Capacitor 導入 + iOS プロジェクト生成 | ⬜ | 🤖 | `npm i @capacitor/core` / `-D @capacitor/cli` → `npx cap init "GTO Lab" com.gtolab.app --web-dir dist` → `npm i @capacitor/ios` → `npx cap add ios`。新規 `capacitor.config.ts`・生成 `ios/`(要 CocoaPods)。 |
+| iOS-A2 | ビルド base の切替(鍵) | ⬜ | 🤖 | `vite.config.ts` の `base` を env 条件分岐(ネイティブ=相対 `'./'`・Pages=`'/poker-gto/'`)。`capacitor://localhost` はルート配信のため `/poker-gto/` 不可。`manifest.json` の start_url/scope は既に `'./'` で破綻なし。`package.json` に `build:native`/`cap:sync` 追加。GitHub Pages 通常 build が回帰しないこと。 |
+| iOS-A3 | ネイティブで SW 無効化 | ⬜ | 🤖 | `src/main.tsx` の既存 `isTauri` SW 登録スキップに **Capacitor 判定を追加**(`window.Capacitor?.isNativePlatform?.()`)。`capacitor://` 配下で SW が走ると資産配信と競合。既存パターンの素直な拡張。 |
+| iOS-A4 | Web Worker のネイティブ動作確認 | ⬜ | 🤖 | `lib/solver/solverClient.ts`・`lib/equity/equityClient.ts` のモジュール worker(`new Worker(new URL(...), {type:'module'})`)が `capacitor://` で読めるか Sim/実機で確認。両 client にメインスレッド fallback あり・SAB 非依存で致命リスク低。 |
+| iOS-A5 | iOS ポリッシュ | ⬜ | 🤖 | `@capacitor/status-bar`(#18181b)/`splash-screen`/必要なら `app`。`@capacitor/assets` で icon/splash 生成(`public/icon-512.png` 流用)。`env(safe-area-inset-*)` 適用確認(`viewport-fit=cover` 済)。任意 `@capacitor/haptics`(native タッチ=4.2 審査対策にも有効)。 |
+| iOS-A6 | 動作確認(無料の到達点) | ⬜ | 🤖/👤 | `npx cap sync ios` → `open ios` → **Simulator** で 起動 / 6ページ遷移 / ハンド1回でソルバー・エクイティ worker 稼働 / IndexedDB 永続化 / SW エラー無し / safe-area。**無料 Personal Team で自分の iPhone にサイドロード**(7日失効許容)。**ここまで $0**。 |
+
+#### 工程B: App Store 提出($99 ゲート・支払い後)
+| ID | タスク | 状態 | 担当 | メモ |
+|----|--------|------|------|------|
+| iOS-B1 | Apple Developer Program 登録 | 🧊 $99ゲート | 👤 | **$99/年。これが無いと App Store 公開は不可**(回避不可・工程A は無関係に進められる)。 |
+| iOS-B2 | App ID 登録 + App Store Connect 作成 | ⬜ | 👤 | `com.gtolab.app` の一意性確認 → アプリレコード作成。 |
+| iOS-B3 | 配布署名(証明書 + provisioning) | ⬜ | 👤 | Xcode の distribution 証明書 + プロビジョニング。 |
+| iOS-B4 | ストアメタデータ + 素材 | ⬜ | 👤 | 中身は作成済(`./RELEASE.md` 流用): §5 タイトル/説明・**年齢区分17+**(§2 simulated gambling)・プライバシー "Data Not Collected"(§3)・非提携文言(§4)・スクショ各サイズ。 |
+| iOS-B5 | Archive → アップロード → 審査提出 | ⬜ | 👤 | 審査注意: **4.2 最小機能性**(フル機能/オフライン/haptics で単なる Web ラッパー判定回避)・**5.3** 実マネー無し申告・輸出コンプライアンス(暗号 none/standard)。TestFlight で事前検証。 |
+
+> 既存 `./RELEASE.md` §1/§2/§3/§4/§5/§6 がそのまま提出素材として適用される(中身は作成済・流用するだけ)。Android(Google Play $25)を出すなら同じ `dist/` で `npx cap add android` を併走可。
 
 ---
 

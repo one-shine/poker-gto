@@ -88,9 +88,9 @@ export interface PlayerProgress {
   masteredConcepts: string[]
 }
 
-// ドリル成績 (U4)。集計軸は MistakeCategory に乗らない (postflop=street/potType, pushfold=role/stack)
-// ため専用の bucketKey で持つ。
-export type DrillKind = 'preflop' | 'postflop' | 'pushfold' | 'odds'
+// ドリル成績 (U4)。集計軸は MistakeCategory に乗らない (postflop=street/potType, pushfold=role/stack,
+// blocker=river) ため専用の bucketKey で持つ。
+export type DrillKind = 'preflop' | 'postflop' | 'pushfold' | 'odds' | 'blocker'
 
 export interface DrillStat {
   attempts: number

@@ -1,5 +1,6 @@
-import type { GameState } from '../../types/game'
+import type { Card, GameState } from '../../types/game'
 import { handCategory } from '../../engine/cards/handCategory'
+import { RANK_VALUES } from '../../engine/cards/Card'
 import { isHeroIP } from '../../engine/game/PositionManager'
 import { conceptById } from '../../data/theory/concepts'
 import { handTier, boardTexture } from './coachConcepts'
@@ -50,6 +51,29 @@ const OPENER_NOTE: Record<string, string> = {
 
 const STREET_JP: Record<string, string> = {
   flop: 'フロップ', turn: 'ターン', river: 'リバー', preflop: 'プリフロップ', showdown: 'ショーダウン',
+}
+
+// hero のホールが相手の強コンボを一部消すか (事実=カードリムーバル)。観点のみ・答え(頻度)ではない。
+function blockerHint(hole: Card[], board: Card[]): string | null {
+  if (board.length < 3 || hole.length < 2) return null
+  const suitCount: Record<string, number> = {}
+  for (const c of board) suitCount[c.suit] = (suitCount[c.suit] ?? 0) + 1
+  // フラッシュ系: 2枚以上同スートのボードで、そのスートの高め(Q+)を持つ → フラッシュを一部ブロック。
+  for (const c of hole) {
+    if ((suitCount[c.suit] ?? 0) >= 2 && RANK_VALUES[c.rank] >= RANK_VALUES.Q) {
+      return 'フラッシュ系の強い組み合わせを一部ブロック (ブラフ価値↑)。'
+    }
+  }
+  // ボードのランクとペア: トリップス/ツーペアを一部ブロック。
+  const boardRanks = new Set(board.map(c => c.rank))
+  if (hole.some(c => boardRanks.has(c.rank))) {
+    return 'ボードに絡む組み合わせ (トリップス/ツーペア) を一部ブロック。'
+  }
+  // A 保持はトップ級/ナッツのブロッカーになりやすい。
+  if (hole.some(c => c.rank === 'A')) {
+    return 'A ブロッカー: 相手のトップ級/ナッツの一部を消す。'
+  }
+  return null
 }
 
 // 現局面で「考えるべきこと」を組み立てる。答え(GTO頻度/推奨アクション)は出さない。
@@ -119,6 +143,14 @@ export function buildDecisionGuidance(state: GameState, heroId: string, ctx: Gui
     conceptIds.push('board-texture')
     terms.push('ボードテクスチャ')
 
+    // ブロッカー観点 (事実=カードリムーバル。ブラフ/バリューの手選びの材料)。
+    const bHint = blockerHint(hero.holeCards, state.board)
+    if (bHint) {
+      considerations.push({ label: 'ブロッカー', value: handKey, note: bHint })
+      conceptIds.push('blockers')
+      terms.push('ブロッカー')
+    }
+
     if (ctx.callAmount > 0) {
       situation = `${STREET_JP[state.street]}・${ip ? 'IP' : 'OOP'}でベットに直面 — 続行の判断`
       // オッズ数値は OddsGuide が出す(ここでは観点の理論リンクのみ)。
@@ -134,6 +166,13 @@ export function buildDecisionGuidance(state: GameState, heroId: string, ctx: Gui
       })
       conceptIds.push(ip ? 'cbet-ip' : 'cbet-oop')
       terms.push('Cベット')
+      // サイズの使い分け観点 (使い分けの一般原則・GTO頻度ではない)。
+      considerations.push({
+        label: 'サイズの使い分け',
+        note: 'レンジ優位だけなら小さく高頻度 (レンジベット/マージ)。ナッツ優位も明確なら大きく/オーバーベット (ポラライズ)。手の強弱でサイズは変えない。',
+      })
+      conceptIds.push('bet-sizing', 'polarization')
+      terms.push('ポラライズ', 'オーバーベット')
     }
   }
 

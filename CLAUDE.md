@@ -4,7 +4,9 @@
 
 PokerSnowie / GTO Wizard ライクなローカル動作のポーカーGTO学習アプリ。React 19 + TypeScript + Vite SPA。UIは日本語。
 
-GitHub Pages に公開稼働中: https://one-shine.github.io/poker-gto/ (PWA一本化・Tauri native は見送り・repo public・noindex)。正典は `docs/BACKLOG.md` C節。
+GitHub Pages に公開稼働中: https://one-shine.github.io/poker-gto/ (PWA配信・repo public・noindex)。**2026-06-14: App Store 一般公開を目標に Capacitor iOS を再開**(無料の工程A→$99 ゲートの工程B・詳細は `docs/BACKLOG.md` D節「Capacitor iOS 実装」)。Tauri デスクトップ native は引き続き見送り。正典は `docs/BACKLOG.md` C節。
+
+**開発フロー原則(2026-06-14 ユーザー確定)**: 機能追加・修正は必ず **PWA(web)で実装・検証してから iPhone(Capacitor)で再確認・包装** する。理由=web は反復が速く GitHub Pages に即反映でき、iOS 包装は web が固まってから被せる工程だから(未検証の変更を先に iOS へ持ち込むと切り分け困難)。ロードマップでも iPhone 工程は末尾。
 
 ## コマンド
 
