@@ -120,5 +120,30 @@ describe('buildDecisionGuidance', () => {
     expect(g.situation).toContain('IP')
     expect(g.situation).toContain('先制')
     expect(g.conceptIds).toContain('cbet-ip')
+    // ベットの使い分け観点 (サイズ) がゲーム中に出る (B10)
+    expect(g.considerations.some(c => c.label === 'サイズの使い分け')).toBe(true)
+    expect(g.conceptIds).toContain('bet-sizing')
+    expect(g.conceptIds).toContain('polarization')
+    expect(g.terms).toContain('ポラライズ')
+    // ブロッカー観点: hero Ks がボードの K をブロック
+    expect(g.considerations.some(c => c.label === 'ブロッカー')).toBe(true)
+    expect(g.conceptIds).toContain('blockers')
+  })
+
+  it('postflop フラッシュ可能ボードで A フラッシュブロッカー → blockers 観点 (B10)', () => {
+    const s = baseState({
+      street: 'flop',
+      board: [C('K', 'hearts'), C('9', 'hearts'), C('4', 'clubs')],
+      players: [
+        player('hero', 'BTN', 0, [C('A', 'hearts'), C('Q', 'spades')]),
+        player('bb', 'BB', 2, null), folded(player('sb', 'SB', 1, null)),
+        folded(player('utg', 'UTG', 3, null)), folded(player('mp', 'MP', 4, null)), folded(player('co', 'CO', 5, null)),
+      ],
+      actionHistory: [rec('hero', 'raise'), rec('bb', 'call')],
+    })
+    const g = buildDecisionGuidance(s, 'hero', noCtx)
+    expect(g.conceptIds).toContain('blockers')
+    expect(g.considerations.some(c => c.label === 'ブロッカー' && /フラッシュ/.test(c.note ?? ''))).toBe(true)
+    expect(g.terms).toContain('ブロッカー')
   })
 })

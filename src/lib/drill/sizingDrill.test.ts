@@ -22,6 +22,10 @@ describe('sizingDrill', () => {
       expect(sc.options.length).toBeGreaterThanOrEqual(2)
       expect(new Set(sc.options).size).toBe(sc.options.length) // 重複なし
       expect(sc.board.trim().split(/\s+/)).toHaveLength(STREET_LEN[sc.street])
+      expect(sc.hero.trim().split(/\s+/)).toHaveLength(2)
+      // 盤面と手札でカードが重複しない。
+      const all = [...sc.board.trim().split(/\s+/), ...sc.hero.trim().split(/\s+/)]
+      expect(new Set(all).size).toBe(all.length)
       expect(sc.conceptId.length).toBeGreaterThan(0)
       expect(sc.explain.length).toBeGreaterThan(0)
       expect(APPROACH_JP[sc.correct]).toBeTruthy()
@@ -39,6 +43,7 @@ describe('sizingDrill', () => {
     for (let seed = 1; seed <= 30; seed++) {
       const q = generateSizingQuestion(mulberry32(seed))
       expect(q.board).toHaveLength(STREET_LEN[q.street])
+      expect(q.heroCards).toHaveLength(2)
       expect(q.options).toContain(q.correct)
       // board は Card オブジェクト (rank/suit を持つ)。
       for (const c of q.board) {

@@ -67,15 +67,19 @@ export function SizingDrillPanel() {
             {STREET_JP[question.street]} · {question.position}
           </p>
           <p className="text-sm text-zinc-300">{question.situation}</p>
-          <p className="text-sm">
-            <span className="text-zinc-500">あなた: </span>
-            <span className="font-bold text-brass-200">{question.heroLabel}</span>
-          </p>
         </div>
 
         {/* ボード */}
         <div className="flex items-center justify-center gap-1.5">
           {question.board.map((c, i) => <CardDisplay key={i} card={c} size="sm" />)}
+        </div>
+
+        {/* 自分の手札 */}
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-xs text-zinc-500">あなた</span>
+          <CardDisplay card={question.heroCards[0]} size="md" />
+          <CardDisplay card={question.heroCards[1]} size="md" />
+          <span className="ml-1 text-sm font-bold text-brass-200">{question.heroLabel}</span>
         </div>
 
         <p className="text-center text-sm text-zinc-200">推奨アプローチは?</p>
