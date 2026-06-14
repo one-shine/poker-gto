@@ -2,7 +2,7 @@
 
 > 製品品質(A)は学習アプリとして公開水準に到達済み。本書は**配信・ストア・法務**の実務playbook。
 > 調査根拠は 2026-05-30 の店舗ポリシー/Capacitor リサーチ + コード監査(下部「出典」)。
-> 関連: 製品仕様 [`./SPEC.md`](./SPEC.md) / 残課題 [`./BACKLOG.md`](./BACKLOG.md) C節 / データ権利 [`./DATA_LICENSE.md`](./DATA_LICENSE.md)。
+> 関連: 製品仕様 [`./SPEC.md`](./SPEC.md) / 残課題 [`./BACKLOG.md`](./BACKLOG.md) C節 / データ権利 [`./DATA_LICENSE.md`](./DATA_LICENSE.md) / 競合比較・ポジショニング [`./COMPETITIVE.md`](./COMPETITIVE.md)。
 > 公開準備レビューの全履歴(R1〜R30 + B節)は [`./archive/RELEASE_READINESS.md`](./archive/RELEASE_READINESS.md)。
 
 ---
