@@ -26,7 +26,7 @@ export class AIPlayerAgent {
       if (payload.playerId !== this.playerId) return
       const { state, validActions, callAmount, minRaiseToAmount } = payload
       this.schedule(() => {
-        const decision = decideFishAction(state, this.playerId, validActions, callAmount, minRaiseToAmount)
+        const decision = decideFishAction(state, this.playerId, validActions, callAmount, minRaiseToAmount, 'fish')
         this.bus.emit('PLAYER_ACTION', { playerId: this.playerId, ...decision })
       })
     })

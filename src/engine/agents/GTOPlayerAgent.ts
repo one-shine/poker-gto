@@ -90,9 +90,10 @@ export class GTOPlayerAgent {
         decision = mapToValid(sampleStrategyAction(sols), payload)
       }
     }
-    // 未カバー: Fish ヒューリスティクスにフォールバック
+    // 未カバー: ヒューリスティクスにフォールバック。trainer 相手なので GTO 寄りプロファイル
+    // (ドンクベットを抑制) で打つ — fish のリーク profile は使わない。
     if (!decision) {
-      decision = decideFishAction(state, this.playerId, validActions, callAmount, minRaiseToAmount)
+      decision = decideFishAction(state, this.playerId, validActions, callAmount, minRaiseToAmount, 'gto')
     }
 
     this.schedule(() => this.bus.emit('PLAYER_ACTION', { playerId: this.playerId, ...decision! }))
