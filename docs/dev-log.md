@@ -155,3 +155,14 @@ date: 2026-05-30
 - **正直なストリート**: river=後続なし=厳密 / turn=完全チャンスCFR(river 全48 runout 織り込み)のみ `solver_precomputed` と名乗れる。flop は ~13% 下限(アブストラクション構造)で対象外=従来通りライブ/近似。
 - **実装**: ① `postflopNode.ts` に hero ノード特定(`heroNodeTarget`/`findHeroNode`)+ combo 行正規化(`comboActionsAt`・bet→raise)を抽出し、ライブ経路 `solveRiverSpot` をリファクタ(挙動不変・既存137テスト緑)→ スクリプトと共有しドリフト防止。② `representativeBoards.ts`(代表テクスチャ turn4/river4 + `representativeHeroCombos`= 事前計算と同一の narrow/cap でドリルの hero 抽選を必ずヒットさせる)。③ `getSolution` postflop に precomputed テーブル参照(盤面/pot/stack/betFrac 完全一致時のみ・**any mode で動く**=モバイル/オフライン可)。④ `scripts/precompute-postflop.ts`(オフライン生成・turn は iters160/cap64 で exploit 1〜2%台=ライブturn8%超を大幅改善 / river <1%)。⑤ ポストフロップドリルに「代表ボード」トグル+テクスチャ表示+厳密解バッジ。
 - **オフライン高品質**: ライブの時間予算(turn=40iters/cap50→8.4%)に縛られず、turn を 160iters/cap64 に上げて 1〜2%台へ。cap は O(combos²) なので 110/400 だと 0.6% だが 74s/spot と過大 → 64/160(≈12s/spot・1.8%)を採用。全64ファイル ≈7分のワンタイム生成。
+
+### 2026-07-05 スマホ公開ブラッシュアップ監査 + P0修正(進行中・中断再開用チェックポイント)
+- **背景**: 「スマホアプリとして出す際のブラッシュアップ要素」を dynamic workflow(6観点×敵対的裏取り・48エージェント)で監査。確定45件→重複統合で **P0×1 / P1×7 / P2×4**。監査の生データ = セッションの scratchpad `synthesis.json` と task 出力 `wjl5c6jwx.output`(session tmp・揮発)。**恒久版は本 dev-log と docs/BACKLOG.md(反映後)が正典**。
+- **ユーザー指示(2026-07-05)**: 「A(P0確定+修正)と B(BACKLOG反映)を進めて、中断しても再開できるように」。
+- **P0 の中身**: `SpotPanel` の `open`/`revealed`(`useState(review)`)が街/フェーズをまたいで漏れる。原因=`GamePage.tsx` の decision 用 SpotPanel(L178・false初期化)と review 用 `strategyReveal`(L52-58・true初期化)が**同一 ternary 位置・同一型・key無し**で交互描画され React が Fiber を再利用。→ 未タップで「考え方」展開+答え露出=**絶対ルール U8 違反 + `markHinted` 汚染で GTO精度計測が壊れる**。web/PWA でも現発生。修正=両 SpotPanel に `handId+street+phase` の一意 key を付与し街/フェーズ変化で強制再マウント。
+- **進捗チェックリスト**:
+  - [x] 手順1: P0 修正 — `GamePage.tsx` の decision/review SpotPanel に `phase+handId+street` の一意 key を付与(review=`:52`/decision=`:178`)。
+  - [x] 手順2: 検証 — `type-check` 緑・全 **617 テスト緑**(SpotPanel に U35 回帰追加)・**key を外すと落ちることを使い捨てで確認**=バグ再現とテスト有効性を両方確証。
+  - [x] 手順3: BACKLOG 反映 — 0節 U35(✅)/U36/U37、D節「監査追補(2026-07-05)」(iOS-A1 min iOS16.4+device family / iOS-A5 格上げ safe-area・haptics・icon・Info.plist・keyboard・export / iOS-A6 移行検証 / iOS-B4 スクショ誤記 / iOS-B5 version・配信ケイデンス / Sentry・広告境界)、C節 L4=実在同名「GTO LAB」確認済+PRIVACY アプリ内導線、F節 QR6(初回ペイロード)/QR7(デグレード)+タッチ/再訪動機ノート。
+  - [x] 手順4: 本チェックポイントを完了状態に更新。
+- **完了(2026-07-05)**: A(P0確定+修正)と B(BACKLOG反映)完了。**未コミット**(ユーザーが要求したらコミット)。残りの P1/P2 実装(U36/U37/QR6/QR7/safe-area 等)は BACKLOG が正典=そこから着手。監査の生データ(session tmp・揮発)= `wjl5c6jwx.output` の `result.synthesis.groups`。

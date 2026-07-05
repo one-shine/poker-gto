@@ -49,6 +49,9 @@
 | U32 | コーチの推奨文でベットサイズが浮動小数点アーティファクト表示(例「レイズ 7.8100000000000005BB」) | 🟡 | ✅ | 2026-06-12: 原因は `CoachAgent.ts` の `recommendText` が `sizeBB`(EV計算用の生float)を丸めず `${s.sizeBB}BB` で展開していたこと(バーは別経路 `actionSizeLabel` の `toFixed(1)` で正常だった)。表示専用ヘルパ `fmtBB = String(Math.round(n*10)/10)` を追加しバーと同じ小数1桁へ丸め(末尾0は省く: 7.8/2.5/3/コール1BB)。`recommendText` を export し回帰テスト追加(`CoachAgent.test.ts` 11件緑・型0)。他の生BB展開は無し(`GameFooter`=整数スタック・`PlayerSeat:152`=React key で表示文字列でない)。 |
 | U33 | Phase B 後も UI が概算EVを「ヒューリスティック(equity近似)」と説明=モデル解由来になった大半のスポットで不正直(ルール1違反) | 🟠 | ✅ | 2026-06-13: **Phase B 公開準備レビュー(workflow `whugvwxha`・敵対的検証付き)で検出**。`approximate_with_ev` は被覆スポット=フロップサブゲームモデル解(`E_w[V]−cPre`)/未被覆・4bet枝=ヒューリスティックの混成だが、3つのUI面が「equity近似のヒューリスティック」固定表示だった。修正: `StrategyBars.tsx:51`(EV列ツールチップ)/`StrategyDetail.tsx:19`(バッジtitle)/`GameFooter.tsx:15`(SOURCE_INFOラベル)を混成実態どおりに書換、`types/solver.ts` の型コメントも更新。source ティアは `approximate_with_ev` 据置が正しい(戦略は手作りのまま)・methodology 詳細は `meta.sourceName`。type-check/lint/コンポーネント40テスト緑。同レビューで license L1・support gate は「問題なし」確認済。 |
 | U34 | 他プレイヤーがドンクベットしすぎる(GTO 通りに見えない) | 🟠 | ✅ | 2026-06-20: **原因** = `fishHeuristic.decidePostflop` がポジションもプリフロップアグレッサーも見ず、先頭手番(`callAmount===0`)で一律 **35% ベット**。OOP のプリフロップコーラーが先頭で打つ=ドンクベット(GTO はほぼ 0)。fish AI(exploit=既定)だけでなく **trainer の "GTO AI" でも発生**: postflop は `getSolution(allowLiveSolve:false)` がランダムな実盤面と事前計算代表盤をまず一致させられず(`getSolution.ts:151` で live solve も無効)、毎回この同じヒューリスティクスにフォールバックするため。コーチ自身が `oop_donk_bet` を「大半の局面でドンク不要」とミス指導しており**自己矛盾**だった。**対応**: `leadBetProb(street, ip, aggressor, hasAggressor, profile)` でポジション×アグレッサー分岐 — ドンク(OOP非アグレッサー)gto 0.04/0.06/0.08(flop/turn/river)・Cベット(アグレッサー)0.60/0.50/0.45・スタブ(IP非アグレッサー)0.42/0.38/0.36・リンプ(アグレッサー不在)中庸。被ベットと**ポット約60%のリードサイズ**(旧 min レイズ≈1BB)も整備。`profile` 2系統(exploit=`fish`=Cベット打ち損ね/ドンク漏れ/コーリングステーション・trainer=`gto`=GTO寄り)。IP判定は絶対ルール3どおり `isHeroIP`(シート)。**敵対的レビュー workflow `wez8r91hy`(4観点×独立検証・7指摘確定)** でリンプポット誤分類を本番修正 + テスト網羅ギャップ6件を解消。`fishHeuristic.test.ts` 20件 + 全 **616 テスト緑・型0**。 |
+| U35 | 答え合わせ(review)の展開状態が次の手番に漏れ、未タップで「考え方」展開+GTO答えが露出 | 🔴 | ✅ | 2026-07-05: **スマホ公開ブラッシュアップ監査(dynamic workflow・実機 Playwright)で検出**。原因=`GamePage` の decision 用 SpotPanel(`GamePage.tsx:178`・open/revealed=`false` 初期化)と review 用 `strategyReveal`(`:52`・=`true` 初期化)が**同一 ternary 位置・同型・key 無し**で交互描画され、React が Fiber を再利用して review の展開/公開状態が次街の decision に漏れる。→ 絶対ルール U8「答えは打った後」違反 + `markHinted` 汚染で GTO 精度計測が壊れる(**web/PWA でも現発生**)。対応=両 SpotPanel に `phase+handId+street` の一意 key を付与し街/フェーズ変化で強制再マウント。回帰テスト `SpotPanel.test.tsx`(U35: review→decision で答え非露出・**key 無しだと落ちることを確認**)。**617 テスト緑・型0**。 |
+| U36 | モバイル幅(390/360)で日本語が単語途中で改行(コーチ講評ヘッダ「インアキュラ/シー」等) | 🟠 | ⬜ | 監査 P1-1。原因=横並び flex 行が幅超過時に要素ごと縮めて内部でテキスト折返し。`MistakeCard.tsx:80`(右上絶対配置「次へ」が pr-20 を奪い実質 294px)/`CoachPanel`/`DrillQuestion`/`PostflopDrillPanel`/`SpotPanel:255`/`RangesPage:103` で再発。対応=Seg/ピル/ラベルに `whitespace-nowrap` 既定+コンテナ側 `flex-wrap gap-y-*`、MistakeCard は「次へ」を別行へ。共有 Pill/Seg に寄せて横展開。**web(PWA)先行**。 |
+| U37 | 学習フィードバック整合2件: 弱点ドリルの深リンクが postflop 系で的外れ出題 / 弱点 TOP3 が全期間累積で克服済みが永久1位 | 🟠 | ⬜ | 監査 P1-4。①`preflopDrill.ts:73` の `scenariosForCategory` が postflop 専用カテゴリ(`missed_cbet_ip` 等6種+`fold_to_3bet` 等)を未フィルタで全27シナリオにフォールバック → 見出し「IP CBet 見送り」と中身(無関係なプリフロップ)が矛盾。②`AnalysisPage:29`/`LearnPage:173` の弱点集計が `MistakeRecord.timestamp` を持つのに全期間累積のみ=克服済みが埋もれる。対応=①未対応カテゴリは明示 or mode 切替 ②直近 N 日/M ハンドのウィンドウ集計(全期間は補助)。新規ストア不要・**web 先行**。 |
 
 ---
 
@@ -103,11 +106,11 @@
 
 | 項目 | 状態 | 担当 | メモ |
 |------|------|------|------|
-| L4 アプリ名「GTO Lab」の商標調査 | 🔄 | 👤 | 各国商標 DB 検索は外部作業(本ツール不可)。"GTO Wizard"/"PokerSnowie" は他社商標=非提携を明示済み。 |
+| L4 アプリ名「GTO Lab」の商標調査 | 🔄 要決定 | 👤 | 各国商標 DB 検索は外部作業(本ツール不可)。"GTO Wizard"/"PokerSnowie" は他社商標=非提携を明示済み。**⚠️ 監査(2026-07-05・WebSearch)で実在同名同ジャンルを確認**: `gtolab.com` = 2023 後半ローンチの **「GTO LAB」**(MTT コーチング/ICM トレーナー・著名プロ起用・SNS 稼働・利用規約で商標帰属明記)。登録有無に関わらずブランド混同/レター/App Store 名称類似(4.1 隣接)のリスク。**改名は `com.gtolab.app`(bundle id)・`manifest.json` name・全 docs に波及**するため、**iOS-A1/iOS-B2 の App ID 確定前に「継続の法務リスク許容を明示決定」か「別名+bundle id/manifest 先行切替」を決める**必要。 |
 | Web フォントのセルフホスト | ✅ | 🤖 | 完了(D 節)。`@fontsource` 化で Google Fonts CDN 排除 → 真のオフライン + 第三者送信ゼロ(Playwright 実測: 外部リクエスト0)。 |
 | `manifest.screenshots` 追加 | ✅ | 🤖 | 完了(D 節)。mobile 390×844 / desktop 1280×800 を登録。 |
 | 静的ホスティング(HTTPS)へデプロイ | ✅ | 🤖 | **GitHub Pages 稼働中(2026-06-06)** <https://one-shine.github.io/poker-gto/>。下記「Web アプリ化 = GitHub Pages 公開」参照。 |
-| PRIVACY_POLICY の確定 + 公開 URL 化 | 🔄 | 👤 | 事業者名・連絡先・施行日を確定([`./PRIVACY_POLICY.md`](./PRIVACY_POLICY.md) はドラフト)。 |
+| PRIVACY_POLICY の確定 + 公開 URL 化 | 🔄 | 👤 | 事業者名・連絡先・施行日を確定([`./PRIVACY_POLICY.md`](./PRIVACY_POLICY.md) はドラフト)。**監査追補(2026-07-05)**: アプリ内にプライバシーポリシー導線が **0件**(`src/` に該当語なし)。実マネー無し・非提携の開示も `GameFooter` の ⓘ モーダルのみで他5ページから到達不能。→ `SettingsPage` に「アプリについて/法務」を新設し ①プライバシーポリシー(公開 URL)リンク ②実マネー無し・非提携文言を常設(Apple 5.1.1/4.x と利用者到達性の両面・**web 先行可**)。 |
 | 本番 Sentry DSN 配線 | ⬜ | 👤 任意 | エラー境界+クラッシュレポート基盤は実装済み(既定 OFF・`VITE_SENTRY_DSN` 設定時のみ)。 |
 | Capacitor iOS で App Store 配信 | 🔄 | 🤖+👤 | **2026-06-14 再開**(App Store 一般公開が目標・2026-05-31 見送りを撤回)。無料の**工程A**(Capacitor 統合〜実機サイドロード=🤖)+ **$99 ゲートの工程B**(審査提出=👤)に2分割。Apple Developer($99/年)は提出時のみ必須。詳細・タスク内訳は D節「Capacitor iOS 実装」。 |
 | 国際化(英語化) | ⬜ | 👤 任意 | 現状 UI は日本語のみ。市場拡大用。 |
@@ -203,6 +206,24 @@
 
 > 既存 `./RELEASE.md` §1/§2/§3/§4/§5/§6 がそのまま提出素材として適用される(中身は作成済・流用するだけ)。Android(Google Play $25)を出すなら同じ `dist/` で `npx cap add android` を併走可。
 
+#### 監査追補(2026-07-05・スマホ公開ブラッシュアップ監査 workflow 由来)— 工程A/B 計画の抜け
+
+> dynamic workflow(6観点×敵対的裏取り・48エージェント)で工程 A/B 計画のギャップを実コード検証。**既存タスクの文言・スコープを以下へ修正**(iOS 実装着手時に反映)。P0 = U35(0節・修正済)。
+
+- **iOS-A1 に追記(必須)**: ① **`IPHONEOS_DEPLOYMENT_TARGET`(MinimumOSVersion)を 16.4 以上に設定**(Xcode/Podfile)。理由=`tailwindcss ^4.3.0` は Safari 16.4+ 必須(`@property`/`color-mix()`)。既定 iOS 14 のまま出すと 14〜16.3 端末で CSS がほぼ全損した画面が配布される(`h-dvh`/モジュール Worker も同方向で同時解消)。工程Bで App Store Connect 互換性表示が iOS 16.4+ になる確認を追加。② **`TARGETED_DEVICE_FAMILY` の決定**(推奨: 初回は `1`=iPhone のみ。iPad ユニバーサルのまま提出すると iPad スクショ必須+未検証レイアウトで審査される)。
+- **iOS-A5 を「ポリッシュ確認」→「実装タスク一式」へ格上げ**(現行の "確認/任意/流用" は実態と乖離):
+  - **セーフエリア=「適用確認」ではなく「実装」**。`env(safe-area-inset-*)` の使用が全コード **0件**(`viewport-fit=cover` は指定済)。`AppShell.tsx:43` の `fixed bottom-0 h-16` ボトムナビがホームインジケータと重なり、上端はノッチに潜る。→ `src/index.css` に CSS 変数(`--safe-b: env(safe-area-inset-bottom,0px)` 等)を集約し、ナビ高を `calc(4rem + env(safe-area-inset-bottom))` 化+`main` の `pb` 連動、ヘッダ/GamePage 上端に `safe-area-inset-top`、landscape に left/right inset。`@capacitor/status-bar` は overlay 時 `Style.Dark`(背景色 #18181b は overlay では効かない)。**現行 iPhone 全機種で毎回起きる体験毀損=提出前必須**(P1)。Playwright では検証不能 → iOS-A6 の Simulator 確認に「ノッチ機種でナビ/ヘッダ非重なり」を明記。
+  - **ハプティクスを「任意」→「必須」**。`useSoundEffects.ts:17` の `vibrate()` は `navigator.vibrate` 依存で **iOS/WKWebView は常時 no-op** = `SettingsPage.tsx:295` の可視トグルが死に機能。→ `@capacitor/haptics` 導入し `vibrate()` を「ネイティブ=Haptics.impact / web=navigator.vibrate」の二段フォールバック(呼出は67/103行の2箇所のみ)。4.2 最小機能性の根拠でもある。
+  - **アイコン/スプラッシュ素材を新規作成**(「icon-512 流用」を修正)。`public/icon-512.png` は**アルファ付き 512px** = App Store マーケティングアイコンは **1024×1024・透過禁止**(`ITMS-90717` で拒否)。`@capacitor/assets` ソース下限(icon 1024/splash 2732)未達。→ `scripts/build-icons.ts` に `favicon.svg` から 1024 不透明(#18181b 塗り)+ 2732 splash を出力。
+  - **Info.plist の1行設定を追加**: `UIUserInterfaceStyle = Dark`(ダーク固定なのにライト端末でキーボード/`confirm()`/ピッカーが白浮き)+ `ITSAppUsesNonExemptEncryption = false`(提出毎の暗号化確認ダイアログ回避)。
+  - **キーボード**: `@capacitor/keyboard` の resize モード決定。`ManualAdvisorPanel.tsx:232` の `type=number` ×3 と `fixed` ボトムナビ+`h-dvh` は「ナビが浮く/スクロールが跳ぶ」典型。入力に `inputMode="decimal"` 付与(**web でも改善=PWA 先行可**)。
+  - **データ書き出しのネイティブ対応**: `SettingsPage.tsx:106` の blob URL+`<a download>` は **WKWebView で silent fail**(なのに「書き出しました」と偽の成功表示)。→ ネイティブ時は `Capacitor.isNativePlatform()` 分岐で `@capacitor/filesystem` 書き出し+`@capacitor/share` シェアシート(web は現行維持)。
+- **iOS-A6 に確認項目を追加**: 「ノッチ機種でナビ/ヘッダ非重なり」「書き出し→ファイル App 保存→再読込一致」「**PWA で書き出し→ネイティブで読込→XP/成績一致**(オリジン分離 github.io↔capacitor://localhost で学習履歴は自動移行されない・唯一の移行手段が U11 JSON なので要検証)」「実機で振動」「バックグラウンド復帰後に効果音が鳴る/サイレントスイッチ挙動」。
+- **iOS-B4 のスクショ「作成済」は誤記**。現物は PWA 用 `mobile-1.png`(390×844)+`desktop-1.png`(1280×800)のみで、App Store 必須サイズ(6.9inch 1320×2868 等)・4枚要件(`RELEASE.md`)未達 → **撮り直しが必要**。ストア説明/初回起動に「PWA 版からの引き継ぎは 設定→データ読み込み」を明記。
+- **iOS-B5/E節に追記**: `scripts/check-version.mjs` は `package.json`/`tauri.conf.json` のみ照合 → ios 生成後は `MARKETING_VERSION` の照合を追加(第3バージョンのドリフト防止)。「main push=即時 PWA 配信」と「ネイティブ=再審査(数日)」の**配信ケイデンス乖離**の運用(ネイティブ提出は `vX.Y.Z` タグの節目のみ・PWA が常に最新)を明文化。
+- **Sentry(監査で棄却=対応不要の確認)**: `reporter.ts:14` の実行時 import は capacitor:// 配下で必ず失敗し**黙って無効化**。意図せぬ送信が無く privacy label "Data Not Collected" に有利=実害なし。ネイティブでクラッシュ収集したくなった時のみ `@sentry/capacitor` を別タスク起票(その時は label 変更必須)。
+- **収益化(広告/IAP)のビルド境界(P2-4・着手は将来)**: 現状 `main.tsx:29-31` のランタイム `if` 一箇所のみで、`RELEASE.md §9`「PWA は広告なし/第三者送信ゼロ」を守る**ビルド分離が無い**。広告/IAP 着手前に `src/lib/platform.ts` へ判定を集約し `VITE_TARGET` ビルドフラグで SDK をネイティブ entry/dynamic import 内に隔離、**PWA build 出力に広告 SDK 文字列が無いことを QR4 同型の CI で検証**。
+
 ---
 
 ## E. CI/CD・リリース運用
@@ -236,6 +257,11 @@
 | QR3 | a11y: ホバー一時停止のキーボード対応 | a11y | ✅ | **2026-06-06**: `CoachToast`/`CoachPanel` に `onFocus`/`onBlur` を追加(キーボード/タッチでも自動消滅を停止・WCAG 2.2.1)。`TermChips` のツールチップに `id`+`aria-controls`/`aria-describedby` を付与しボタンと関連付け。`GameFooter` モーダルは既に `aria-label` 済(対応済)。 |
 | QR4 | データライセンスのビルド時強制(L1) | security | ✅ | **2026-06-06**: `scripts/check-data-license.mjs`(`src/data/solutions/**` の `meta.license` が `self-generated`/`original` か検証=201件全件OK)+ `npm run license:check` を **CI に追加**。他社ソルバー出力の誤混入をビルドで防止。 |
 | QR5 | multiway equity のサンプル下限警告 | 精度 | ⬜ 任意 | rejection sampling で `samples` が大きく減った場合に信頼度を下げる/注記(参考値ゆえ低優先)。実測ではサンプル効率は高く、当面保留。 |
+| QR6 | 初回ペイロード削減(スマホ/LTE 体感)| 性能 | ⬜ | **監査 P1-3(実測ビルド追試)**。①`App.tsx:3-4/31` が `OnboardingFlow`/`ReflectionModal` を lazy 化せず即時 import+早期 return → **framer-motion(120KB raw)が初回 index に混入**(index 110.71→66.14kB gzip = **-44.5kB gzip**。既存6ページと同じ `lazy()`+`Suspense` で分離。オンボは初回のみ・振り返りは100ハンド毎)。②`main.tsx:8,11` の和文/latin **500 ウェイト(≈960KB=precache の約31%)が実質未使用**(`font-medium` 8箇所のみ)→ import 削除+`font-normal/semibold` へ統一。③後続で `fonttools` サブセット(実使用 ≈1,022字)をビルド化し `license:check` 同型の「実使用文字集合↔サブセット整合」CI ガード。**全て web/PWA 完結**。 |
+| QR7 | 障害時のグレースフルデグレード | 堅牢性 | ⬜ | **監査 P2-3**。①`sw.js:9-14` の install が `cache.addAll`(SHELL4+フォント17=21件)で try/catch も allSettled も無く、初回 LTE で1件失敗すると SW が入らず「完全オフライン保証」が無音で不成立 → 個別 `fetch`+`cache.put` の `Promise.allSettled` に分解。②`solverClient.ts`/`equityClient.ts` は `new Worker()` 生成に `error` イベント/タイムアウト未登録=モジュール Worker ロード失敗時に Promise が永久 pending で「求解中」無限ハング(既存 main-thread fallback は同期例外にしか効かない)→ `addEventListener('error')` で保留 Promise を reject+worker null 化(次回インライン fallback)+防御的タイムアウト。③`sound.ts:29` の resume が `suspended` のみ=iOS 非標準の `interrupted`(電話/バックグラウンド)から復帰せず以後無音 → 条件を `!== 'running'` に広げ `visibilitychange`/`pointerdown` でも試行。iOS-A4 の実機検証前に入れるとフリーズでなく近似解へ縮退。**web/PWA 先行可**。 |
+
+> **モバイル/タッチ品質ペーパーカット群(監査 P2-1・任意)**: hover 専用の方法論注記(`StrategyDetail`/`StrategyBars` の EV 列 → U27 の Portal+タップ方式を横展開)/ number 入力 14px の iOS 自動ズーム(`ManualAdvisorPanel`・`TheoryPage` 検索 → `text-base`+`inputMode`)/ 44px 規約逸脱(`CoachToast` ✕・Onboarding スキップ・`ActionPanel` スライダーサム 16px・`CardSelector`)/ `overscroll-behavior`/`touch-action` 皆無(pull-to-refresh・ダブルタップズーム誤爆)。単体は非致命だが数が多い=`index.css` の基盤 + 共有部品で一括是正、iOS-A5 ポリッシュにまとめ **web 先行**。
+> **再訪動機の強化(監査 P2-2・任意・LTV)**: `drillStore`/`sessionStore`/`progressStore` が `timestamp` 付きで蓄積済みなのに**連続日数の導出ロジックが全コードに無い**(streak/daily 0件)→ クライアント側でストリーク導出+Dashboard 1枚 / ドリルに任意の「5問セット」完了画面 / Dashboard ミス傾向 TOP3 に「ドリルで練習」導線(既存 `onGoToDrill`)/ オプトインの `@capacitor/local-notifications`(第三者送信ゼロと両立)。**web 先行可**。
 
 ---
 
