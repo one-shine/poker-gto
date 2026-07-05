@@ -51,6 +51,10 @@ export function GamePage() {
   // (CoachPanel が答えを出すミス時は二重を避けて省略・U7)。事前に見せないので markHinted しない。
   const strategyReveal = appMode === 'study' && studyShowStrategy && lastHeroDecision && !showCoachPanel ? (
     <SpotPanel
+      // U8: decision と review は同じ ternary 位置に交互描画されるため、street/phase を含む一意 key で
+      // 別 Fiber に分離する。key が無いと React が同型 SpotPanel を再利用し、review の open/revealed(=true)が
+      // 次の手番の decision に漏れて「未タップで答えが露出」→ U8 違反 + markHinted 汚染で精度計測が壊れる。
+      key={`review-${lastHeroDecision.payload.state.handId}-${lastHeroDecision.payload.state.street}`}
       pending={lastHeroDecision.payload}
       phase="review"
       actedAction={lastHeroDecision.action}
@@ -175,7 +179,14 @@ export function GamePage() {
           ) : pendingHeroAction ? (
             // U8: アクション前は戦略(答え)を見せない。代わりに「考え方」(答え中立の観点)を出して思考を促す。
             <>
-              {appMode === 'study' && showReasoningGuide && <SpotPanel pending={pendingHeroAction} phase="decision" />}
+              {appMode === 'study' && showReasoningGuide && (
+                <SpotPanel
+                  // U8: review と別 Fiber にするため street/phase を含む一意 key(上の strategyReveal 参照)。
+                  key={`decision-${pendingHeroAction.state.handId}-${pendingHeroAction.state.street}`}
+                  pending={pendingHeroAction}
+                  phase="decision"
+                />
+              )}
               <ActionPanel pending={pendingHeroAction} onAction={submitHeroAction} />
             </>
           ) : (

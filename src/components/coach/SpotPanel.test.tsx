@@ -160,4 +160,26 @@ describe('SpotPanel', () => {
     openGuide()
     expect(screen.queryByRole('button', { name: /GTO の答えを見る/ })).toBeNull()
   })
+
+  // ── U35 回帰: GamePage の ternary で review→decision が同一位置に交互描画される。
+  // key で別 Fiber に分離しないと、review の open/revealed(=true)が次の手番の decision に漏れ、
+  // 未タップで答えが露出して U8 違反 + markHinted 汚染になる(実機で発見)。
+  // GamePage と同じ key(phase+handId+street)を付けた位置切替で漏れないことを守る。
+  it('U35: review(展開・答え表示)から decision へ切り替えても答えが露出しない(key分離)', async () => {
+    const payload = pending()
+    const Slot = ({ mode }: { mode: 'review' | 'decision' }) =>
+      mode === 'review' ? (
+        <SpotPanel key={`review-${payload.state.handId}-${payload.state.street}`} pending={payload} phase="review" actedAction="raise" />
+      ) : (
+        <SpotPanel key={`decision-${payload.state.handId}-${payload.state.street}`} pending={payload} phase="decision" />
+      )
+    const { rerender } = render(<Slot mode="review" />)
+    // review は自動展開で答え(頻度)を表示している
+    expect(await screen.findByText(/AKs @ btn-open/)).toBeInTheDocument()
+    // 同じ位置で decision へ切替 → 別 key なので再マウント = 折りたたみ・答え非表示に戻る
+    rerender(<Slot mode="decision" />)
+    expect(screen.getByText(/タップで開く/)).toBeInTheDocument()
+    expect(screen.queryByText(/AKs @ btn-open/)).toBeNull()
+    expect(screen.queryByText('100%')).toBeNull()
+  })
 })
