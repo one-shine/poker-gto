@@ -107,7 +107,7 @@
 
 | 項目 | 状態 | 担当 | メモ |
 |------|------|------|------|
-| L4 アプリ名「GTO Lab」の商標調査 | 🔄 要決定 | 👤 | 各国商標 DB 検索は外部作業(本ツール不可)。"GTO Wizard"/"PokerSnowie" は他社商標=非提携を明示済み。**⚠️ 監査(2026-07-05・WebSearch)で実在同名同ジャンルを確認**: `gtolab.com` = 2023 後半ローンチの **「GTO LAB」**(MTT コーチング/ICM トレーナー・著名プロ起用・SNS 稼働・利用規約で商標帰属明記)。登録有無に関わらずブランド混同/レター/App Store 名称類似(4.1 隣接)のリスク。**改名は `com.gtolab.app`(bundle id)・`manifest.json` name・全 docs に波及**するため、**iOS-A1/iOS-B2 の App ID 確定前に「継続の法務リスク許容を明示決定」か「別名+bundle id/manifest 先行切替」を決める**必要。 |
+| L4 アプリ名の商標・名称衝突 → **「GTO Atlas」へ改名**(旧「GTO Lab」) | ✅改名実装 / 🔄クリアランス | 🤖✅+👤 | **2026-07-11 決定・実装**(20+エージェント調査→対抗検証→改名確定・[`./COMPETITIVE.md`] 手法)。旧「GTO Lab」は実在競合「**GTO LAB**」(`gtolab.com`・GTOLAB LTD マルタ登記 C 108005・2023末ローンチ・著名プロ前面・ToS で商標主張)と**大小文字を除き完全一致×同一ニッチ** + App Store 2.3.7/4.1(c)/5.2.1・名称グローバル一意性でリスク大 → **提出前(可逆・ストア資産ゼロ)の今 `GTO Atlas` に改名**。**実装済(一括置換)**: `index.html`/`manifest.json`(name・short_name)/`AppShell` ロゴ/`sw.js`/`tauri.conf.json`/README/OVERVIEW/SPEC/USER_GUIDE/DESIGN/COMPETITIVE/RELEASE/slides。技術識別子 `poker-gto`・`base=/poker-gto/`・公開 URL は**不変**。**bundle id**: `com.gtolab.app` → **`io.github.one-shine.pokergto`**(脱ブランド=名称未クリアランスでも安定・第三者保有 `gtoatlas.com` を符号化しない・**最終 iOS bundle id は iOS-A1 で確定**)。**「GTO Atlas」の残リスク(minor-concern・提出前の専門クリアランス=👤)**: ①**PokerAtlas.com**(同ポーカー分野で "Atlas" 共有・機能別=卓検索 vs 学習で実誤認は低)②**Atlus/アトラス**(「Atlas」の日本語表記「アトラス」= Atlus のカタカナと一致・**日本=主要市場・先願・class 41 games**)③権威商標DB(JPO/EUIPO/USPTO/WIPO)は JS ゲートで未検証 → **弁理士クリアランス(JPO「アトラス」class 9/41 + EUIPO + PokerAtlas 混同)を提出前(iOS-B2 前)に実施**。`gtoatlas.com` は第三者(東京・2026-05-06 登録)保有だが**現在 DNS 未設定=未稼働**(出荷ブロッカーではない)。 |
 | Web フォントのセルフホスト | ✅ | 🤖 | 完了(D 節)。`@fontsource` 化で Google Fonts CDN 排除 → 真のオフライン + 第三者送信ゼロ(Playwright 実測: 外部リクエスト0)。 |
 | `manifest.screenshots` 追加 | ✅ | 🤖 | 完了(D 節)。mobile 390×844 / desktop 1280×800 を登録。 |
 | 静的ホスティング(HTTPS)へデプロイ | ✅ | 🤖 | **GitHub Pages 稼働中(2026-06-06)** <https://one-shine.github.io/poker-gto/>。下記「Web アプリ化 = GitHub Pages 公開」参照。 |
@@ -172,8 +172,8 @@
 
 ### Tauri デスクトップ実装 ✅ Mac(2026-05-31)
 - `src-tauri/`(Tauri v2)を追加。**`npm run tauri:dev`**(開発・ホットリロード)/ **`npm run tauri:build`**(配布物生成)。
-- 成果物: `src-tauri/target/release/bundle/macos/GTO Lab.app`(16MB)+ `.../dmg/GTO Lab_0.1.0_aarch64.dmg`(**約11MB の単一ファイル = 「1ファDLで実行」**)。Rust コンパイル ~57s。
-- `tauri.conf.json`: frontendDist=`../dist` / beforeBuildCommand=`npm run build` / window 1200×820(min 900×600)/ CSP=null(起動優先・後で厳格化可)/ identifier `com.gtolab.app`(商標 L4 は後で変更可)。
+- 成果物: `src-tauri/target/release/bundle/macos/GTO Atlas.app`(16MB)+ `.../dmg/GTO Atlas_0.1.0_aarch64.dmg`(**約11MB の単一ファイル = 「1ファDLで実行」**)。Rust コンパイル ~57s。(2026-07-11 改名前は `GTO Lab.app`。) 
+- `tauri.conf.json`: frontendDist=`../dist` / beforeBuildCommand=`npm run build` / window 1200×820(min 900×600)/ CSP=null(起動優先・後で厳格化可)/ identifier `io.github.one-shine.pokergto`(2026-07-11 に `com.gtolab.app` から変更・L4)。
 - `src/main.tsx`: Tauri 配下(`__TAURI_INTERNALS__` 検出)では SW を登録しない(資産バイナリ同梱で不要・stale 回避)。**Web/PWA 経路は不変**(ブラウザでは従来どおり SW 登録)。
 - 前提: Rust(rustup)導入済・Xcode あり・Apple Silicon。`src-tauri/target` `gen` は gitignore。検証: 338テスト緑・lint0・build緑・bundle 生成確認。
 - 残(任意): **Apple Developer ID 署名 + notarize**(未署名は初回起動で「未確認の開発元」警告 → 右クリック→開く で回避)/ **Windows ビルド**(要 Windows マシン or CI・同手順)/ CSP 厳格化。
@@ -184,12 +184,12 @@
 >
 > **⚠️ 正直な制約(最重要)**: 「App Store 公開」と「無料」は**最後の1ステップだけ両立しない**。**App Store 提出には Apple Developer Program($99/年)が必須**(Apple のルール・回避不可)。無料 Apple ID では自分の実機へのサイドロードのみ(プロビジョニング 7日で失効)。→ 工程を2分割し、**無料でできる全工事(工程A)を先に完了**、$99 が要る審査提出(工程B)だけをゲートにする。これで「無料で実機で使う」も「将来 App Store 公開」も1本のロードマップで満たす。
 >
-> **技術的追い風**: **SharedArrayBuffer / WASM / COOP-COEP 非依存**(自前 TS ソルバー = `src/workers/*.worker.ts`)→ iOS WKWebView 最大の難所が**そもそも無い**。全データ自社生成(`./DATA_LICENSE.md`)= ストアのライセンス障害ゼロ。前提: Mac(確認済)+ Xcode + CocoaPods。Capacitor 7 = 最小 iOS 14。App ID は `com.gtolab.app`(Tauri と共通・App Store 登録時に一意性確認)。
+> **技術的追い風**: **SharedArrayBuffer / WASM / COOP-COEP 非依存**(自前 TS ソルバー = `src/workers/*.worker.ts`)→ iOS WKWebView 最大の難所が**そもそも無い**。全データ自社生成(`./DATA_LICENSE.md`)= ストアのライセンス障害ゼロ。前提: Mac(確認済)+ Xcode + CocoaPods。Capacitor 7 = 最小 iOS 14。App ID は `io.github.one-shine.pokergto`(2026-07-11 L4 で `com.gtolab.app` から変更・Tauri と共通・App Store 登録時に一意性確認・最終確定は iOS-A1)。
 
 #### 工程A: 無料エンジニアリング(今すぐ実装可・$0)
 | ID | タスク | 状態 | 担当 | メモ |
 |----|--------|------|------|------|
-| iOS-A1 | Capacitor 導入 + iOS プロジェクト生成 | ⬜ | 🤖 | `npm i @capacitor/core` / `-D @capacitor/cli` → `npx cap init "GTO Lab" com.gtolab.app --web-dir dist` → `npm i @capacitor/ios` → `npx cap add ios`。新規 `capacitor.config.ts`・生成 `ios/`(要 CocoaPods)。 |
+| iOS-A1 | Capacitor 導入 + iOS プロジェクト生成 | ⬜ | 🤖 | `npm i @capacitor/core` / `-D @capacitor/cli` → `npx cap init "GTO Atlas" io.github.one-shine.pokergto --web-dir dist` → `npm i @capacitor/ios` → `npx cap add ios`。新規 `capacitor.config.ts`・生成 `ios/`(要 CocoaPods)。**bundle id 最終確定はここ**(L4=脱ブランド `io.github.one-shine.pokergto`)。 |
 | iOS-A2 | ビルド base の切替(鍵) | ⬜ | 🤖 | `vite.config.ts` の `base` を env 条件分岐(ネイティブ=相対 `'./'`・Pages=`'/poker-gto/'`)。`capacitor://localhost` はルート配信のため `/poker-gto/` 不可。`manifest.json` の start_url/scope は既に `'./'` で破綻なし。`package.json` に `build:native`/`cap:sync` 追加。GitHub Pages 通常 build が回帰しないこと。 |
 | iOS-A3 | ネイティブで SW 無効化 | ⬜ | 🤖 | `src/main.tsx` の既存 `isTauri` SW 登録スキップに **Capacitor 判定を追加**(`window.Capacitor?.isNativePlatform?.()`)。`capacitor://` 配下で SW が走ると資産配信と競合。既存パターンの素直な拡張。 |
 | iOS-A4 | Web Worker のネイティブ動作確認 | ⬜ | 🤖 | `lib/solver/solverClient.ts`・`lib/equity/equityClient.ts` のモジュール worker(`new Worker(new URL(...), {type:'module'})`)が `capacitor://` で読めるか Sim/実機で確認。両 client にメインスレッド fallback あり・SAB 非依存で致命リスク低。 |
@@ -200,7 +200,7 @@
 | ID | タスク | 状態 | 担当 | メモ |
 |----|--------|------|------|------|
 | iOS-B1 | Apple Developer Program 登録 | 🧊 $99ゲート | 👤 | **$99/年。これが無いと App Store 公開は不可**(回避不可・工程A は無関係に進められる)。 |
-| iOS-B2 | App ID 登録 + App Store Connect 作成 | ⬜ | 👤 | `com.gtolab.app` の一意性確認 → アプリレコード作成。 |
+| iOS-B2 | App ID 登録 + App Store Connect 作成 | ⬜ | 👤 | `io.github.one-shine.pokergto` の一意性確認 → アプリレコード作成。**提出前に L4 専門クリアランス(JPO「アトラス」9/41 + EUIPO + PokerAtlas)完了を確認**。 |
 | iOS-B3 | 配布署名(証明書 + provisioning) | ⬜ | 👤 | Xcode の distribution 証明書 + プロビジョニング。 |
 | iOS-B4 | ストアメタデータ + 素材 | ⬜ | 👤 | 中身は作成済(`./RELEASE.md` 流用): §5 タイトル/説明・**年齢区分17+**(§2 simulated gambling)・プライバシー "Data Not Collected"(§3)・非提携文言(§4)・スクショ各サイズ。 |
 | iOS-B5 | Archive → アップロード → 審査提出 | ⬜ | 👤 | 審査注意: **4.2 最小機能性**(フル機能/オフライン/haptics で単なる Web ラッパー判定回避)・**5.3** 実マネー無し申告・輸出コンプライアンス(暗号 none/standard)。TestFlight で事前検証。 |

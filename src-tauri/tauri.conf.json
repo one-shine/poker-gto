@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "GTO Lab",
+  "productName": "GTO Atlas",
   "version": "0.1.0",
-  "identifier": "com.gtolab.app",
+  "identifier": "io.github.one-shine.pokergto",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "GTO Lab",
+        "title": "GTO Atlas",
         "width": 1200,
         "height": 820,
         "minWidth": 900,

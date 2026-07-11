@@ -40,13 +40,13 @@
 
 | # | ファイル | 内容 |
 |---|---------|------|
-| 1 | `index.html` | Google Fonts 読み込み、`lang="ja"`、title「GTO Lab」 |
+| 1 | `index.html` | Google Fonts 読み込み、`lang="ja"`、title「GTO Atlas」 |
 | 2 | `src/index.css` | Tailwind 4 `@theme` でフォント/ブラス/フェルト/アイボリー/インク トークン、`.felt`/`.grain`/`.brass`/`.font-data` ユーティリティ、背景階層 |
 | 3 | `CardDisplay.tsx` | アイボリー紙質・大ランク+スート記号のクリーン表示。裏面=ブラス菱格子+「G」 |
 | 4 | `PlayerSeat.tsx` | グラス調シートプレート、手番リングを Framer Motion でブラス発光、アクションバッジ(塗り+アイコン+spring)、オールイン/フォールド表現、ヒーロー「あなた」リボン |
 | 5 | `PokerTable.tsx` | 照明付きフェルト楕円(ラジアル+レール+グレイン)、ブラスのディーラーボタン、チップ風ポット、ベットチップ層(誰がいくら)、ボード配布アニメ。ヒーロー(seat0)を下中央に配置 |
 | 6 | `ActionPanel.tsx` | ダークガラス + ブラスアクセント、スライダー/プリセット作り込み(aria-label 厳守) |
-| 7 | `AppShell.tsx` | GTO LAB ブランドマーク、アクティブをブラスバー+発光、6タブを lucide 風細線インライン SVG に統一、背景階層 |
+| 7 | `AppShell.tsx` | GTO ATLAS ブランドマーク、アクティブをブラスバー+発光、6タブを lucide 風細線インライン SVG に統一、背景階層 |
 | 8 | `GamePage.tsx` | テーブル周りの余白・ショーダウン結果の質感調整 |
 | 9 | `OnboardingFlow.tsx` | ディスプレイ書体の見出し、Framer Motion スタッガード表示、凡例作り込み |
 | — | `RangeGrid.tsx` | レスポンシブ大型化(`minmax(0,1fr)` aspect-square セル)、ブラスのランクヘッダ、各セル角に R/C/M トークン併記、混合戦略の頻度比スタック塗り |

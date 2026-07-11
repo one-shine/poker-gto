@@ -22,7 +22,7 @@ export function AppShell({ active, onNavigate, children }: AppShellProps) {
           <span className="w-9 h-9 rounded-xl brass flex items-center justify-center font-display font-extrabold text-base shadow-[0_2px_8px_rgba(212,175,55,0.35)]">
             ♠
           </span>
-          <span className="font-display text-[9px] font-bold tracking-widest text-brass-300/80">GTO LAB</span>
+          <span className="font-display text-[9px] font-bold tracking-widest text-brass-300/80">GTO ATLAS</span>
         </div>
         {NAV_ITEMS.map(item => (
           <NavButton

@@ -1,4 +1,4 @@
-# GTO Lab — ポーカー GTO 学習アプリ
+# GTO Atlas — ポーカー GTO 学習アプリ
 
 PokerSnowie / GTO Wizard ライクな、**ローカル動作のポーカー GTO 学習アプリ**。
 6-max ノーリミットホールデムのレンジ・ドリル・push/fold を、解の信頼度を常に正直に表示しながら学べる。

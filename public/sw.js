@@ -1,4 +1,4 @@
-// GTO Lab Service Worker — オフライン対応 (アプリシェル + フォント資産プリキャッシュ + 同一オリジン資産の runtime cache)。
+// GTO Atlas Service Worker — オフライン対応 (アプリシェル + フォント資産プリキャッシュ + 同一オリジン資産の runtime cache)。
 // CACHE 名と PRECACHE_FONTS はビルド後に scripts/inject-sw-precache.mjs がプレースホルダを実値へ置換する。
 const CACHE = '__CACHE_VERSION__'
 // 相対パス: SW は base 配下(例 /poker-gto/sw.js)に配信され、相対URLは自身の URL 基準で解決される。

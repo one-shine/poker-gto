@@ -1,6 +1,6 @@
 {
-  "name": "GTO Lab — ポーカーGTO学習",
-  "short_name": "GTO Lab",
+  "name": "GTO Atlas — ポーカーGTO学習",
+  "short_name": "GTO Atlas",
   "description": "ローカル動作のポーカーGTO学習アプリ。レンジ・ソルバー解・弱点分析・ドリル。",
   "start_url": "./",
   "scope": "./",
