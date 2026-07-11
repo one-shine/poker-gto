@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { MistakeCategory, MistakeRecord, HandSummary } from '../types/stats'
 import type { SkillLevel } from '../types/game'
 import type { PageId } from '../components/layout/navItems'
 import { XP_THRESHOLDS } from '../types/stats'
 import { CATEGORY_JP } from '../data/mistakeLabels'
 import type { DrillKind } from '../types/stats'
+import { aggregateRecentWeaknesses, WEAKNESS_WINDOW_DAYS } from '../lib/analysis/weaknessWindow'
+import { isPreflopDrillCategory } from '../lib/drill/preflopDrill'
 import { useProgressStore } from '../stores/progressStore'
 import { useSessionStore } from '../stores/sessionStore'
 import { useDrillStore } from '../stores/drillStore'
@@ -159,9 +161,10 @@ function Dashboard({ onGoToDrill }: { onGoToDrill: () => void }) {
   const accuracy = useSessionStore(s => s.gtoAccuracy())
   const evaluated = useSessionStore(s => s.evaluatedCount)
   const sessionHandCount = useSessionStore(s => s.sessionHandCount)
+  const mistakes = useSessionStore(s => s.mistakes)
 
   // 初回判定: ほぼプレイしておらず、まだミス記録もない (= 学習ループ未体験) 状態。
-  const hasMistakes = Object.values(progress.mistakesByCategory).some(n => n > 0)
+  const hasMistakes = mistakes.length > 0
   const isNew = sessionHandCount < 5 && !hasMistakes
 
   const idx = LEVEL_ORDER.indexOf(progress.level)
@@ -170,10 +173,8 @@ function Dashboard({ onGoToDrill }: { onGoToDrill: () => void }) {
   const nextT = nextLevel ? XP_THRESHOLDS[nextLevel] : curT
   const pct = nextLevel ? Math.min(100, ((progress.xp - curT) / (nextT - curT)) * 100) : 100
 
-  const topMistakes = (Object.entries(progress.mistakesByCategory) as [MistakeCategory, number][])
-    .filter(([, n]) => n > 0)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
+  // 通算 mistakesByCategory はタイムスタンプが無く克服済みが永久残留するため、直近ウィンドウで集計する。
+  const topMistakes = useMemo(() => aggregateRecentWeaknesses(mistakes).slice(0, 3), [mistakes])
 
   return (
     <div className="space-y-5">
@@ -215,19 +216,21 @@ function Dashboard({ onGoToDrill }: { onGoToDrill: () => void }) {
         </div>
       </div>
 
-      {/* ミス傾向 TOP3 */}
+      {/* ミス傾向 TOP3 (直近ウィンドウ) */}
       <div className="rounded-2xl border border-white/10 bg-base-800/60 p-4">
-        <h3 className="text-xs font-bold text-brass-300 uppercase tracking-wider mb-2">ミス傾向 TOP3</h3>
+        <h3 className="text-xs font-bold text-brass-300 uppercase tracking-wider mb-2">ミス傾向 TOP3(直近{WEAKNESS_WINDOW_DAYS}日)</h3>
         {topMistakes.length === 0 ? (
           <p className="text-sm text-zinc-500">
-            まだミスの記録がありません。<span className="text-zinc-400">ゲームを回すか、下のドリルで基礎から練習できます。</span>
+            {hasMistakes
+              ? <>直近{WEAKNESS_WINDOW_DAYS}日は繰り返しミスがありません。<span className="text-zinc-400">安定しています。全期間の傾向は分析ページで確認できます。</span></>
+              : <>まだミスの記録がありません。<span className="text-zinc-400">ゲームを回すか、下のドリルで基礎から練習できます。</span></>}
           </p>
         ) : (
           <ul className="space-y-1.5">
-            {topMistakes.map(([cat, n]) => (
-              <li key={cat} className="flex items-center justify-between text-sm">
-                <span className="text-zinc-200">{CATEGORY_JP[cat]}</span>
-                <span className="font-data text-rose-300 font-bold">{n}回</span>
+            {topMistakes.map(a => (
+              <li key={a.category} className="flex items-center justify-between text-sm">
+                <span className="text-zinc-200">{CATEGORY_JP[a.category]}</span>
+                <span className="font-data text-rose-300 font-bold">{a.count}回</span>
               </li>
             ))}
           </ul>
@@ -363,13 +366,31 @@ function DrillIntro() {
 }
 
 // ドリルタブ: プリフロップ(近似) / ポストフロップ(自前CFR) / プッシュフォールド(厳密解) の切替。
-function DrillTab({ deepLinked }: { deepLinked: boolean }) {
-  // 弱点ディープリンク(プリフロップのMistakeCategory)で来たら必ずプリフロップを表示。
-  const [mode, setMode] = useState<DrillKind>('preflop')
+function DrillTab({ deepLinkedCategory }: { deepLinkedCategory: MistakeCategory | null }) {
+  const clearDrillCategory = useNavStore(s => s.clearDrillCategory)
+  // ディープリンクのカテゴリはマウント時に一度だけ取り込む (消費後も初期モード/注記を固定するため)。
+  const [linked] = useState(() => deepLinkedCategory)
+  // ポストフロップ専用の弱点はプリフロップに該当スポットが無い → ポストフロップ・ドリルを初期表示し誘導する。
+  const postflopLink = linked != null && !isPreflopDrillCategory(linked)
+  const [mode, setMode] = useState<DrillKind>(() => (postflopLink ? 'postflop' : 'preflop'))
+
+  // ポストフロップ誘導では DrillPanel が載らず消費フラグが残るため、ここで掃除する。
+  useEffect(() => {
+    if (deepLinkedCategory) clearDrillCategory()
+  }, [deepLinkedCategory, clearDrillCategory])
+
   return (
     <div className="space-y-4">
       <DrillIntro />
-      {!deepLinked && (
+      {postflopLink && (
+        <div role="note" className="rounded-xl border border-amber-500/40 bg-amber-950/20 px-3.5 py-2.5 text-sm text-amber-100 flex items-start gap-2">
+          <span aria-hidden="true" className="mt-0.5 shrink-0">▸</span>
+          <span>
+            「<span className="font-bold">{CATEGORY_JP[linked!]}</span>」はポストフロップの弱点です。プリフロップ・ドリルには該当スポットが無いため、こちらのポストフロップ・ドリルで練習しましょう。
+          </span>
+        </div>
+      )}
+      {deepLinkedCategory == null && (
         <div className="flex flex-wrap gap-2">
           <Tab active={mode === 'preflop'} onClick={() => setMode('preflop')}>プリフロップ</Tab>
           <Tab active={mode === 'postflop'} onClick={() => setMode('postflop')}>ポストフロップ</Tab>
@@ -398,7 +419,7 @@ export function LearnPage() {
           <Tab active={tab === 'drill'} onClick={() => setTab('drill')}>ドリル</Tab>
           <Tab active={tab === 'history'} onClick={() => setTab('history')}>ハンド履歴</Tab>
         </div>
-        {tab === 'dashboard' ? <Dashboard onGoToDrill={() => setTab('drill')} /> : tab === 'drill' ? <DrillTab deepLinked={!!drillCategory} /> : <History onGoToDrill={() => setTab('drill')} />}
+        {tab === 'dashboard' ? <Dashboard onGoToDrill={() => setTab('drill')} /> : tab === 'drill' ? <DrillTab deepLinkedCategory={drillCategory} /> : <History onGoToDrill={() => setTab('drill')} />}
       </div>
     </div>
   )

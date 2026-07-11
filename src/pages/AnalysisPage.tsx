@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import type { MistakeCategory } from '../types/stats'
+import { useMemo, useState } from 'react'
 import { useSessionStore } from '../stores/sessionStore'
 import { useNavStore } from '../stores/navStore'
+import { CATEGORY_JP } from '../data/mistakeLabels'
+import { aggregateRecentWeaknesses, aggregateAllTimeWeaknesses, WEAKNESS_WINDOW_DAYS, WEAKNESS_WINDOW_MAX, type WeaknessAgg } from '../lib/analysis/weaknessWindow'
 import { WeaknessCard } from '../components/analysis/WeaknessCard'
 import { PositionStatsTable } from '../components/analysis/PositionStatsTable'
 
@@ -20,22 +21,16 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
   )
 }
 
-interface Agg { category: MistakeCategory; count: number; evLost: number }
-
 function Weaknesses() {
   const mistakes = useSessionStore(s => s.mistakes)
   const goTo = useNavStore(s => s.goTo)
 
-  const byCat = new Map<MistakeCategory, Agg>()
-  for (const m of mistakes) {
-    const a = byCat.get(m.category) ?? { category: m.category, count: 0, evLost: 0 }
-    a.count++
-    a.evLost += m.evLoss
-    byCat.set(m.category, a)
-  }
-  const top3 = [...byCat.values()].sort((a, b) => b.count - a.count).slice(0, 3)
+  // 主表示は直近ウィンドウ (克服済みが永久に居座らない)。全期間は補助で残す。
+  const recent = useMemo(() => aggregateRecentWeaknesses(mistakes), [mistakes])
+  const allTime = useMemo(() => aggregateAllTimeWeaknesses(mistakes), [mistakes])
+  const top3 = recent.slice(0, 3)
 
-  if (top3.length === 0) {
+  if (mistakes.length === 0) {
     // D4: 静的な「Gameでプレイ」だけでなく、推奨パスとドリルCTAを提示する。
     return (
       <div className="rounded-2xl border border-white/10 bg-base-800/60 p-4 space-y-3">
@@ -72,14 +67,44 @@ function Weaknesses() {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-zinc-400">
-        繰り返しやすいミスの上位です。各カードから関連理論を開いて、原因と対策を確認しましょう。
-      </p>
-      <div className="space-y-3">
-        {top3.map((a, i) => (
-          <WeaknessCard key={a.category} category={a.category} count={a.count} evLost={a.evLost} rank={i + 1} />
+      {top3.length > 0 ? (
+        <>
+          <p className="text-xs text-zinc-400">
+            直近{WEAKNESS_WINDOW_DAYS}日(最大{WEAKNESS_WINDOW_MAX}件)で繰り返しているミスの上位です。克服したミスは自然に薄れます。各カードから関連理論を開けます。
+          </p>
+          <div className="space-y-3">
+            {top3.map((a, i) => (
+              <WeaknessCard key={a.category} category={a.category} count={a.count} evLost={a.evLost} rank={i + 1} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 text-sm text-emerald-100">
+          <p className="font-bold mb-1 flex items-center gap-1.5">
+            <span aria-hidden="true">✓</span>直近{WEAKNESS_WINDOW_DAYS}日は繰り返しミスがありません
+          </p>
+          <p className="text-emerald-200/80 leading-relaxed">最近のプレイは安定しています。下は全期間の傾向(参考)です。</p>
+        </div>
+      )}
+
+      {allTime.length > 0 && <AllTimeSummary rows={allTime.slice(0, 5)} />}
+    </div>
+  )
+}
+
+// 全期間のミス傾向 (補助表示)。主表示は直近ウィンドウ、こちらは通算の参考。
+function AllTimeSummary({ rows }: { rows: WeaknessAgg[] }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-base-800/60 p-4">
+      <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">全期間の傾向(参考)</h3>
+      <ul className="space-y-1">
+        {rows.map(r => (
+          <li key={r.category} className="flex items-center justify-between text-xs">
+            <span className="text-zinc-300">{CATEGORY_JP[r.category]}</span>
+            <span className="font-data text-zinc-500 font-bold">{r.count}回</span>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   )
 }

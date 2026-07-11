@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { actionFreqs, judge, generateQuestion, allHandCategories, explainPreflop, type PreflopDrillQuestion } from './preflopDrill'
+import { actionFreqs, judge, generateQuestion, allHandCategories, explainPreflop, isPreflopDrillCategory, type PreflopDrillQuestion } from './preflopDrill'
 
 const q = (scenarioId: string, hand: string): PreflopDrillQuestion => ({
   scenarioId, scenarioLabel: '', position: '', hand, options: [],
@@ -29,6 +29,38 @@ describe('preflop drill', () => {
     const question = generateQuestion(() => 0)
     expect(question.hand).toBeTruthy()
     expect(question.options.length).toBeGreaterThanOrEqual(2)
+  })
+
+  describe('category routing', () => {
+    it('classifies postflop-only categories as out of scope for preflop drill', () => {
+      expect(isPreflopDrillCategory('missed_cbet_ip')).toBe(false)
+      expect(isPreflopDrillCategory('cbet_oop_too_wide')).toBe(false)
+      expect(isPreflopDrillCategory('oop_donk_bet')).toBe(false)
+      expect(isPreflopDrillCategory('bluff_frequency')).toBe(false)
+      expect(isPreflopDrillCategory('value_bet_missed')).toBe(false)
+      expect(isPreflopDrillCategory('check_ip_missed_value')).toBe(false)
+    })
+
+    it('classifies preflop categories (and no category) as in scope', () => {
+      expect(isPreflopDrillCategory(undefined)).toBe(true)
+      expect(isPreflopDrillCategory('preflop_too_wide')).toBe(true)
+      expect(isPreflopDrillCategory('fold_to_3bet')).toBe(true)
+      expect(isPreflopDrillCategory('call_3bet_oop')).toBe(true)
+      expect(isPreflopDrillCategory('blind_defense_wide')).toBe(true)
+      expect(isPreflopDrillCategory('sb_limp')).toBe(true)
+    })
+
+    it('routes fold_to_3bet / call_3bet_oop to facing-3bet scenarios (not random opens)', () => {
+      expect(generateQuestion(() => 0, 'fold_to_3bet').scenarioId).toMatch(/-3bet$/)
+      expect(generateQuestion(() => 0.99, 'fold_to_3bet').scenarioId).toMatch(/-3bet$/)
+      expect(generateQuestion(() => 0, 'call_3bet_oop').scenarioId).toMatch(/-3bet$/)
+    })
+
+    it('routes preflop open / blind-defense / sb-limp categories to their own spots', () => {
+      expect(generateQuestion(() => 0, 'preflop_too_wide').scenarioId).toMatch(/-open$/)
+      expect(generateQuestion(() => 0, 'blind_defense_tight').scenarioId).toMatch(/^bb-vs-/)
+      expect(generateQuestion(() => 0, 'sb_limp').scenarioId).toBe('sb-open')
+    })
   })
 
   describe('explainPreflop', () => {

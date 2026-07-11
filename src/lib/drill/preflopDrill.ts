@@ -69,15 +69,32 @@ function optionsFor(scenarioId: string): DrillOption[] {
     : [{ action: 'raise', label: raiseLabel }, { action: 'fold', label: 'フォールド' }]
 }
 
-// MistakeCategory → 出題対象シナリオの絞り込み。
+// プリフロップ・ドリルに該当スポットが存在しないミスカテゴリ (ポストフロップ専用)。
+// これらは無関係なプリフロップ出題を出さず、UI 側でポストフロップ・ドリルへ誘導する。
+const POSTFLOP_ONLY_CATEGORIES = new Set<MistakeCategory>([
+  'missed_cbet_ip', 'cbet_oop_too_wide', 'check_ip_missed_value',
+  'oop_donk_bet', 'bluff_frequency', 'value_bet_missed',
+])
+
+// このカテゴリがプリフロップ・ドリルの出題対象か (未指定=一般ドリルは対象)。
+export function isPreflopDrillCategory(category?: MistakeCategory): boolean {
+  return !category || !POSTFLOP_ONLY_CATEGORIES.has(category)
+}
+
+// MistakeCategory → 出題対象シナリオの絞り込み。ポストフロップ専用カテゴリは空 (該当スポットなし)。
 function scenariosForCategory(category?: MistakeCategory): typeof PREFLOP_SCENARIOS {
   if (!category) return PREFLOP_SCENARIOS
+  if (POSTFLOP_ONLY_CATEGORIES.has(category)) return []
   if (category.startsWith('blind_defense')) return PREFLOP_SCENARIOS.filter(s => s.id.startsWith('bb-vs-'))
   if (category === 'sb_limp') return PREFLOP_SCENARIOS.filter(s => s.id === 'sb-open')
+  // 対3bet の弱点 (降りすぎ / OOPコール) は opener 応答=対3bet スポットで出題する。
+  if (category === 'fold_to_3bet' || category === 'call_3bet_oop') return PREFLOP_SCENARIOS.filter(s => s.id.endsWith('-3bet'))
   if (category.startsWith('preflop')) return PREFLOP_SCENARIOS.filter(s => s.id.endsWith('-open'))
   return PREFLOP_SCENARIOS
 }
 
+// 呼び出し側 (LearnPage) は isPreflopDrillCategory でポストフロップ専用カテゴリを事前に振り分けるため、
+// ここに来る category は一般 or プリフロップ対象のみ (pool は非空)。
 export function generateQuestion(rng: () => number = Math.random, category?: MistakeCategory): PreflopDrillQuestion {
   const pool = scenariosForCategory(category)
   const list = pool.length > 0 ? pool : PREFLOP_SCENARIOS
