@@ -313,7 +313,7 @@ export function SettingsPage() {
                 type="button"
                 disabled={dataBusy}
                 onClick={handleExport}
-                className="flex-1 min-h-11 rounded-xl border border-brass-500/30 bg-brass-500/10 hover:bg-brass-500/20 text-sm font-medium text-brass-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 min-h-11 rounded-xl border border-brass-500/30 bg-brass-500/10 hover:bg-brass-500/20 text-sm font-semibold text-brass-200 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span aria-hidden="true">⤓ </span>データを書き出す
               </button>
@@ -321,7 +321,7 @@ export function SettingsPage() {
                 type="button"
                 disabled={dataBusy}
                 onClick={() => fileRef.current?.click()}
-                className="flex-1 min-h-11 rounded-xl border border-white/10 bg-base-800/60 hover:border-brass-500/40 text-sm font-medium text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 min-h-11 rounded-xl border border-white/10 bg-base-800/60 hover:border-brass-500/40 text-sm font-semibold text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span aria-hidden="true">⤒ </span>データを読み込む
               </button>
@@ -347,7 +347,7 @@ export function SettingsPage() {
               type="button"
               disabled={sessionHandCount < 20}
               onClick={openReflection}
-              className="min-h-11 rounded-xl border border-brass-500/30 bg-brass-500/10 hover:bg-brass-500/20 text-sm font-medium text-brass-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="min-h-11 rounded-xl border border-brass-500/30 bg-brass-500/10 hover:bg-brass-500/20 text-sm font-semibold text-brass-200 disabled:opacity-40 disabled:cursor-not-allowed"
               title={sessionHandCount < 20 ? '20ハンド以上プレイすると振り返りできます' : undefined}
             >
               セッションを振り返る{sessionHandCount < 20 ? `(あと${20 - sessionHandCount}ハンド)` : ''}
@@ -355,14 +355,14 @@ export function SettingsPage() {
             <button
               type="button"
               onClick={() => s.resetOnboarding()}
-              className="min-h-11 rounded-xl border border-white/10 bg-base-800/60 hover:border-brass-500/40 text-sm font-medium text-zinc-200"
+              className="min-h-11 rounded-xl border border-white/10 bg-base-800/60 hover:border-brass-500/40 text-sm font-semibold text-zinc-200"
             >
               チュートリアルを再表示
             </button>
             <button
               type="button"
               onClick={() => { if (confirm('XP・レベル・統計をリセットします。よろしいですか?')) resetProgress() }}
-              className="min-h-11 rounded-xl border border-rose-500/30 bg-rose-950/30 hover:bg-rose-950/50 text-sm font-medium text-rose-300"
+              className="min-h-11 rounded-xl border border-rose-500/30 bg-rose-950/30 hover:bg-rose-950/50 text-sm font-semibold text-rose-300"
             >
               進捗(XP・統計)をリセット
             </button>

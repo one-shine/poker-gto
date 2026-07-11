@@ -126,7 +126,7 @@ export function RangeEquityDistribution({ a, b }: { a: RangeScenario; b: RangeSc
               key={p.label}
               type="button"
               onClick={() => setBoard(parseCards(p.cards))}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
                 active ? 'bg-white text-zinc-900' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
               }`}
             >
@@ -137,7 +137,7 @@ export function RangeEquityDistribution({ a, b }: { a: RangeScenario; b: RangeSc
         <button
           type="button"
           onClick={() => setBoard(randomFlop())}
-          className="px-2.5 py-1 rounded text-xs font-medium bg-brass-600/30 text-brass-200 hover:bg-brass-600/50 transition-colors"
+          className="px-2.5 py-1 rounded text-xs font-semibold bg-brass-600/30 text-brass-200 hover:bg-brass-600/50 transition-colors"
         >
           🎲 ランダム
         </button>

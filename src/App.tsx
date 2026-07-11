@@ -1,11 +1,12 @@
 import { lazy, Suspense } from 'react'
 import { AppShell } from './components/layout/AppShell'
-import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
-import { ReflectionModal } from './components/reflection/ReflectionModal'
 import { useSettingsStore } from './stores/settingsStore'
 import { useNavStore } from './stores/navStore'
 
 // 各ページを遅延ロードして初期バンドル/モバイルTTIを抑える (Phase 6 最適化)
+// framer-motion を積む OnboardingFlow/ReflectionModal も遅延化し初回 index から外す (QR6)
+const OnboardingFlow = lazy(() => import('./components/onboarding/OnboardingFlow').then(m => ({ default: m.OnboardingFlow })))
+const ReflectionModal = lazy(() => import('./components/reflection/ReflectionModal').then(m => ({ default: m.ReflectionModal })))
 const GamePage = lazy(() => import('./pages/GamePage').then(m => ({ default: m.GamePage })))
 const LearnPage = lazy(() => import('./pages/LearnPage').then(m => ({ default: m.LearnPage })))
 const AnalysisPage = lazy(() => import('./pages/AnalysisPage').then(m => ({ default: m.AnalysisPage })))
@@ -28,7 +29,11 @@ export default function App() {
 
   // 初回起動はチュートリアルを最前面に表示 (settingsStore.onboardingComplete で判定)
   if (!onboardingComplete) {
-    return <OnboardingFlow />
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <OnboardingFlow />
+      </Suspense>
+    )
   }
 
   return (
@@ -41,7 +46,9 @@ export default function App() {
         {page === 'ranges' && <RangesPage />}
         {page === 'settings' && <SettingsPage />}
       </Suspense>
-      <ReflectionModal />
+      <Suspense fallback={null}>
+        <ReflectionModal />
+      </Suspense>
     </AppShell>
   )
 }
