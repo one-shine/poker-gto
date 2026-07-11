@@ -14,7 +14,24 @@ function getACtor(): ACtor | null {
   )
 }
 
-// ユーザー操作後に呼ばれる前提。autoplay ポリシーで suspended なら resume する。
+// iOS は電話/バックグラウンドで AudioContext が非標準の 'interrupted' になり、suspended とは別状態。
+// running 以外はすべて resume 対象にし、closed 等の reject は握り潰す。
+function tryResume(): void {
+  if (ctx && ctx.state !== 'running') void ctx.resume().catch(() => {})
+}
+
+let resumeHandlersBound = false
+// 復帰契機(再表示/タップ)でも resume を試みる。多重登録しないよう ctx 初回生成時に一度だけ束ねる。
+function bindResumeHandlers(): void {
+  if (resumeHandlersBound || typeof window === 'undefined') return
+  resumeHandlersBound = true
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') tryResume()
+  })
+  window.addEventListener('pointerdown', tryResume, { passive: true })
+}
+
+// ユーザー操作後に呼ばれる前提。autoplay ポリシー/中断状態なら resume する。
 function ensureCtx(): AudioContext | null {
   if (!enabled) return null
   if (!ctx) {
@@ -25,8 +42,9 @@ function ensureCtx(): AudioContext | null {
     } catch {
       return null
     }
+    bindResumeHandlers()
   }
-  if (ctx.state === 'suspended') void ctx.resume()
+  tryResume()
   return ctx
 }
 

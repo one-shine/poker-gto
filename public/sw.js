@@ -6,10 +6,28 @@ const CACHE = '__CACHE_VERSION__'
 const SHELL = ['./', './index.html', './manifest.json', './favicon.svg']
 const PRECACHE_FONTS = __PRECACHE_FONTS__ // ビルドで dist/assets/*.woff2 を注入 (完全オフライン保証)
 
+// フォント(17件)は best-effort: 1件でも失敗すると起動を止めないよう個別 fetch+put を allSettled で許容する。
+// 取り逃したフォントはオンライン時に fetch ハンドラ(stale-while-revalidate)が後追いで埋める。
+async function precacheBestEffort(cache, urls) {
+  await Promise.allSettled(
+    urls.map(async url => {
+      const res = await fetch(url)
+      if (res.ok) await cache.put(url, res)
+    }),
+  )
+}
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll([...SHELL, ...PRECACHE_FONTS]))
+      .then(async cache => {
+        // 必須シェルは原子的にキャッシュする。1件(特に './')でも失敗したら addAll が throw →
+        // install ごと reject → ブラウザが次回ナビゲーションで install を再試行する(回線が安定した時点で
+        // シェル一式が確実に入る=完全オフライン保証)。best-effort にすると './' 欠落でも install 成功扱いに
+        // なり二度と再試行されず、オフライン起動が恒久的に不成立になる。
+        await cache.addAll(SHELL)
+        await precacheBestEffort(cache, PRECACHE_FONTS) // フォントは best-effort(起動をブロックしない)
+      })
       .then(() => self.skipWaiting()),
   )
 })
