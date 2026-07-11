@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { useGameStore } from './gameStore'
+import { useGameStore, HERO_ID } from './gameStore'
 import { useSettingsStore } from './settingsStore'
 import { useSessionStore } from './sessionStore'
 
@@ -133,5 +133,51 @@ describe('gameStore', () => {
     store.getState().initGame()
     store.getState().startNewHand()
     expect(store.getState().effectiveStackBB).toBe(50)
+  })
+
+  // B7 fix: エンジンは配当を stackBB に戻さないため、修正前はショーダウンで勝者の席が拠出分だけ
+  // 減って見え、cash で「勝ったのにキャッシュが増えない」体感バグになっていた。ハンド完了時に
+  // 卓の hero 席が「真の終了スタック(=次ハンドへ持ち越す額)」を表示し、ポットが空になることを検証する。
+  it('cash: ハンド完了時に卓の hero 席が配当込みの終了スタックを表示し、持ち越しと一致する', () => {
+    vi.useFakeTimers()
+    useSettingsStore.getState().setAppMode('play')
+    useSettingsStore.getState().setStackMode('cash')
+    useSettingsStore.getState().setBuyInBB(100)
+    const store = useGameStore
+    store.getState().resetGame()
+    store.getState().initGame()
+
+    let sawWin = false
+    for (let h = 0; h < 200; h++) {
+      store.getState().startNewHand()
+      const startStack = store.getState().effectiveStackBB
+      // hero は常にチェック/コールでショーダウンまで進み、勝ちハンドを拾う。
+      for (let i = 0; i < 800 && store.getState().handCount === h; i++) {
+        const p = store.getState().pendingHeroAction
+        if (p) {
+          const act = p.validActions.includes('call') ? 'call'
+            : p.validActions.includes('check') ? 'check' : 'fold'
+          store.getState().submitHeroAction(act as 'call' | 'check' | 'fold')
+        }
+        vi.advanceTimersByTime(300)
+      }
+      // 完了直後: 卓に見える hero 席スタック = 開始 + netBB(=真の終了スタック)。
+      const gs = store.getState().gameState!
+      const heroSeat = gs.players.find(pl => pl.id === HERO_ID)!
+      const net = useSessionStore.getState().handSummaries.at(-1)!.netBB
+      const trueEnd = Math.round((startStack + net) * 100) / 100
+      expect(heroSeat.stackBB).toBeCloseTo(trueEnd, 2)
+      // ポットは勝者へ払い出し済み(中央に満額ポットが残らない=二重表示しない)。
+      expect(gs.pot.mainPotBB).toBe(0)
+      expect(gs.pot.sidePots).toHaveLength(0)
+
+      if (net > 0) {
+        sawWin = true
+        // 勝ったハンドでは席スタックが「開始より増えている」= 修正前は拠出分だけ減っていた。
+        expect(heroSeat.stackBB).toBeGreaterThan(startStack)
+      }
+    }
+    // 200 ハンド call し続ければ必ず勝ちが出る(勝ち経路が未検証だったのが本バグの温床だった)。
+    expect(sawWin).toBe(true)
   })
 })

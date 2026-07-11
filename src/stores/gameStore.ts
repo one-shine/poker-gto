@@ -215,15 +215,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // 返すので winnerId で集計する(winnerIds.includes だと split で co-winner 分を二重計上する)。
       const wonByPlayer = (id: string) =>
         results.filter(r => r.winnerId === id).reduce((acc, r) => acc + r.amountWonBB, 0)
-      // U5: netBB = グロス受取 − 拠出(当ハンド開始stack − 終了stack)。配当は stack に戻されない実装。
+      // U5: netBB = グロス受取 − 拠出(当ハンド開始stack − 終了stack)。拠出はエンジンの
+      // 「配当を stack に戻さない」post-bet stack から求める(以降で表示用に配当を戻す前に確定する)。
       const hero = state.players.find(p => p.id === HERO_ID)
       const invested = heroHandStartStackBB - (hero?.stackBB ?? heroHandStartStackBB)
       const grossWon = wonByPlayer(HERO_ID)
-      // B7 cash: 全席の真の終了スタック(終了stack + 受取)を次ハンドへ持ち越す。
+      // B7 fix: エンジンは勝者のポット受取を stackBB に戻さない(post-bet stack のまま)。そのままだと
+      // ショーダウンで「勝ったのに席の数字が拠出分だけ減って見える」→ cash で「キャッシュが増えない」体感バグ。
+      // ここで各席へ受取を加算し(=真の終了スタック)ポットを空にして award を可視化する。reset/cash 共通で
+      // 正しく、cash の持ち越しはこの credited stack をそのまま使う(表示と carry の単一ソース化)。
+      const settledPlayers = state.players.map(p => ({
+        ...p,
+        stackBB: Math.round((p.stackBB + wonByPlayer(p.id)) * 100) / 100,
+      }))
+      const settledState: GameState = {
+        ...state,
+        players: settledPlayers,
+        pot: { mainPotBB: 0, sidePots: [] },
+      }
+      // B7 cash: 全席の真の終了スタックを次ハンドへ持ち越す(= 上の credited stack)。
       if (useSettingsStore.getState().stackMode === 'cash') {
-        carryStacks = Object.fromEntries(
-          state.players.map(p => [p.id, Math.round((p.stackBB + wonByPlayer(p.id)) * 100) / 100]),
-        )
+        carryStacks = Object.fromEntries(settledPlayers.map(p => [p.id, p.stackBB]))
       }
       const summary: HandSummary = {
         handId: state.handId,
@@ -241,7 +253,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const play = useSettingsStore.getState().appMode === 'play'
       const review = play && handDecisions.length > 0 ? handDecisions : null
       set(s => ({
-        gameState: state,
+        gameState: settledState,
         lastResults: results,
         pendingHeroAction: null,
         handReview: review,
