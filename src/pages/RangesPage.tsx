@@ -87,7 +87,7 @@ function SingleRange() {
                 type="button"
                 onClick={() => selectScenario(s.id)}
                 aria-pressed={selectedId === s.id}
-                className={`px-3 min-h-9 rounded text-sm font-medium transition-colors ${
+                className={`px-3 min-h-9 rounded text-sm font-semibold transition-colors ${
                   selectedId === s.id
                     ? 'bg-white text-zinc-900'
                     : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
@@ -100,22 +100,22 @@ function SingleRange() {
         </div>
 
         {/* Scenario info */}
-        <div className="flex items-center gap-6 text-sm">
-          <span className="text-zinc-400">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+          <span className="text-zinc-400 whitespace-nowrap">
             ポジション: <span className="text-white font-semibold">{scenario.position}</span>
           </span>
-          <span className="text-zinc-400">
+          <span className="text-zinc-400 whitespace-nowrap">
             レイズサイズ: <span className="text-white font-semibold">{scenario.raiseSize}BB</span>
           </span>
-          <span className="text-zinc-400">
+          <span className="text-zinc-400 whitespace-nowrap">
             アクティブハンド: <span className="text-white font-semibold">{openCount}</span>/169
           </span>
           {callCount > 0 && (
             <>
-              <span className="text-zinc-400">
+              <span className="text-zinc-400 whitespace-nowrap">
                 {scenario.id.endsWith('-3bet') ? '4-Bet' : '3-Bet'}: <span className="text-green-400 font-semibold">{raiseCount}</span>
               </span>
-              <span className="text-zinc-400">
+              <span className="text-zinc-400 whitespace-nowrap">
                 コール: <span className="text-blue-400 font-semibold">{callCount}</span>
               </span>
             </>

@@ -77,12 +77,12 @@ export function MistakeCard({ feedback }: { feedback: CoachFeedback }) {
 
   return (
     <>
-      <span className={`flex items-center gap-2 font-display font-extrabold ${sev.cls}`}>
+      <span className={`flex flex-wrap items-center gap-x-2 gap-y-1 font-display font-extrabold ${sev.cls}`}>
         <span aria-hidden="true" className="text-lg">{sev.icon}</span>
-        {sev.label}
-        {explain && <span className="text-xs font-bold text-zinc-400">· {explain.label}</span>}
+        <span className="whitespace-nowrap">{sev.label}</span>
+        {explain && <span className="text-xs font-bold text-zinc-400 whitespace-nowrap">· {explain.label}</span>}
         {feedback.showEv && (
-          <span className="font-data text-sm font-bold">-{feedback.evLoss.toFixed(1)}BB</span>
+          <span className="font-data text-sm font-bold whitespace-nowrap">-{feedback.evLoss.toFixed(1)}BB</span>
         )}
       </span>
       <p className="text-sm text-zinc-200 leading-relaxed my-2">{feedback.message}</p>

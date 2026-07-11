@@ -126,13 +126,13 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
     answer = (
       <div className="space-y-1.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-bold text-brass-300">GTO 戦略</span>
-          {handKey && node && <span className="text-[10px] text-zinc-400">{handKey} @ {node.spotId}</span>}
+          <span className="text-[11px] font-bold text-brass-300 whitespace-nowrap">GTO 戦略</span>
+          {handKey && node && <span className="text-[10px] text-zinc-400 whitespace-nowrap">{handKey} @ {node.spotId}</span>}
           {node.multiwayReference && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300"
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300 whitespace-nowrap"
               title="3人以上(マルチウェイ)。ヘッズアップのレンジを参考表示(厳密解ではない・精度測定対象外)。">マルチウェイ=参考値</span>
           )}
-          {sourceBadge && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300">{sourceBadge}</span>}
+          {sourceBadge && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300 whitespace-nowrap">{sourceBadge}</span>}
         </div>
         <StrategyBars
           strategy={strategy}
@@ -227,12 +227,12 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
           <svg className="w-3.5 h-3.5 shrink-0 text-brass-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3v18h18" /><rect x="7" y="11" width="3" height="6" rx="0.5" /><rect x="12" y="7" width="3" height="10" rx="0.5" /><rect x="17" y="13" width="3" height="4" rx="0.5" /></svg>
           <span className="text-[11px] font-bold text-brass-300">答え合わせ</span>
           {actedAction && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-base-700 text-zinc-200 border border-white/10">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-base-700 text-zinc-200 border border-white/10 whitespace-nowrap">
               あなた: <span className="font-bold text-zinc-100">{ACTION_JP[actedAction]}</span>
             </span>
           )}
           {recommended && node && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-brass-500/15 text-brass-200 border border-brass-400/30 inline-flex items-center gap-1">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-brass-500/15 text-brass-200 border border-brass-400/30 inline-flex items-center gap-1 whitespace-nowrap">
               <span aria-hidden="true">★</span>
               {recommendLabel(node.source)}: <span className="font-bold">{actionSizeLabel(recommended)}</span>
             </span>
@@ -255,11 +255,11 @@ export function SpotPanel({ pending, phase, actedAction }: Props) {
           className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left
             focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-300"
         >
-          <span className="text-[11px] font-bold text-sky-300 flex items-center gap-1.5">
-            <span aria-hidden="true">💡</span> この局面の考え方
+          <span className="text-[11px] font-bold text-sky-300 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <span className="whitespace-nowrap"><span aria-hidden="true">💡</span> この局面の考え方</span>
             <span className="text-zinc-500 font-normal">(タップで開く・答えは出ません)</span>
           </span>
-          <span className="text-zinc-400 text-xs shrink-0" aria-hidden="true">▼ 開く</span>
+          <span className="text-zinc-400 text-xs shrink-0 whitespace-nowrap" aria-hidden="true">▼ 開く</span>
         </button>
       </div>
       {open && (

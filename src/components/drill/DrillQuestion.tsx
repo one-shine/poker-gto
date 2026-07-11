@@ -60,13 +60,13 @@ export function DrillQuestion({ question, judgement, onAnswer, onNext }: Props) 
       </div>
 
       {!judgement ? (
-        <div className="flex justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
           {question.options.map(o => (
             <button
               key={o.action}
               type="button"
               onClick={() => onAnswer(o.action)}
-              className="min-h-12 px-6 rounded-xl font-display font-bold bg-base-900 border border-white/10 hover:border-brass-400 hover:text-brass-200 transition-colors"
+              className="min-h-12 px-6 rounded-xl font-display font-bold whitespace-nowrap bg-base-900 border border-white/10 hover:border-brass-400 hover:text-brass-200 transition-colors"
             >
               {o.label}
             </button>
@@ -94,12 +94,12 @@ export function DrillQuestion({ question, judgement, onAnswer, onNext }: Props) 
             </p>
             <TermChips terms={PREFLOP_TERMS} />
           </div>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <ConceptLink conceptId={conceptForScenario(question.scenarioId)} />
             <button
               type="button"
               onClick={onNext}
-              className="min-h-11 px-6 rounded-xl brass font-display font-extrabold"
+              className="min-h-11 px-6 rounded-xl brass font-display font-extrabold whitespace-nowrap"
             >
               次の問題 →
             </button>

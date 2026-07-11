@@ -53,7 +53,7 @@ function situationText(q: PostflopQuestion): string {
 // hero の位置を平易な言葉で示すバッジ (色 + 文言で色覚配慮)。
 function PositionBadge({ oop }: { oop: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-bold border ${
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-bold whitespace-nowrap border ${
       oop ? 'bg-amber-950/50 border-amber-500/50 text-amber-200' : 'bg-sky-950/50 border-sky-500/50 text-sky-200'}`}>
       <span aria-hidden="true">{oop ? '◀' : '▶'}</span>
       あなた: {oop ? 'OOP（先に行動・不利な位置）' : 'IP（後に行動・有利な位置）'}
@@ -69,7 +69,7 @@ function Seg({ active, onClick, children }: { active: boolean; onClick: () => vo
   return (
     <button
       type="button" onClick={onClick} aria-pressed={active}
-      className={`min-h-9 px-3 rounded-lg text-sm font-bold transition-colors ${
+      className={`min-h-9 px-3 rounded-lg text-sm font-bold whitespace-nowrap transition-colors ${
         active ? 'brass' : 'bg-base-900 text-zinc-400 hover:text-zinc-100 border border-white/10'}`}
     >{children}</button>
   )
@@ -159,19 +159,19 @@ export function PostflopDrillPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-2 gap-x-2 sm:gap-x-4">
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
           <span className="text-xs text-zinc-500">盤面</span>
           <Seg active={boardMode === 'random'} onClick={() => changeBoardMode('random')}>ランダム</Seg>
           <Seg active={boardMode === 'representative'} onClick={() => changeBoardMode('representative')}>代表ボード</Seg>
         </div>
         {/* ポット種別はどちらのモードでも選べる(代表ボードも SRP/3bet を事前計算済) */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
           <span className="text-xs text-zinc-500">ポット</span>
           <Seg active={potType === 'srp'} onClick={() => changePotType('srp')}>シングルレイズド</Seg>
           <Seg active={potType === '3bet'} onClick={() => changePotType('3bet')}>3betポット</Seg>
         </div>
         {boardMode === 'random' ? (
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
             <span className="text-xs text-zinc-500">ストリート</span>
             <Seg active={streetMode === 'flop'} onClick={() => changeStreet('flop')}>フロップ</Seg>
             <Seg active={streetMode === 'turn'} onClick={() => changeStreet('turn')}>ターン</Seg>
@@ -208,7 +208,7 @@ export function PostflopDrillPanel() {
           )}
           <div className="flex flex-wrap items-center justify-center gap-2">
             <PositionBadge oop={question.heroIsOOP} />
-            <span className="text-sm text-zinc-200">{situationText(question)}</span>
+            <span className="text-sm text-zinc-200 whitespace-nowrap">{situationText(question)}</span>
           </div>
         </div>
 
@@ -262,7 +262,7 @@ export function PostflopDrillPanel() {
             {solved.all.map(o => (
               <button
                 key={o.action} type="button" onClick={() => onAnswer(o.action)}
-                className="min-h-12 px-5 rounded-xl font-display font-bold bg-base-900 border border-white/10 hover:border-brass-400 hover:text-brass-200 transition-colors"
+                className="min-h-12 px-5 rounded-xl font-display font-bold whitespace-nowrap bg-base-900 border border-white/10 hover:border-brass-400 hover:text-brass-200 transition-colors"
               >{o.label}</button>
             ))}
           </div>
@@ -293,7 +293,7 @@ export function PostflopDrillPanel() {
 
             <div className="flex flex-wrap justify-center gap-2 text-sm">
               {judgement.all.map(info => (
-                <span key={info.action} className="px-2.5 py-1 rounded-lg bg-base-900 border border-white/10 font-data text-zinc-200">
+                <span key={info.action} className="px-2.5 py-1 rounded-lg bg-base-900 border border-white/10 font-data text-zinc-200 whitespace-nowrap">
                   {info.label} <span className="text-zinc-400">{Math.round(info.freq * 100)}%</span>
                   {' · '}<span className={Number.isFinite(info.ev) && info.ev >= 0 ? 'text-emerald-300' : 'text-rose-300'}>{fmtEv(info.ev)}</span>
                 </span>
