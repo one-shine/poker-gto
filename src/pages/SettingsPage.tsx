@@ -5,6 +5,7 @@ import { useGameStore } from '../stores/gameStore'
 import { useSessionStore } from '../stores/sessionStore'
 import { useNavStore } from '../stores/navStore'
 import { exportAll, importAll } from '../lib/storage/dataTransfer'
+import { AboutLegalSection } from '../components/settings/AboutLegalSection'
 
 // セグメント切替ボタン (色 + 選択リングで色覚配慮)
 function Segmented<T extends string>({ value, options, onChange }: {
@@ -368,6 +369,8 @@ export function SettingsPage() {
             </button>
           </div>
         </Section>
+
+        <AboutLegalSection />
       </div>
     </div>
   )
